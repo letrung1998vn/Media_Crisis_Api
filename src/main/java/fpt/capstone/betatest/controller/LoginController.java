@@ -22,8 +22,8 @@ public class LoginController {
 	
 	@GetMapping("login")
     public UserEntity checkLogin(@RequestParam(value = "username") String username, @RequestParam(value = "password") String password) {
-		String showString = "";
 		UserEntity result = userService.checkLogin(username, password);
         return result;
     }
+	
 }

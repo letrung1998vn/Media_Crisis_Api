@@ -12,4 +12,5 @@ import fpt.capstone.betatest.entities.UserEntity;
 public interface UserRepository extends JpaRepository<UserEntity, Integer> {
 	UserEntity findByUsernameAndPassword(String username,String password);
 	List<UserEntity> findAll();
+	
 }
