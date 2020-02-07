@@ -60,12 +60,16 @@ public class UserController {
 		return userInfo;
     }
 	
-	@GetMapping("findAll")
-    public List<UserInfo> findAllUser() {
+	@GetMapping("findAllUserInfo")
+    public List<UserInfo> findAllUserInfo() {
 		List<UserInfo> result = userInfoService.getAll();
         return result;
     }
 	
-	
+	@GetMapping("findAllUser")
+    public List<User> findAllUser() {
+		List<User> result = userService.getAll();
+        return result;
+    }
 	
 }
