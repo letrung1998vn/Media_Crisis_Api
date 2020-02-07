@@ -7,7 +7,7 @@ import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import fpt.capstone.betatest.entities.UserEntity;
+import fpt.capstone.betatest.entities.User;
 import fpt.capstone.betatest.repositories.UserRepository;;
 
 @Service
@@ -16,12 +16,17 @@ public class UserService {
 	private UserRepository usersRepository;
 	
 	@Transactional
-	public UserEntity checkLogin(String username, String password) {
-		return usersRepository.findByUsernameAndPassword(username, password);
+	public User checkLogin(String username, String password) {
+		return usersRepository.findByUserNameAndPassword(username, password);
 	}
 	
 	@Transactional
-	public List<UserEntity> getAll() {
+	public List<User> getAll() {
 		return usersRepository.findAll();
+	}
+	
+	@Transactional
+	public User getByUsername(String username) {
+		return usersRepository.checkUserexist(username);
 	}
 }

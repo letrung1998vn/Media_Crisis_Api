@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import fpt.capstone.betatest.entities.UserEntity;
+import fpt.capstone.betatest.entities.User;
 import fpt.capstone.betatest.services.UserService;
 
 @RestController
@@ -21,8 +21,20 @@ public class LoginController {
 	UserService userService;
 	
 	@GetMapping("login")
-    public UserEntity checkLogin(@RequestParam(value = "username") String username, @RequestParam(value = "password") String password) {
-		UserEntity result = userService.checkLogin(username, password);
+    public User checkLogin(@RequestParam(value = "username") String username, @RequestParam(value = "password") String password) {
+		User result = userService.checkLogin(username, password);
+        return result;
+    }
+	
+	@GetMapping("check")
+    public User checkExist(@RequestParam(value = "username") String username) {
+		User result = userService.getByUsername(username);
+        return result;
+    }
+	
+	@GetMapping("findAll")
+    public List<User> findAllUser() {
+		List<User> result = userService.getAll();
         return result;
     }
 	
