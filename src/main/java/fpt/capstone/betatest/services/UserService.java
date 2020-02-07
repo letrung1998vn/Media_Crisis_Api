@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import fpt.capstone.betatest.entities.User;
-import fpt.capstone.betatest.repositories.UserRepository;;
+import fpt.capstone.betatest.repositories.UserRepository;
 
 @Service
 public class UserService {
@@ -28,5 +28,10 @@ public class UserService {
 	@Transactional
 	public User getByUsername(String username) {
 		return usersRepository.checkUserexist(username);
+	}
+	
+	@Transactional
+	public User saveUser(User u) {
+		return usersRepository.save(u);
 	}
 }
