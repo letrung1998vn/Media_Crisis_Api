@@ -23,6 +23,7 @@ import fpt.capstone.betatest.services.UserService;
 public class UserController {
 	@Autowired
 	UserService userService;
+	@Autowired
 	UserInfoService userInfoService;
 	
 	@GetMapping("login")
@@ -40,13 +41,13 @@ public class UserController {
 	@PostMapping("registration")
 	public UserInfo registration(@RequestParam(value = "username") String username, @RequestParam(value = "name") String name, @RequestParam(value = "password") String password, @RequestParam(value = "email") String email) {
 		
-//		User user = new User();
-//		user.setUserName(username);
-//		user.setPassword(password);
-//		user.setRole("user");
-//		user = userService.saveUser(user);
-//		System.out.println("User controller");
-//		System.out.println(user.toString());
+		User user = new User();
+		user.setUserName(username);
+		user.setPassword(password);
+		user.setRole("user");
+		user = userService.saveUser(user);
+		System.out.println("User controller");
+		System.out.println(user.toString());
 		
 		UserInfo userInfo = new UserInfo();
 		userInfo.setUserId(username);
@@ -55,7 +56,6 @@ public class UserController {
 		System.out.println("User info controller");
 		System.out.println(userInfo.toString());
 		userInfo = userInfoService.saveUser(userInfo);
-		System.out.println(userInfo.toString());
 		
 		return userInfo;
     }
