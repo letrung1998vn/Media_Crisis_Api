@@ -46,17 +46,12 @@ public class UserController {
 		user.setPassword(password);
 		user.setRole("user");
 		user = userService.saveUser(user);
-		System.out.println("User controller");
-		System.out.println(user.toString());
 		
 		UserInfo userInfo = new UserInfo();
 		userInfo.setUserId(username);
 		userInfo.setName(name);
 		userInfo.setEmail(email);
-		System.out.println("User info controller");
-		System.out.println(userInfo.toString());
 		userInfo = userInfoService.saveUser(userInfo);
-		
 		return userInfo;
     }
 	
