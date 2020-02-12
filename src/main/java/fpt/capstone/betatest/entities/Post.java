@@ -3,51 +3,52 @@ package fpt.capstone.betatest.entities;
 import java.io.Serializable;
 import javax.persistence.*;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
-
 
 /**
  * The persistent class for the Post database table.
  * 
  */
 @Entity
-@Table(name="[Post]")
-@NamedQuery(name="Post.findAll", query="SELECT p FROM Post p")
+@Table(name = "[Post]")
+@NamedQuery(name = "Post.findAll", query = "SELECT p FROM Post p")
 public class Post implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	@Id
-	@Column(name="Id")
+	@Column(name = "Id")
 	private String id;
 
-	@Column(name="Content")
+	@Column(name = "Content")
 	private String content;
 
-	@Column(name="CrawlDate")
+	@Column(name = "CrawlDate")
 	private Timestamp crawlDate;
 
-	@Column(name="Link_Detail")
+	@Column(name = "Link_Detail")
 	private String link_Detail;
 
-	@Column(name="Number_Of_Comment")
+	@Column(name = "Number_Of_Comment")
 	private double number_Of_Comment;
 
-	@Column(name="Number_of_Share")
+	@Column(name = "Number_of_Share")
 	private double number_of_Share;
 
-	@Column(name="Numbet_Of_React")
+	@Column(name = "Numbet_Of_React")
 	private double numbet_Of_React;
 
-	//bi-directional many-to-one association to Comment
-	@OneToMany(mappedBy="post")
+	// bi-directional many-to-one association to Comment
+	@OneToMany(mappedBy = "post")
 	private List<Comment> comments;
 
-	//bi-directional many-to-one association to Keyword
+	// bi-directional many-to-one association to Keyword
 	@ManyToOne
-	@JoinColumn(name="Keyword")
+	@JoinColumn(name = "Keyword")
 	private Keyword keywordBean;
 
 	public Post() {
+		comments = new ArrayList<Comment>();
 	}
 
 	public String getId() {
