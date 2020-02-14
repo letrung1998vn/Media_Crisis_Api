@@ -9,11 +9,15 @@ import org.springframework.stereotype.Service;
 
 import fpt.capstone.betatest.entities.UserInfo;
 import fpt.capstone.betatest.repositories.UserInfoRepository;
+import fpt.capstone.betatest.repositories.UserRepository;
 
 @Service
 public class UserInfoService {
 	@Autowired
 	private UserInfoRepository usersInfoRepository;
+	
+	@Autowired
+	private UserRepository userRepository;
 	
 	@Transactional
 	public UserInfo saveUser(UserInfo u) {
@@ -23,5 +27,10 @@ public class UserInfoService {
 	@Transactional
 	public List<UserInfo> getAll() {
 		return usersInfoRepository.findAll();
+	}
+	
+	@Transactional
+	public UserInfo getByUsernameAndPassword(String username, String password) {
+		return usersInfoRepository.findByUser(userRepository.findByUserNameAndPassword(username, password));
 	}
 }

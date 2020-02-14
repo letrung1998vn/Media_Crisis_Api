@@ -27,14 +27,14 @@ public class UserController {
 	UserInfoService userInfoService;
 	
 	@GetMapping("login")
-    public User checkLogin(@RequestParam(value = "username") String username, @RequestParam(value = "password") String password) {
-		User result = userService.checkLogin(username, password);
+    public UserInfo checkLogin(@RequestParam(value = "username") String username, @RequestParam(value = "password") String password) {
+		UserInfo result = userInfoService.getByUsernameAndPassword(username, password);
         return result;
     }
 	
 	@GetMapping("check")
-    public User checkExist(@RequestParam(value = "username") String username) {
-		User result = userService.getByUsername(username);
+    public List<UserInfo> checkExist() {
+		List<UserInfo> result = userInfoService.getAll();
         return result;
     }
 	
@@ -52,6 +52,8 @@ public class UserController {
 		userInfo.setName(name);
 		userInfo.setEmail(email);
 		userInfo = userInfoService.saveUser(userInfo);
+		
+		
 		return userInfo;
     }
 	
