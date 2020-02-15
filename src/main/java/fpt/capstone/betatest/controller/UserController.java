@@ -51,7 +51,9 @@ public class UserController {
 				infoOutPut2.setRole(result.getUser().getRole());			
 				infoOutPut2.setKeywordId(resultKeyword.get(i).getId());
 				infoOutPut2.setKeyword(resultKeyword.get(i).getKeyword());
+				System.out.println(infoOutPut2.toString());
 				output.add(infoOutPut2);
+				infoOutPut2 = new UserLoginOutput();
 			}
 		}
         return output;
