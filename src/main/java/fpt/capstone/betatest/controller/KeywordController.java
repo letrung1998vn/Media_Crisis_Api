@@ -19,7 +19,7 @@ public class KeywordController {
 	@Autowired
 	KeywordService keywordService;
 	@Autowired
-//	private KeywordRepository keywordsRepository;
+	private KeywordRepository keywordsRepository;
 	
 	@GetMapping("getAll")
 	public List<Keyword> getAll(@RequestParam(value = "userId") String userId) {
