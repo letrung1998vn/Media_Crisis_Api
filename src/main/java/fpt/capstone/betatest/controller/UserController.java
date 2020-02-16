@@ -1,5 +1,6 @@
 package fpt.capstone.betatest.controller;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,8 +14,11 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import fpt.capstone.betatest.entities.Keyword;
 import fpt.capstone.betatest.entities.User;
 import fpt.capstone.betatest.entities.UserInfo;
+import fpt.capstone.betatest.model.UserLoginOutput;
+import fpt.capstone.betatest.services.KeywordService;
 import fpt.capstone.betatest.services.UserInfoService;
 import fpt.capstone.betatest.services.UserService;
 
@@ -25,11 +29,34 @@ public class UserController {
 	UserService userService;
 	@Autowired
 	UserInfoService userInfoService;
+	@Autowired
+	KeywordService keywordService;
 	
 	@GetMapping("login")
-    public UserInfo checkLogin(@RequestParam(value = "username") String username, @RequestParam(value = "password") String password) {
+    public List<UserLoginOutput> checkLogin(@RequestParam(value = "username") String username, @RequestParam(value = "password") String password) {
+		List<UserLoginOutput> output = new ArrayList<UserLoginOutput>();
 		UserInfo result = userInfoService.getByUsernameAndPassword(username, password);
-        return result;
+		List<Keyword> resultKeyword = keywordService.getAll(result.getUserId());
+		if (resultKeyword.size() == 0) {
+			UserLoginOutput infoOutPut1 = new UserLoginOutput(result.getUserId(), result.getUser().getPassword(), result.getEmail(), result.getName(), "", 0, result.getUser().getRole());
+			System.out.println(infoOutPut1);
+			output.add(infoOutPut1);
+		}else {
+			UserLoginOutput infoOutPut2 = new UserLoginOutput();
+			for (int i = 0; i < resultKeyword.size(); i++) {
+				infoOutPut2.setName(result.getName());
+				infoOutPut2.setEmail(result.getEmail());
+				infoOutPut2.setUserId(result.getUserId());				
+				infoOutPut2.setPassword(result.getUser().getPassword());			
+				infoOutPut2.setRole(result.getUser().getRole());			
+				infoOutPut2.setKeywordId(resultKeyword.get(i).getId());
+				infoOutPut2.setKeyword(resultKeyword.get(i).getKeyword());
+				System.out.println(infoOutPut2.toString());
+				output.add(infoOutPut2);
+				infoOutPut2 = new UserLoginOutput();
+			}
+		}
+        return output;
     }
 	
 	@GetMapping("check")
