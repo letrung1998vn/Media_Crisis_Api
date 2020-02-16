@@ -19,7 +19,7 @@ public class KeywordController {
 	@Autowired
 	KeywordService keywordService;
 	@Autowired
-	private KeywordRepository keywordsRepository;
+//	private KeywordRepository keywordsRepository;
 	
 	@GetMapping("getAll")
 	public List<Keyword> getAll(@RequestParam(value = "userId") String userId) {
@@ -50,8 +50,8 @@ public class KeywordController {
 	}
 	
 	@PostMapping("deleteKeyword")
-	public void deleteKeyword(@RequestParam(value = "keyword") String keyword, @RequestParam(value = "userId") String userId) {
-		keywordService.deleteKeyword(keyword, userId);
+	public void deleteKeyword(@RequestParam(value = "id") int id) {
+		keywordService.deleteKeyword(id);
 		
 	}
 	

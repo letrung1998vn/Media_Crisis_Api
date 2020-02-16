@@ -36,8 +36,8 @@ public class KeywordService {
 	}
 	
 	@Transactional
-	public void deleteKeyword(String keyword, String userId) {
-		int id = keywordsRepository.findByUserIdAndKeyword(userId, keyword).getId();
+	public void deleteKeyword(int id) {
+//		id = keywordsRepository.findUserAndKeywordById(id).getId();
 		keywordsRepository.deleteById(id);
 	}
 
