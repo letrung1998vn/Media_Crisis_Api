@@ -21,6 +21,11 @@ public class KeywordService {
 	}
 	
 	@Transactional
+	public List<Keyword> getAllKeyword() {
+		return keywordsRepository.findAll();
+	}
+	
+	@Transactional
 	public List<Keyword> getAll(String userId) {
 		return keywordsRepository.findByUserId(userId);
 	}
