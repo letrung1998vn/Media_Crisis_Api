@@ -50,8 +50,8 @@ public class KeywordController {
 	}
 	
 	@PostMapping("deleteKeyword")
-	public void deleteKeyword(@RequestParam(value = "keyword") String keyword, @RequestParam(value = "userId") String userId) {
-		keywordService.deleteKeyword(keyword, userId);
+	public void deleteKeyword(@RequestParam(value = "id") int id) {
+		keywordService.deleteKeyword(id);
 		
 	}
 	

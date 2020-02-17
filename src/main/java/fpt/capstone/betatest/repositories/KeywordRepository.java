@@ -23,4 +23,6 @@ public interface KeywordRepository extends JpaRepository<Keyword, Integer> {
 	
 	List<Keyword> findByUserId(String userId);
 	
+//	Keyword findUserAndKeywordById(int id);
+	 
 }
