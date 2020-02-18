@@ -22,7 +22,13 @@ public class KeywordController {
 	private KeywordRepository keywordsRepository;
 	
 	@GetMapping("getAll")
-	public List<Keyword> getAll(@RequestParam(value = "userId") String userId) {
+	public List<Keyword> getAll() {
+		List<Keyword> result = keywordService.getAllKeyword();
+		return result;
+	}
+	
+	@GetMapping("getAllByUserId")
+	public List<Keyword> getAllByUserId(@RequestParam(value = "userId") String userId) {
 		List<Keyword> result = keywordService.getAll(userId);
 		return result;
 	}
