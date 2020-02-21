@@ -93,6 +93,7 @@ public class UserController {
 			user.setUserName(username);
 			user.setPassword(password);
 			user.setRole("user");
+			user.setAvailable(true);
 			user = userService.saveUser(user);
 
 			userInfo.setUserId(username);
