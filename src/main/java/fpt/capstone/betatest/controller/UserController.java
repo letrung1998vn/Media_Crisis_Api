@@ -31,69 +31,92 @@ public class UserController {
 	UserInfoService userInfoService;
 	@Autowired
 	KeywordService keywordService;
-	
+
+	@PostMapping("changeStatus")
+	public UserInfo changeUserStatus(@RequestParam(value = "username") String username) {
+		UserInfo user = userInfoService.getByUser(userService.getByUsername(username));
+		boolean isAvailable = user.getUser().isAvailable();
+		if (isAvailable) {
+			isAvailable = false;
+		} else {
+			isAvailable = true;
+		}
+		user.getUser().setAvailable(isAvailable);
+		return userInfoService.saveUser(user);
+	}
+
 	@GetMapping("login")
-    public List<UserLoginOutput> checkLogin(@RequestParam(value = "username") String username, @RequestParam(value = "password") String password) {
+	public List<UserLoginOutput> checkLogin(@RequestParam(value = "username") String username,
+			@RequestParam(value = "password") String password) {
 		List<UserLoginOutput> output = new ArrayList<UserLoginOutput>();
 		UserInfo result = userInfoService.getByUsernameAndPassword(username, password);
 		List<Keyword> resultKeyword = keywordService.getAll(result.getUserId());
 		if (resultKeyword.size() == 0) {
-			UserLoginOutput infoOutPut1 = new UserLoginOutput(result.getUserId(), result.getUser().getPassword(), result.getEmail(), result.getName(), "", 0, result.getUser().getRole());
-			System.out.println(infoOutPut1);
+			UserLoginOutput infoOutPut1 = new UserLoginOutput(result.getUserId(), result.getUser().getPassword(),
+					result.getEmail(), result.getName(), "", 0, result.getUser().getRole(),
+					result.getUser().isAvailable());
+//			System.out.println(infoOutPut1);
 			output.add(infoOutPut1);
-		}else {
+		} else {
 			UserLoginOutput infoOutPut2 = new UserLoginOutput();
 			for (int i = 0; i < resultKeyword.size(); i++) {
 				infoOutPut2.setName(result.getName());
 				infoOutPut2.setEmail(result.getEmail());
-				infoOutPut2.setUserId(result.getUserId());				
-				infoOutPut2.setPassword(result.getUser().getPassword());			
-				infoOutPut2.setRole(result.getUser().getRole());			
+				infoOutPut2.setUserId(result.getUserId());
+				infoOutPut2.setPassword(result.getUser().getPassword());
+				infoOutPut2.setRole(result.getUser().getRole());
+				infoOutPut2.setAvailable(result.getUser().isAvailable());
 				infoOutPut2.setKeywordId(resultKeyword.get(i).getId());
 				infoOutPut2.setKeyword(resultKeyword.get(i).getKeyword());
-				System.out.println(infoOutPut2.toString());
+//				System.out.println(infoOutPut2.toString());
 				output.add(infoOutPut2);
 				infoOutPut2 = new UserLoginOutput();
 			}
 		}
-        return output;
-    }
-	
+		return output;
+	}
+
 	@GetMapping("check")
-    public List<UserInfo> checkExist() {
+	public List<UserInfo> checkExist() {
 		List<UserInfo> result = userInfoService.getAll();
-        return result;
-    }
-	
+		return result;
+	}
+
 	@PostMapping("registration")
-	public UserInfo registration(@RequestParam(value = "username") String username, @RequestParam(value = "name") String name, @RequestParam(value = "password") String password, @RequestParam(value = "email") String email) {
-		
-		User user = new User();
-		user.setUserName(username);
-		user.setPassword(password);
-		user.setRole("user");
-		user = userService.saveUser(user);
-		
+	public UserInfo registration(@RequestParam(value = "username") String username,
+			@RequestParam(value = "name") String name, @RequestParam(value = "password") String password,
+			@RequestParam(value = "email") String email) {
 		UserInfo userInfo = new UserInfo();
-		userInfo.setUserId(username);
-		userInfo.setName(name);
-		userInfo.setEmail(email);
-		userInfo = userInfoService.saveUser(userInfo);
-		
-		
+		User user = new User();
+		if (userService.getByUsername(username) == null) {
+
+			user.setUserName(username);
+			user.setPassword(password);
+			user.setRole("user");
+			user = userService.saveUser(user);
+
+			userInfo.setUserId(username);
+			userInfo.setName(name);
+			userInfo.setEmail(email);
+			userInfo = userInfoService.saveUser(userInfo);
+		} else {
+			userInfo.setUserId("");
+			userInfo.setName("");
+			userInfo.setEmail("");
+		}
 		return userInfo;
-    }
-	
+	}
+
 	@GetMapping("findAllUserInfo")
-    public List<UserInfo> findAllUserInfo() {
+	public List<UserInfo> findAllUserInfo() {
 		List<UserInfo> result = userInfoService.getAll();
-        return result;
-    }
-	
+		return result;
+	}
+
 	@GetMapping("findAllUser")
-    public List<User> findAllUser() {
+	public List<User> findAllUser() {
 		List<User> result = userService.getAll();
-        return result;
-    }
-	
+		return result;
+	}
+
 }
