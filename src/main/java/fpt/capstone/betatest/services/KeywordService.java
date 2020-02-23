@@ -5,6 +5,9 @@ import java.util.List;
 import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import fpt.capstone.betatest.entities.Keyword;
@@ -14,6 +17,12 @@ import fpt.capstone.betatest.repositories.KeywordRepository;
 public class KeywordService {
 	@Autowired
 	private KeywordRepository keywordsRepository;
+	
+	@Transactional
+	public Page<Keyword> keywordPaging(int Page) {
+		Pageable page = PageRequest.of((Page - 1), 10);
+		return keywordsRepository.findAll(page);
+	}
 	
 	@Transactional
 	public List<Keyword> searchKeyword(String userId, String keyword) {
