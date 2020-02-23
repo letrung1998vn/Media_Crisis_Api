@@ -28,6 +28,11 @@ public class KeywordController {
 		return result;
 	}
 	
+	@GetMapping("getUsers")
+	public List<String> getUsers() {
+		return keywordService.getAllUserHaveKeyword();
+	}
+	
 	@GetMapping("getAllByPage")
 	public Page<Keyword> getAllPaging(@RequestParam(value = "page") int page) {
 		Page<Keyword> result = keywordService.keywordPaging(page);

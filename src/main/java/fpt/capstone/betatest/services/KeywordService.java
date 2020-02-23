@@ -40,6 +40,11 @@ public class KeywordService {
 	}
 	
 	@Transactional
+	public List<String> getAllUserHaveKeyword() {
+		return keywordsRepository.findAllUserHaveKeyword();
+	}
+	
+	@Transactional
 	public Keyword getByKeywordAndUserId(String keyword, String userId) {
 		return keywordsRepository.findByUserIdAndKeyword(keyword, userId);
 	}
