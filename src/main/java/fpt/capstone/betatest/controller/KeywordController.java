@@ -46,8 +46,8 @@ public class KeywordController {
 	}
 	
 	@GetMapping("searchKeyword")
-	public List<Keyword> searchKeyword(@RequestParam(value = "keyword") String keyword, @RequestParam(value = "userId") String userId) {
-		List<Keyword> result = keywordService.searchKeyword(userId, keyword);
+	public Page<Keyword> searchKeyword(@RequestParam(value = "keyword") String keyword, @RequestParam(value = "page") int page) {
+		Page<Keyword> result = keywordService.searchKeyword(keyword, page);
 		return result;
 	}
 	

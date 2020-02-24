@@ -25,8 +25,9 @@ public class KeywordService {
 	}
 	
 	@Transactional
-	public List<Keyword> searchKeyword(String userId, String keyword) {
-		return keywordsRepository.findByUserIdAndKeywordContaining(userId, keyword);
+	public Page<Keyword> searchKeyword(String keyword, int Page) {
+		Pageable page = PageRequest.of((Page - 1), 10);
+		return keywordsRepository.findByKeywordContaining(keyword, page);
 	}
 	
 	@Transactional
