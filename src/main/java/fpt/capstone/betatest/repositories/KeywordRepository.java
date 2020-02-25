@@ -20,6 +20,7 @@ public interface KeywordRepository extends JpaRepository<Keyword, Integer> {
 //	Keyword checkKeywordExist(@Param("keyword") String keyword, @Param("userId") String userId);
 	
 	Page<Keyword> findByKeywordContaining(String keyword, Pageable pageable);
+	Page<Keyword> findByKeywordContainingAndUserId(String keyword, String userId, Pageable pageable);
 
 	Keyword findByUserIdAndKeyword(String keyword, String userId);
 	
