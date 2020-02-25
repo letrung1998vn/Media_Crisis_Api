@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -76,11 +77,11 @@ public class UserController {
 		return output;
 	}
 
-	@GetMapping("check")
-	public List<UserInfo> checkExist() {
-		List<UserInfo> result = userInfoService.getAll();
-		return result;
-	}
+//	@GetMapping("check")
+//	public List<UserInfo> checkExist() {
+//		List<UserInfo> result = userInfoService.getAll();
+//		return result;
+//	}
 
 	@PostMapping("registration")
 	public UserInfo registration(@RequestParam(value = "username") String username,
@@ -109,8 +110,8 @@ public class UserController {
 	}
 
 	@GetMapping("findAllUserInfo")
-	public List<UserInfo> findAllUserInfo() {
-		List<UserInfo> result = userInfoService.getAll();
+	public Page<UserInfo> findUserInfo(@RequestParam(value = "username") String userId, @RequestParam(value = "page") int page) {
+		Page<UserInfo> result = userInfoService.searchByUsernameAndPage(userId, page);
 		return result;
 	}
 
