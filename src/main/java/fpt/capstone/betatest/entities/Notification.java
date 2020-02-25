@@ -17,9 +17,14 @@ public class Notification implements Serializable {
 	@Column(name="ID")
 	private int id;
 
-	@Column(name="Content")
-	private String content;
+	@Column(name="CrisisId")
+	private int crisisId;
 
+	@Column(name="Email")
+	private boolean email;
+	
+	@Column(name="Webhook")
+	private boolean webhook;
 	//bi-directional many-to-one association to UserInfo
 	@ManyToOne
 	@JoinColumn(name="UserId")
@@ -28,28 +33,61 @@ public class Notification implements Serializable {
 	public Notification() {
 	}
 
+	public Notification(int id, int crisisId, boolean email, boolean webhook, UserInfo userInfo) {
+		super();
+		this.id = id;
+		this.crisisId = crisisId;
+		this.email = email;
+		this.webhook = webhook;
+		this.userInfo = userInfo;
+	}
+
 	public int getId() {
-		return this.id;
+		return id;
 	}
 
 	public void setId(int id) {
 		this.id = id;
 	}
 
-	public String getContent() {
-		return this.content;
+	public int getCrisisId() {
+		return crisisId;
 	}
 
-	public void setContent(String content) {
-		this.content = content;
+	public void setCrisisId(int crisisId) {
+		this.crisisId = crisisId;
+	}
+
+	public boolean isEmail() {
+		return email;
+	}
+
+	public void setEmail(boolean email) {
+		this.email = email;
+	}
+
+	public boolean isWebhook() {
+		return webhook;
+	}
+
+	public void setWebhook(boolean webhook) {
+		this.webhook = webhook;
 	}
 
 	public UserInfo getUserInfo() {
-		return this.userInfo;
+		return userInfo;
 	}
 
 	public void setUserInfo(UserInfo userInfo) {
 		this.userInfo = userInfo;
 	}
+
+	@Override
+	public String toString() {
+		return "Notification [id=" + id + ", crisisId=" + crisisId + ", email=" + email + ", webhook=" + webhook
+				+ ", userInfo=" + userInfo + "]";
+	}
+
+	
 
 }

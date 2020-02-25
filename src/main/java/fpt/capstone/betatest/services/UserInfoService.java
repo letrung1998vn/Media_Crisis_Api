@@ -7,6 +7,7 @@ import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import fpt.capstone.betatest.entities.User;
 import fpt.capstone.betatest.entities.UserInfo;
 import fpt.capstone.betatest.repositories.UserInfoRepository;
 import fpt.capstone.betatest.repositories.UserRepository;
@@ -27,6 +28,11 @@ public class UserInfoService {
 	@Transactional
 	public List<UserInfo> getAll() {
 		return usersInfoRepository.findAll();
+	}
+	
+	@Transactional
+	public UserInfo getByUser(User user) {
+		return usersInfoRepository.findByUser(user);
 	}
 	
 	@Transactional

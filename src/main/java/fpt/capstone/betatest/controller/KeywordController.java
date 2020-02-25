@@ -3,6 +3,7 @@ package fpt.capstone.betatest.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,6 +28,17 @@ public class KeywordController {
 		return result;
 	}
 	
+	@GetMapping("getUsers")
+	public List<String> getUsers() {
+		return keywordService.getAllUserHaveKeyword();
+	}
+	
+	@GetMapping("getAllByPage")
+	public Page<Keyword> getAllPaging(@RequestParam(value = "page") int page) {
+		Page<Keyword> result = keywordService.keywordPaging(page);
+		return result;
+	}
+	
 	@GetMapping("getAllByUserId")
 	public List<Keyword> getAllByUserId(@RequestParam(value = "userId") String userId) {
 		List<Keyword> result = keywordService.getAll(userId);
@@ -34,8 +46,8 @@ public class KeywordController {
 	}
 	
 	@GetMapping("searchKeyword")
-	public List<Keyword> searchKeyword(@RequestParam(value = "keyword") String keyword, @RequestParam(value = "userId") String userId) {
-		List<Keyword> result = keywordService.searchKeyword(userId, keyword);
+	public Page<Keyword> searchKeyword(@RequestParam(value = "keyword") String keyword, @RequestParam(value = "page") int page) {
+		Page<Keyword> result = keywordService.searchKeyword(keyword, page);
 		return result;
 	}
 	

@@ -5,6 +5,9 @@ import java.util.List;
 import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import fpt.capstone.betatest.entities.Keyword;
@@ -16,8 +19,15 @@ public class KeywordService {
 	private KeywordRepository keywordsRepository;
 	
 	@Transactional
-	public List<Keyword> searchKeyword(String userId, String keyword) {
-		return keywordsRepository.findByUserIdAndKeywordContaining(userId, keyword);
+	public Page<Keyword> keywordPaging(int Page) {
+		Pageable page = PageRequest.of((Page - 1), 10);
+		return keywordsRepository.findAll(page);
+	}
+	
+	@Transactional
+	public Page<Keyword> searchKeyword(String keyword, int Page) {
+		Pageable page = PageRequest.of((Page - 1), 10);
+		return keywordsRepository.findByKeywordContaining(keyword, page);
 	}
 	
 	@Transactional
@@ -28,6 +38,11 @@ public class KeywordService {
 	@Transactional
 	public List<Keyword> getAll(String userId) {
 		return keywordsRepository.findByUserId(userId);
+	}
+	
+	@Transactional
+	public List<String> getAllUserHaveKeyword() {
+		return keywordsRepository.findAllUserHaveKeyword();
 	}
 	
 	@Transactional

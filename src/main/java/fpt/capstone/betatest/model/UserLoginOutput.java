@@ -3,12 +3,13 @@ package fpt.capstone.betatest.model;
 public class UserLoginOutput {
 String userId, password, email, name, keyword, role;
 int keywordId;
+boolean isAvailable;
 
 public UserLoginOutput() {
 
 }
 
-public UserLoginOutput(String userId, String password, String email, String name, String keyword, int keywordId, String role) {
+public UserLoginOutput(String userId, String password, String email, String name, String keyword, int keywordId, String role, boolean isAvailable) {
 	super();
 	this.userId = userId;
 	this.password = password;
@@ -17,6 +18,7 @@ public UserLoginOutput(String userId, String password, String email, String name
 	this.keyword = keyword;
 	this.keywordId = keywordId;
 	this.role = role;
+	this.isAvailable = isAvailable;
 }
 
 public String getUserId() {
@@ -75,10 +77,21 @@ public void setRole(String role) {
 	this.role = role;
 }
 
+public boolean isAvailable() {
+	return isAvailable;
+}
+
+public void setAvailable(boolean isAvailable) {
+	this.isAvailable = isAvailable;
+}
+
 @Override
 public String toString() {
 	return "UserLoginOutput [userId=" + userId + ", password=" + password + ", email=" + email + ", name=" + name
-			+ ", keyword=" + keyword + ", role=" + role + ", keywordId=" + keywordId + "]";
+			+ ", keyword=" + keyword + ", role=" + role + ", keywordId=" + keywordId + ", isAvailable=" + isAvailable
+			+ "]";
 }
+
+
 
 }

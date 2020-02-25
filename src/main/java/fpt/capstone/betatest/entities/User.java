@@ -23,6 +23,9 @@ public class User implements Serializable {
 	@Column(name="Role")
 	private String role;
 
+	@Column(name="Available")
+	private boolean available;
+	
 	public User() {
 	}
 
@@ -50,12 +53,17 @@ public class User implements Serializable {
 		this.role = role;
 	}
 
-	@Override
-	public String toString() {
-		return "User [userName=" + userName + ", password=" + password + ", role=" + role + "]";
+	public boolean isAvailable() {
+		return available;
 	}
 
-	
+	public void setAvailable(boolean available) {
+		this.available = available;
+	}
 
-	
+	@Override
+	public String toString() {
+		return "User [userName=" + userName + ", password=" + password + ", role=" + role + ", available=" + available
+				+ "]";
+	}
 }
