@@ -41,7 +41,13 @@ public class KeywordController {
 	
 	@GetMapping("search")
 	public Page<Keyword> getKeyword(@RequestParam(value = "keyword") String keyword, @RequestParam(value = "username") String username, @RequestParam(value = "page") int page) {
-		Page<Keyword> result = keywordService.searchKeywordByUserIdAndKeywordContain(keyword, username, page);
+		Page<Keyword> result = null;
+		if (username.equals("")) {
+			result = keywordService.searchKeyword(keyword, page);
+		} else {
+			result = keywordService.searchKeywordByUserIdAndKeywordContain(keyword, username, page);	
+		}
+		
 		return result;
 	}
 	
