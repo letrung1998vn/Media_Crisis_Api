@@ -5,6 +5,9 @@ import java.util.List;
 import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import fpt.capstone.betatest.entities.User;
@@ -26,8 +29,9 @@ public class UserInfoService {
 	}
 
 	@Transactional
-	public List<UserInfo> getAll() {
-		return usersInfoRepository.findAll();
+	public Page<UserInfo> searchByUsernameAndPage(String userId, int Page) {
+		Pageable page = PageRequest.of((Page - 1), 10);
+		return usersInfoRepository.findByUserIdContaining(userId, page);
 	}
 	
 	@Transactional
