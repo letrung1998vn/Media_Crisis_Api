@@ -79,6 +79,14 @@ public class KeywordController {
 		return kw;
 	}
 	
+	@PostMapping("updateKeyword")
+	public Keyword updateKeyword(@RequestParam(value = "keyword") String keyword, @RequestParam(value = "keywordId") int keywordId) {
+		Keyword kw = keywordService.getKeywordById(keywordId);
+		kw.setKeyword(keyword);
+		kw = keywordService.saveKeyword(kw);
+		return kw;
+	}
+	
 	@PostMapping("deleteKeyword")
 	public void deleteKeyword(@RequestParam(value = "id") int id) {
 		keywordService.deleteKeyword(id);

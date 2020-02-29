@@ -24,6 +24,8 @@ public interface KeywordRepository extends JpaRepository<Keyword, Integer> {
 
 	Keyword findByUserIdAndKeyword(String keyword, String userId);
 	
+	Keyword findById(int id);
+	
 	List<Keyword> findByUserId(String userId);
 	
 	@Query("SELECT l.userId from Keyword l GROUP BY l.userId")

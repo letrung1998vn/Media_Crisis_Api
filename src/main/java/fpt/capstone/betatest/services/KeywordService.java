@@ -62,6 +62,16 @@ public class KeywordService {
 	}
 	
 	@Transactional
+	public Keyword getKeywordById(int id) {
+		return keywordsRepository.findById(id);
+	}
+	
+	@Transactional
+	public void updateKeyword(Keyword kw) {
+		keywordsRepository.save(kw);
+	}
+	
+	@Transactional
 	public void deleteKeyword(int id) {
 //		id = keywordsRepository.findUserAndKeywordById(id).getId();
 		keywordsRepository.deleteById(id);
