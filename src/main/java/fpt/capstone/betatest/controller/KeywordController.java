@@ -22,21 +22,9 @@ public class KeywordController {
 	@Autowired
 	private KeywordRepository keywordsRepository;
 	
-	@GetMapping("getAll")
-	public List<Keyword> getAll() {
-		List<Keyword> result = keywordService.getAllKeyword();
-		return result;
-	}
-	
 	@GetMapping("getUsers")
 	public List<String> getUsers() {
 		return keywordService.getAllUserHaveKeyword();
-	}
-	
-	@GetMapping("getAllByPage")
-	public Page<Keyword> getAllPaging(@RequestParam(value = "page") int page) {
-		Page<Keyword> result = keywordService.keywordPaging(page);
-		return result;
 	}
 	
 	@PostMapping("search")
@@ -51,18 +39,6 @@ public class KeywordController {
 		return result;
 	}
 	
-	@GetMapping("getAllByUserId")
-	public List<Keyword> getAllByUserId(@RequestParam(value = "userId") String userId) {
-		List<Keyword> result = keywordService.getAll(userId);
-		return result;
-	}
-	
-	@GetMapping("searchKeyword")
-	public Page<Keyword> searchKeyword(@RequestParam(value = "keyword") String keyword, @RequestParam(value = "page") int page) {
-		Page<Keyword> result = keywordService.searchKeyword(keyword, page);
-		return result;
-	}
-	
 	@GetMapping("check")
 	public Keyword checkExist(@RequestParam(value = "userId") String userId, @RequestParam(value = "keyword") String keyword) {
 		Keyword result = keywordService.getByKeywordAndUserId(userId, keyword);
@@ -74,6 +50,8 @@ public class KeywordController {
 		Keyword kw = new Keyword();
 		kw.setKeyword(keyword);
 		kw.setUserId(userId);
+		kw.setAvailable(true);
+		kw.setVersion(1);
 
 		kw = keywordService.saveKeyword(kw);
 		return kw;
@@ -83,14 +61,19 @@ public class KeywordController {
 	public Keyword updateKeyword(@RequestParam(value = "keyword") String keyword, @RequestParam(value = "keywordId") int keywordId) {
 		Keyword kw = keywordService.getKeywordById(keywordId);
 		kw.setKeyword(keyword);
+		kw.setVersion(kw.getVersion() + 1);
 		kw = keywordService.saveKeyword(kw);
 		return kw;
 	}
 	
 	@PostMapping("deleteKeyword")
-	public void deleteKeyword(@RequestParam(value = "id") int id) {
-		keywordService.deleteKeyword(id);
-		
+	public Keyword deleteKeyword(@RequestParam(value = "id") int id) {
+		Keyword kw = keywordService.getKeywordById(id);
+		if (kw != null) {
+		kw.setAvailable(false);
+		kw = keywordService.saveKeyword(kw);
+		}
+		return kw;
 	}
 	
 

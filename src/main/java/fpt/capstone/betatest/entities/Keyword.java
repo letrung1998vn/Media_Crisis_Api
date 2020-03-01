@@ -27,6 +27,11 @@ public class Keyword implements Serializable {
 	@Column(name = "UserId")
 	private String userId;
 
+	@Column(name = "Available")
+	private boolean available;
+	
+	@Column(name = "Version")
+	private int version;
 //	//bi-directional many-to-one association to Post
 //	@OneToMany(mappedBy="keywordBean")
 //	private List<Post> posts;
@@ -65,10 +70,29 @@ public class Keyword implements Serializable {
 		this.userId = userId;
 	}
 
+	public boolean isAvailable() {
+		return available;
+	}
+
+	public void setAvailable(boolean available) {
+		this.available = available;
+	}
+
+	public int getVersion() {
+		return version;
+	}
+
+	public void setVersion(int version) {
+		this.version = version;
+	}
+
 	@Override
 	public String toString() {
-		return "Keyword [id=" + id + ", keyword=" + keyword + ", userInfo=" + userId + "]";
+		return "Keyword [id=" + id + ", keyword=" + keyword + ", userId=" + userId + ", available=" + available
+				+ ", version=" + version + "]";
 	}
+
+	
 
 //	public List<Post> getPosts() {
 //		return this.posts;

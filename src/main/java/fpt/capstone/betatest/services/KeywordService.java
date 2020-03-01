@@ -27,13 +27,13 @@ public class KeywordService {
 	@Transactional
 	public Page<Keyword> searchKeyword(String keyword, int Page) {
 		Pageable page = PageRequest.of((Page - 1), 10);
-		return keywordsRepository.findByKeywordContaining(keyword, page);
+		return keywordsRepository.findByKeywordContainingAndAvailable(keyword, page, true);
 	}
 	
 	@Transactional
 	public Page<Keyword> searchKeywordByUserIdAndKeywordContain(String keyword, String userId, int Page) {
 		Pageable page = PageRequest.of((Page - 1), 10);
-		return keywordsRepository.findByUserIdAndKeywordContaining(userId, keyword, page);
+		return keywordsRepository.findByUserIdAndKeywordContainingAndAvailable(userId, keyword, page, true);
 	}
 	
 	@Transactional
@@ -67,14 +67,13 @@ public class KeywordService {
 	}
 	
 	@Transactional
-	public void updateKeyword(Keyword kw) {
-		keywordsRepository.save(kw);
+	public Keyword updateKeyword(Keyword kw) {
+		return keywordsRepository.save(kw);
 	}
 	
 	@Transactional
-	public void deleteKeyword(int id) {
-//		id = keywordsRepository.findUserAndKeywordById(id).getId();
-		keywordsRepository.deleteById(id);
+	public Keyword deleteKeyword(Keyword kw) {
+		return keywordsRepository.save(kw);
 	}
 
 }
