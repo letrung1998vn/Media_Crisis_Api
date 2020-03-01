@@ -52,30 +52,59 @@ public class KeywordController {
 	}
 
 	@PostMapping("createKeyword")
-	public Keyword createKeyword(@RequestParam(value = "keyword") String keyword,
+	public MessageOutputModel createKeyword(@RequestParam(value = "keyword") String keyword,
 			@RequestParam(value = "userId") String userId) {
 		Keyword kw = new Keyword();
-		kw.setKeyword(keyword);
-		kw.setUserId(userId);
-		kw.setAvailable(true);
-		kw.setVersion(1);
+		MessageOutputModel mod = new MessageOutputModel();
+		User user = userService.getByUsername(userId);
+		boolean havePermissionToDelete = false;
 
-		kw = keywordService.saveKeyword(kw);
-		return kw;
+		if ((user.getRole().equals("user") && user.isAvailable()) || user.getRole().equals("admin")) {
+			havePermissionToDelete = true;
+		} else {
+			mod.setStatusCode(3);
+			mod.setStatusMessage("Your account has been disabled. Please contact admin for more information!");
+		}
+		if (havePermissionToDelete) {
+			kw.setKeyword(keyword);
+			kw.setUserId(userId);
+			kw.setAvailable(true);
+			kw.setVersion(1);
+			kw = keywordService.saveKeyword(kw);
+			mod.setStatusCode(2);
+			mod.setStatusMessage("Created successfully!");
+		}
+		return mod;
 	}
 
 	@PostMapping("updateKeyword")
-	public Keyword updateKeyword(@RequestParam(value = "keyword") String keyword,
-			@RequestParam(value = "keywordId") int keywordId, @RequestParam(value = "logVersion") int log_version) {
+	public MessageOutputModel updateKeyword(@RequestParam(value = "keyword") String keyword,
+			@RequestParam(value = "keywordId") int keywordId, @RequestParam(value = "logVersion") int log_version,
+			@RequestParam(value = "author") String author) {
 		Keyword kw = keywordService.getKeywordById(keywordId);
-		if (kw.getVersion() != log_version) {
-			kw = null;
+		MessageOutputModel mod = new MessageOutputModel();
+		User user = userService.getByUsername(author);
+		boolean havePermissionToDelete = false;
+
+		if ((user.getRole().equals("user") && user.isAvailable()) || user.getRole().equals("admin")) {
+			havePermissionToDelete = true;
 		} else {
-			kw.setKeyword(keyword);
-			kw.setVersion(kw.getVersion() + 1);
-			kw = keywordService.saveKeyword(kw);
+			mod.setStatusCode(3);
+			mod.setStatusMessage("Your account has been disabled. Please contact admin for more information!");
 		}
-		return kw;
+		if (havePermissionToDelete) {
+			if (kw.getVersion() == log_version) {
+				kw.setKeyword(keyword);
+				kw.setVersion(kw.getVersion() + 1);
+				keywordService.saveKeyword(kw);
+				mod.setStatusCode(2);
+				mod.setStatusMessage("Update successfully!");
+			} else {
+				mod.setStatusCode(4);
+				mod.setStatusMessage("Your current keyword list is already old, please try again with the new one.");
+			}
+		}
+		return mod;
 	}
 
 	@PostMapping("deleteKeyword")
@@ -85,7 +114,7 @@ public class KeywordController {
 		MessageOutputModel mod = new MessageOutputModel();
 		User user = userService.getByUsername(author);
 		boolean havePermissionToDelete = false;
-		
+
 		if ((user.getRole().equals("user") && user.isAvailable()) || user.getRole().equals("admin")) {
 			havePermissionToDelete = true;
 		} else {
