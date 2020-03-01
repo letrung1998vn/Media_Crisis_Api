@@ -80,8 +80,8 @@ public class KeywordController {
 		Keyword kw = keywordService.getKeywordById(id);
 		if (kw.getVersion() == log_version) {
 			kw.setAvailable(false);
-			kw = keywordService.saveKeyword(kw);
 			kw.setVersion(kw.getVersion() + 1);
+			kw = keywordService.saveKeyword(kw);
 		} else {
 			kw = null;
 		}
