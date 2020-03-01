@@ -11,8 +11,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import fpt.capstone.betatest.entities.Keyword;
+import fpt.capstone.betatest.entities.User;
+import fpt.capstone.betatest.model.MessageOutputModel;
 import fpt.capstone.betatest.repositories.KeywordRepository;
 import fpt.capstone.betatest.services.KeywordService;
+import fpt.capstone.betatest.services.UserInfoService;
+import fpt.capstone.betatest.services.UserService;
 
 @RestController
 @RequestMapping("/keyword")
@@ -20,7 +24,7 @@ public class KeywordController {
 	@Autowired
 	KeywordService keywordService;
 	@Autowired
-	private KeywordRepository keywordsRepository;
+	private UserService userService;
 
 	@GetMapping("getUsers")
 	public List<String> getUsers() {
@@ -75,17 +79,32 @@ public class KeywordController {
 	}
 
 	@PostMapping("deleteKeyword")
-	public Keyword deleteKeyword(@RequestParam(value = "id") int id,
-			@RequestParam(value = "logVersion") int log_version) {
+	public MessageOutputModel deleteKeyword(@RequestParam(value = "id") int id,
+			@RequestParam(value = "logVersion") int log_version, @RequestParam(value = "author") String author) {
 		Keyword kw = keywordService.getKeywordById(id);
-		if (kw.getVersion() == log_version) {
-			kw.setAvailable(false);
-			kw.setVersion(kw.getVersion() + 1);
-			kw = keywordService.saveKeyword(kw);
+		MessageOutputModel mod = new MessageOutputModel();
+		User user = userService.getByUsername(author);
+		boolean havePermissionToDelete = false;
+		
+		if ((user.getRole().equals("user") && user.isAvailable()) || user.getRole().equals("admin")) {
+			havePermissionToDelete = true;
 		} else {
-			kw = null;
+			mod.setStatusCode(3);
+			mod.setStatusMessage("Your account has been disabled. Please contact admin for more information!");
 		}
-		return kw;
+		if (havePermissionToDelete) {
+			if (kw.getVersion() == log_version) {
+				kw.setAvailable(false);
+				kw.setVersion(kw.getVersion() + 1);
+				keywordService.saveKeyword(kw);
+				mod.setStatusCode(1);
+				mod.setStatusMessage("Deleted successfully!");
+			} else {
+				mod.setStatusCode(2);
+				mod.setStatusMessage("Your current keyword list is already old, please try again with the new one.");
+			}
+		}
+		return mod;
 	}
 
 }
