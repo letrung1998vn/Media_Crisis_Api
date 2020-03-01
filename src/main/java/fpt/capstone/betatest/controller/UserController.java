@@ -47,34 +47,10 @@ public class UserController {
 	}
 
 	@GetMapping("login")
-	public List<UserLoginOutput> checkLogin(@RequestParam(value = "username") String username,
+	public UserInfo checkLogin(@RequestParam(value = "username") String username,
 			@RequestParam(value = "password") String password) {
-		List<UserLoginOutput> output = new ArrayList<UserLoginOutput>();
 		UserInfo result = userInfoService.getByUsernameAndPassword(username, password);
-		List<Keyword> resultKeyword = keywordService.getAll(result.getUserId());
-		if (resultKeyword.size() == 0) {
-			UserLoginOutput infoOutPut1 = new UserLoginOutput(result.getUserId(), result.getUser().getPassword(),
-					result.getEmail(), result.getName(), "", 0, result.getUser().getRole(),
-					result.getUser().isAvailable());
-//			System.out.println(infoOutPut1);
-			output.add(infoOutPut1);
-		} else {
-			UserLoginOutput infoOutPut2 = new UserLoginOutput();
-			for (int i = 0; i < resultKeyword.size(); i++) {
-				infoOutPut2.setName(result.getName());
-				infoOutPut2.setEmail(result.getEmail());
-				infoOutPut2.setUserId(result.getUserId());
-				infoOutPut2.setPassword(result.getUser().getPassword());
-				infoOutPut2.setRole(result.getUser().getRole());
-				infoOutPut2.setAvailable(result.getUser().isAvailable());
-				infoOutPut2.setKeywordId(resultKeyword.get(i).getId());
-				infoOutPut2.setKeyword(resultKeyword.get(i).getKeyword());
-//				System.out.println(infoOutPut2.toString());
-				output.add(infoOutPut2);
-				infoOutPut2 = new UserLoginOutput();
-			}
-		}
-		return output;
+		return result;
 	}
 
 //	@GetMapping("check")
