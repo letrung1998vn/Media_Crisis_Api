@@ -97,10 +97,10 @@ public class KeywordController {
 				kw.setAvailable(false);
 				kw.setVersion(kw.getVersion() + 1);
 				keywordService.saveKeyword(kw);
-				mod.setStatusCode(1);
+				mod.setStatusCode(2);
 				mod.setStatusMessage("Deleted successfully!");
 			} else {
-				mod.setStatusCode(2);
+				mod.setStatusCode(4);
 				mod.setStatusMessage("Your current keyword list is already old, please try again with the new one.");
 			}
 		}
