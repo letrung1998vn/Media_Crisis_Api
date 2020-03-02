@@ -120,5 +120,15 @@ public class UserController {
 		List<User> result = userService.getAll();
 		return result;
 	}
+	
+	@PostMapping("updateProfile")
+	public UserInfo updateProfile(@RequestParam(value = "userId") String userId, @RequestParam(value = "name") String name, 
+			@RequestParam(value = "email") String email) {
+		UserInfo info = userInfoService.getUserByUserId(userId);
+		info.setEmail(email);
+		info.setName(name);
+		info = userInfoService.saveUser(info);
+		return info;
+	}
 
 }
