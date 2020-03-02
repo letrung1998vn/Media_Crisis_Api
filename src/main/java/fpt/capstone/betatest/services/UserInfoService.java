@@ -1,6 +1,5 @@
 package fpt.capstone.betatest.services;
 
-import java.util.List;
 
 import javax.transaction.Transactional;
 
@@ -42,5 +41,10 @@ public class UserInfoService {
 	@Transactional
 	public UserInfo getByUsernameAndPassword(String username, String password) {
 		return usersInfoRepository.findByUser(userRepository.findByUserNameAndPassword(username, password));
+	}
+	
+	@Transactional
+	public UserInfo getUserByUserId(String userId) {
+		return usersInfoRepository.findByUserId(userId);
 	}
 }

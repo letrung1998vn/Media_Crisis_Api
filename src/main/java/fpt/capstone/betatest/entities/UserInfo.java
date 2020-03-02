@@ -95,6 +95,11 @@ public class UserInfo implements Serializable {
 		return "UserInfo [userId=" + userId + ", email=" + email + ", name=" + name + ", notifications=" + notifications
 				+ ", user=" + user + "]";
 	}
+	
+//	@Override
+//	public String toString() {
+//		return "UserInfo [userId=" + userId + ", email=" + email + ", name=" + name + "]";
+//	}
 
 	
 }
