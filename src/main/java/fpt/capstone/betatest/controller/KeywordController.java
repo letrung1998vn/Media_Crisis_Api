@@ -84,15 +84,26 @@ public class KeywordController {
 		Keyword kw = keywordService.getKeywordById(keywordId);
 		MessageOutputModel mod = new MessageOutputModel();
 		User user = userService.getByUsername(author);
-		boolean havePermissionToDelete = false;
+		boolean havePermissionToUpdate = false;
 
 		if ((user.getRole().equals("user") && user.isAvailable()) || user.getRole().equals("admin")) {
-			havePermissionToDelete = true;
+			havePermissionToUpdate = true;
+			if (user.getRole().equals("admin")) {
+				List<Keyword> list = keywordService.getAll(author);
+				for (int i = 0; i < list.size(); i++) {
+					if ((list.get(i).getKeyword().equals(keyword)) && (list.get(i).getId() != keywordId)) {
+						mod.setStatusCode(4);
+						mod.setStatusMessage(
+								"This user already have this keyword!");
+						havePermissionToUpdate = false;
+					}
+				}
+			}
 		} else {
 			mod.setStatusCode(3);
 			mod.setStatusMessage("Your account has been disabled. Please contact admin for more information!");
 		}
-		if (havePermissionToDelete) {
+		if (havePermissionToUpdate) {
 			if (kw.getVersion() == log_version) {
 				kw.setKeyword(keyword);
 				kw.setVersion(kw.getVersion() + 1);
