@@ -110,7 +110,8 @@ public class KeywordController {
 				mod.setStatusMessage("Update successfully!");
 			} else {
 				mod.setStatusCode(4);
-				mod.setStatusMessage("Currently the value of this keyword has been changed to " + kw.getKeyword() +", please try again if you still want to update.");
+				mod.setStatusMessage("Currently the value of this keyword has been changed to " + kw.getKeyword()
+						+ ", please try again if you still want to update.");
 			}
 		}
 		return mod;
@@ -138,8 +139,15 @@ public class KeywordController {
 				mod.setStatusCode(2);
 				mod.setStatusMessage("Deleted successfully!");
 			} else {
-				mod.setStatusCode(4);
-				mod.setStatusMessage("Your current keyword list is already old, please try again with the new one.");
+				if (kw.isAvailable()) {
+					mod.setStatusCode(4);
+					mod.setStatusMessage(
+							"Your current keyword list is already old, please try again with the new one.");
+				} else {
+					mod.setStatusCode(4);
+					mod.setStatusMessage(
+							"This keyword is not available anymore.");
+				}
 			}
 		}
 		return mod;
