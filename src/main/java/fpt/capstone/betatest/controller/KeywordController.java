@@ -110,7 +110,7 @@ public class KeywordController {
 				mod.setStatusMessage("Update successfully!");
 			} else {
 				mod.setStatusCode(4);
-				mod.setStatusMessage("Your current keyword list is already old, please try again with the new one.");
+				mod.setStatusMessage("Currently the value of this keyword has been changed to " + kw.getKeyword() +", please try again if you still want to update.");
 			}
 		}
 		return mod;
