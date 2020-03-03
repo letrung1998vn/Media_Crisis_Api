@@ -88,15 +88,13 @@ public class KeywordController {
 
 		if ((user.getRole().equals("user") && user.isAvailable()) || user.getRole().equals("admin")) {
 			havePermissionToUpdate = true;
-			if (user.getRole().equals("admin")) {
-				List<Keyword> list = keywordService.getAll(kw.getUserId());
-				for (int i = 0; i < list.size(); i++) {
-					if ((list.get(i).getKeyword().equals(keyword)) && (list.get(i).getId() != keywordId) && (list.get(i).isAvailable())) {
-						mod.setStatusCode(4);
-						mod.setStatusMessage(
-								"This user already have this keyword!");
-						havePermissionToUpdate = false;
-					}
+			List<Keyword> list = keywordService.getAll(kw.getUserId());
+			for (int i = 0; i < list.size(); i++) {
+				if ((list.get(i).getKeyword().equals(keyword)) && (list.get(i).getId() != keywordId)
+						&& (list.get(i).isAvailable())) {
+					mod.setStatusCode(4);
+					mod.setStatusMessage("This user already have this keyword!");
+					havePermissionToUpdate = false;
 				}
 			}
 		} else {
