@@ -23,6 +23,9 @@ public class UserInfo implements Serializable {
 
 	@Column(name="Name")
 	private String name;
+	
+	@Column(name="Version")
+	private int version;
 
 	//bi-directional many-to-one association to Notification
 	@OneToMany(mappedBy="userInfo")
@@ -35,6 +38,19 @@ public class UserInfo implements Serializable {
 
 	public UserInfo() {
 	}
+
+	public UserInfo(String userId, String email, String name, int version, List<Notification> notifications,
+			User user) {
+		super();
+		this.userId = userId;
+		this.email = email;
+		this.name = name;
+		this.version = version;
+		this.notifications = notifications;
+		this.user = user;
+	}
+
+
 
 	public String getUserId() {
 		return this.userId;
@@ -90,11 +106,21 @@ public class UserInfo implements Serializable {
 		this.user = user;
 	}
 
+	public int getVersion() {
+		return version;
+	}
+
+	public void setVersion(int version) {
+		this.version = version;
+	}
+
 	@Override
 	public String toString() {
-		return "UserInfo [userId=" + userId + ", email=" + email + ", name=" + name + ", notifications=" + notifications
-				+ ", user=" + user + "]";
+		return "UserInfo [userId=" + userId + ", email=" + email + ", name=" + name + ", version=" + version
+				+ ", notifications=" + notifications + ", user=" + user + "]";
 	}
+
+	
 	
 //	@Override
 //	public String toString() {

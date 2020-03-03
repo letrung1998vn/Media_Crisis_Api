@@ -34,4 +34,9 @@ public class UserService {
 	public User saveUser(User u) {
 		return usersRepository.save(u);
 	}
+	
+	@Transactional
+	public User getUserByUserName(String userName) {
+		return usersRepository.findByUserName(userName);
+	}
 }
