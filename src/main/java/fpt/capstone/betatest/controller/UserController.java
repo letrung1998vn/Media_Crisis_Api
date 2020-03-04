@@ -40,8 +40,22 @@ public class UserController {
 		boolean isAvailable = user.getUser().isAvailable();
 		if (isAvailable) {
 			isAvailable = false;
+			List<Keyword> listKeyword = keywordService.getAll(username);
+			Keyword keyword;
+			for (int i = 0; i < listKeyword.size(); i++) {
+				keyword = listKeyword.get(i);
+				keyword.setAvailable(false);
+				keywordService.saveKeyword(keyword);
+			}
 		} else {
 			isAvailable = true;
+			List<Keyword> listKeyword = keywordService.getAll(username);
+			Keyword keyword;
+			for (int i = 0; i < listKeyword.size(); i++) {
+				keyword = listKeyword.get(i);
+				keyword.setAvailable(true);
+				keywordService.saveKeyword(keyword);
+			}
 		}
 		user.getUser().setAvailable(isAvailable);
 		return userInfoService.saveUser(user);
