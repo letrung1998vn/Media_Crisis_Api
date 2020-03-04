@@ -145,9 +145,7 @@ public class KeywordController {
 		}
 		if (havePermissionToDelete) {
 			if (kw.getVersion() == log_version) {
-				kw.setAvailable(false);
-				kw.setVersion(kw.getVersion() + 1);
-				keywordService.saveKeyword(kw);
+				keywordService.deleteKeyword(kw);
 				mod.setStatusCode(2);
 				mod.setStatusMessage("Deleted successfully!");
 			} else {
