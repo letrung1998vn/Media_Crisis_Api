@@ -43,7 +43,6 @@ public class UserController {
 			isAvailable = true;
 		}
 		user.getUser().setAvailable(isAvailable);
-		user.setVersion(user.getVersion() + 1);
 		return userInfoService.saveUser(user);
 	}
 
@@ -77,7 +76,6 @@ public class UserController {
 			userInfo.setUserId(username);
 			userInfo.setName(name);
 			userInfo.setEmail(email);
-			userInfo.setVersion(1);
 			userInfo = userInfoService.saveUser(userInfo);
 		} else {
 			userInfo.setUserId("");
@@ -105,7 +103,6 @@ public class UserController {
 		UserInfo info = userInfoService.getUserByUserId(userId);
 		info.setEmail(email);
 		info.setName(name);
-		info.setVersion(info.getVersion() + 1);
 		info = userInfoService.saveUser(info);
 		return info;
 	}
@@ -115,7 +112,6 @@ public class UserController {
 		User user = userService.getUserByUserName(username);
 		user.setPassword(password);
 		UserInfo userInfo = userInfoService.getByUser(user);
-		userInfo.setVersion(userInfo.getVersion() + 1);
 		user = userService.saveUser(user);
 		return user;
 	}
