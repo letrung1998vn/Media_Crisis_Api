@@ -111,7 +111,7 @@ public class KeywordController {
 			havePermissionToUpdate = true;
 			List<Keyword> list = keywordService.getAll(kw.getUserId());
 			for (int i = 0; i < list.size(); i++) {
-				if ((list.get(i).getKeyword().equals(keyword)) && (list.get(i).getId() != keywordId)
+				if ((list.get(i).getKeyword().toLowerCase().equals(keyword.toLowerCase())) && (list.get(i).getId() != keywordId)
 						&& (list.get(i).isAvailable())) {
 					mod.setStatusCode(4);
 					mod.setStatusMessage("This user already have this keyword!");
