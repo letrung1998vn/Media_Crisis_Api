@@ -111,8 +111,8 @@ public class KeywordController {
 			havePermissionToUpdate = true;
 			List<Keyword> list = keywordService.getAll(kw.getUserId());
 			for (int i = 0; i < list.size(); i++) {
-				if ((list.get(i).getKeyword().toLowerCase().equals(keyword.toLowerCase())) && (list.get(i).getId() != keywordId)
-						&& (list.get(i).isAvailable())) {
+				if ((list.get(i).getKeyword().toLowerCase().equals(keyword.toLowerCase()))
+						&& (list.get(i).getId() != keywordId) && (list.get(i).isAvailable())) {
 					mod.setStatusCode(4);
 					mod.setStatusMessage("This user already have this keyword!");
 					havePermissionToUpdate = false;
@@ -141,7 +141,7 @@ public class KeywordController {
 	@PostMapping("deleteKeyword")
 	public MessageOutputModel deleteKeyword(@RequestParam(value = "id") int id,
 			@RequestParam(value = "logVersion") int log_version, @RequestParam(value = "author") String author) {
-		Keyword kw = keywordService.getKeywordById(id);
+
 		MessageOutputModel mod = new MessageOutputModel();
 		User user = userService.getByUsername(author);
 		boolean havePermissionToDelete = false;
@@ -153,18 +153,20 @@ public class KeywordController {
 			mod.setStatusMessage("Your account has been disabled. Please contact admin for more information!");
 		}
 		if (havePermissionToDelete) {
-			if (kw.getVersion() == log_version) {
-				keywordService.deleteKeyword(kw);
-				mod.setStatusCode(2);
-				mod.setStatusMessage("Deleted successfully!");
+			Keyword kw = keywordService.getKeywordById(id);
+			if (kw == null) {
+				mod.setStatusCode(4);
+				mod.setStatusMessage("This keyword is not exist anymore.");
+
 			} else {
-				if (kw.isAvailable()) {
+				if (kw.getVersion() == log_version) {
+					keywordService.deleteKeyword(kw);
+					mod.setStatusCode(2);
+					mod.setStatusMessage("Deleted successfully!");
+				} else {
 					mod.setStatusCode(4);
 					mod.setStatusMessage(
 							"Your current keyword list is already old, please try again with the new one.");
-				} else {
-					mod.setStatusCode(4);
-					mod.setStatusMessage("This keyword is not available anymore.");
 				}
 			}
 		}
