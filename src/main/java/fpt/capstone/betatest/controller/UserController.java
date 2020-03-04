@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import fpt.capstone.betatest.entities.Keyword;
 import fpt.capstone.betatest.entities.User;
 import fpt.capstone.betatest.entities.UserInfo;
+import fpt.capstone.betatest.model.MessageOutputModel;
 import fpt.capstone.betatest.model.UserLoginOutput;
 import fpt.capstone.betatest.services.KeywordService;
 import fpt.capstone.betatest.services.UserInfoService;
@@ -98,21 +99,40 @@ public class UserController {
 	}
 	
 	@PostMapping("updateProfile")
-	public UserInfo updateProfile(@RequestParam(value = "userId") String userId, @RequestParam(value = "name") String name, 
+	public MessageOutputModel updateProfile(@RequestParam(value = "userId") String userId, @RequestParam(value = "name") String name, 
 			@RequestParam(value = "email") String email) {
 		UserInfo info = userInfoService.getUserByUserId(userId);
-		info.setEmail(email);
-		info.setName(name);
-		info = userInfoService.saveUser(info);
-		return info;
+		MessageOutputModel mod = new MessageOutputModel();
+		if (!info.getUser().isAvailable()) {
+			mod.setStatusCode(3);
+			mod.setStatusMessage("Your account has been disabled. Please contact admin for more information!");
+		}
+		else {
+			info.setEmail(email);
+			info.setName(name);
+			info = userInfoService.saveUser(info);
+			mod.setStatusCode(2);
+			mod.setStatusMessage("Changed password successfully.");
+		}
+		
+		return mod;
 	}
 	
 	@PostMapping("updatePassword")
-	public User updatePassword(@RequestParam(value = "userName") String username, @RequestParam(value = "password") String password) {
+	public MessageOutputModel updatePassword(@RequestParam(value = "userName") String username, @RequestParam(value = "password") String password) {
 		User user = userService.getUserByUserName(username);
-		user.setPassword(password);
-		UserInfo userInfo = userInfoService.getByUser(user);
-		user = userService.saveUser(user);
-		return user;
+		MessageOutputModel mod = new MessageOutputModel();
+		if (!user.isAvailable()) {
+			mod.setStatusCode(3);
+			mod.setStatusMessage("Your account has been disabled. Please contact admin for more information!");
+		}
+		else {
+			user.setPassword(password);
+			user = userService.saveUser(user);
+			mod.setStatusCode(2);
+			mod.setStatusMessage("Changed password successfully.");
+		}
+		
+		return mod;
 	}
 }
