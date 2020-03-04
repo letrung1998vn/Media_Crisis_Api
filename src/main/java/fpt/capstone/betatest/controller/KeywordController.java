@@ -67,15 +67,26 @@ public class KeywordController {
 		Keyword kw = new Keyword();
 		MessageOutputModel mod = new MessageOutputModel();
 		User user = userService.getByUsername(userId);
-		boolean havePermissionToDelete = false;
+		boolean havePermissionToCreate = false;
 
 		if ((user.getRole().equals("user") && user.isAvailable()) || user.getRole().equals("admin")) {
-			havePermissionToDelete = true;
+			havePermissionToCreate = true;
+			if (user.getRole().equals("admin")) {
+				List<Keyword> list = keywordService.getAll(userId);
+				for (int i = 0; i < list.size(); i++) {
+					if (list.get(i).getKeyword().equals(keyword)) {
+						mod.setStatusCode(4);
+						mod.setStatusMessage("This keyword is existed!");
+						havePermissionToCreate = false;
+						break;
+					}
+				}
+			}
 		} else {
 			mod.setStatusCode(3);
 			mod.setStatusMessage("Your account has been disabled. Please contact admin for more information!");
 		}
-		if (havePermissionToDelete) {
+		if (havePermissionToCreate) {
 			kw.setKeyword(keyword);
 			kw.setUserId(userId);
 			kw.setAvailable(true);
