@@ -43,16 +43,14 @@ public class KeywordController {
 	public Page<Keyword> getKeyword(@RequestParam(value = "keyword") String keyword,
 			@RequestParam(value = "username") String username, @RequestParam(value = "page") int page) {
 		Page<Keyword> result = null;
-		User user = userService.getByUsername(username);
-
-		if (user.isAvailable()) {
-			if (username.equals("")) {
-				result = keywordService.searchKeyword(keyword, page);
-			} else {
+		if (username.equals("")) {
+			result = keywordService.searchKeyword(keyword, page);
+		} else {
+			User user = userService.getByUsername(username);
+			if (user.isAvailable()) {
 				result = keywordService.searchKeywordByUserIdAndKeywordContain(keyword, username, page);
 			}
 		}
-
 		return result;
 	}
 
