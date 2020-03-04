@@ -73,8 +73,8 @@ public class KeywordService {
 	}
 	
 	@Transactional
-	public Keyword deleteKeyword(Keyword kw) {
-		return keywordsRepository.save(kw);
+	public void deleteKeyword(Keyword kw) {
+		keywordsRepository.delete(kw);
 	}
 
 }
