@@ -28,18 +28,29 @@ public class KeywordController {
 
 	@GetMapping("getUsers")
 	public List<String> getUsers() {
-		return keywordService.getAllUserHaveKeyword();
+		List<String> list = keywordService.getAllUserHaveKeyword();
+		User user;
+		for (int i = 0; i < list.size(); i++) {
+			user = userService.getByUsername(list.get(i).toString());
+			if (!user.isAvailable()) {
+				list.remove(i);
+			}
+		}
+		return list;
 	}
 
 	@PostMapping("search")
 	public Page<Keyword> getKeyword(@RequestParam(value = "keyword") String keyword,
 			@RequestParam(value = "username") String username, @RequestParam(value = "page") int page) {
 		Page<Keyword> result = null;
-		
-		if (username.equals("")) {
-			result = keywordService.searchKeyword(keyword, page);
-		} else {
-			result = keywordService.searchKeywordByUserIdAndKeywordContain(keyword, username, page);
+		User user = userService.getByUsername(username);
+
+		if (user.isAvailable()) {
+			if (username.equals("")) {
+				result = keywordService.searchKeyword(keyword, page);
+			} else {
+				result = keywordService.searchKeywordByUserIdAndKeywordContain(keyword, username, page);
+			}
 		}
 
 		return result;
@@ -146,8 +157,7 @@ public class KeywordController {
 							"Your current keyword list is already old, please try again with the new one.");
 				} else {
 					mod.setStatusCode(4);
-					mod.setStatusMessage(
-							"This keyword is not available anymore.");
+					mod.setStatusMessage("This keyword is not available anymore.");
 				}
 			}
 		}

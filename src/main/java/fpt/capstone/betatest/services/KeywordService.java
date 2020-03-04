@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import fpt.capstone.betatest.entities.Keyword;
+import fpt.capstone.betatest.entities.User;
 import fpt.capstone.betatest.repositories.KeywordRepository;
 
 @Service
