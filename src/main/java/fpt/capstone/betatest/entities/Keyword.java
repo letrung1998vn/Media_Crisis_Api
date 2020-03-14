@@ -3,6 +3,10 @@ package fpt.capstone.betatest.entities;
 import java.io.Serializable;
 import javax.persistence.*;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 /**
  * The persistent class for the Keyword database table.
  * 
@@ -14,23 +18,23 @@ public class Keyword implements Serializable {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name="id")
+	@Column(name = "id")
 	private int id;
 
-	@Column(name = "Keyword")
+	@Column(name = "keyword")
 	private String keyword;
 
 	// bi-directional many-to-one association to UserInfo
-//	@ManyToOne
-//	@JoinColumn(name="UserId")
-//	private UserInfo userInfo;
-	@Column(name = "UserId")
-	private String userId;
+	@ManyToOne()
+	@JoinColumn(name="user_id")
+	private User user;
+//	@Column(name = "user_id")
+//	private String userId;
 
-	@Column(name = "Available")
+	@Column(name = "available")
 	private boolean available;
-	
-	@Column(name = "Version")
+
+	@Column(name = "version")
 	private int version;
 //	//bi-directional many-to-one association to Post
 //	@OneToMany(mappedBy="keywordBean")
@@ -39,39 +43,51 @@ public class Keyword implements Serializable {
 	public Keyword() {
 	}
 
-	public int getId() {
-		return this.id;
+	public Keyword(int id, String keyword, User user, boolean available, int version) {
+		super();
+		this.id = id;
+		this.keyword = keyword;
+		this.user = user;
+		this.available = available;
+		this.version = version;
 	}
-	
+
+	public int getId() {
+		return id;
+	}
+
 	public void setId(int id) {
 		this.id = id;
 	}
 
 	public String getKeyword() {
-		return this.keyword;
+		return keyword;
 	}
 
 	public void setKeyword(String keyword) {
 		this.keyword = keyword;
 	}
 
-//	public UserInfo getUserInfo() {
-//		return this.userInfo;
+//	public String getUserId() {
+//		return userId;
 //	}
 //
-//	public void setUserInfo(UserInfo userInfo) {
-//		this.userInfo = userInfo;
+//	public void setUserId(String userId) {
+//		this.userId = userId;
 //	}
-	public String getUserId() {
-		return this.userId;
-	}
-
-	public void setUserId(String userId) {
-		this.userId = userId;
-	}
+	
+	
 
 	public boolean isAvailable() {
 		return available;
+	}
+
+	public User getUser() {
+		return user;
+	}
+
+	public void setUser(User user) {
+		this.user = user;
 	}
 
 	public void setAvailable(boolean available) {
@@ -86,34 +102,6 @@ public class Keyword implements Serializable {
 		this.version = version;
 	}
 
-	@Override
-	public String toString() {
-		return "Keyword [id=" + id + ", keyword=" + keyword + ", userId=" + userId + ", available=" + available
-				+ ", version=" + version + "]";
-	}
 
-	
-
-//	public List<Post> getPosts() {
-//		return this.posts;
-//	}
-//
-//	public void setPosts(List<Post> posts) {
-//		this.posts = posts;
-//	}
-
-//	public Post addPost(Post post) {
-//		getPosts().add(post);
-//		post.setKeywordBean(this);
-//
-//		return post;
-//	}
-//
-//	public Post removePost(Post post) {
-//		getPosts().remove(post);
-//		post.setKeywordBean(null);
-//
-//		return post;
-//	}
 
 }

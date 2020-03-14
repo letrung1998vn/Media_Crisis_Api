@@ -1,6 +1,8 @@
 package fpt.capstone.betatest.entities;
 
 import java.io.Serializable;
+import java.sql.Date;
+
 import javax.persistence.*;
 
 
@@ -14,32 +16,32 @@ public class Notification implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	@Id
-	@Column(name="ID")
+	@Column(name="id")
 	private int id;
 
-	@Column(name="CrisisId")
-	private int crisisId;
-
-	@Column(name="Email")
+	@Column(name="email")
 	private boolean email;
 	
-	@Column(name="Webhook")
+	@Column(name="webhook")
 	private boolean webhook;
 	//bi-directional many-to-one association to UserInfo
 	@ManyToOne
-	@JoinColumn(name="UserId")
-	private UserInfo userInfo;
+	@JoinColumn(name="user_id", referencedColumnName="user_id")
+	private User user;
+	
+	@Column(name="date")
+	private Date date;
 
 	public Notification() {
 	}
 
-	public Notification(int id, int crisisId, boolean email, boolean webhook, UserInfo userInfo) {
+	public Notification(int id, boolean email, boolean webhook, User user, Date date) {
 		super();
 		this.id = id;
-		this.crisisId = crisisId;
 		this.email = email;
 		this.webhook = webhook;
-		this.userInfo = userInfo;
+		this.user = user;
+		this.date = date;
 	}
 
 	public int getId() {
@@ -48,14 +50,6 @@ public class Notification implements Serializable {
 
 	public void setId(int id) {
 		this.id = id;
-	}
-
-	public int getCrisisId() {
-		return crisisId;
-	}
-
-	public void setCrisisId(int crisisId) {
-		this.crisisId = crisisId;
 	}
 
 	public boolean isEmail() {
@@ -74,18 +68,26 @@ public class Notification implements Serializable {
 		this.webhook = webhook;
 	}
 
-	public UserInfo getUserInfo() {
-		return userInfo;
+	public User getUser() {
+		return user;
 	}
 
-	public void setUserInfo(UserInfo userInfo) {
-		this.userInfo = userInfo;
+	public void setUser(User user) {
+		this.user = user;
+	}
+
+	public Date getDate() {
+		return date;
+	}
+
+	public void setDate(Date date) {
+		this.date = date;
 	}
 
 	@Override
 	public String toString() {
-		return "Notification [id=" + id + ", crisisId=" + crisisId + ", email=" + email + ", webhook=" + webhook
-				+ ", userInfo=" + userInfo + "]";
+		return "Notification [id=" + id + ", email=" + email + ", webhook=" + webhook + ", user=" + user + ", date="
+				+ date + "]";
 	}
 
 	

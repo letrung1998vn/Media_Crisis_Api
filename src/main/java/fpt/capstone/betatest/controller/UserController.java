@@ -34,119 +34,155 @@ public class UserController {
 	@Autowired
 	KeywordService keywordService;
 
-	@PostMapping("changeStatus")
-	public UserInfo changeUserStatus(@RequestParam(value = "username") String username) {
-		UserInfo user = userInfoService.getByUser(userService.getByUsername(username));
-		boolean isAvailable = user.getUser().isAvailable();
-		if (isAvailable) {
-			isAvailable = false;
-			List<Keyword> listKeyword = keywordService.getAll(username);
-			Keyword keyword;
-			for (int i = 0; i < listKeyword.size(); i++) {
-				keyword = listKeyword.get(i);
-				keyword.setAvailable(false);
-				keywordService.saveKeyword(keyword);
-			}
-		} else {
-			isAvailable = true;
-			List<Keyword> listKeyword = keywordService.getAll(username);
-			Keyword keyword;
-			for (int i = 0; i < listKeyword.size(); i++) {
-				keyword = listKeyword.get(i);
-				keyword.setAvailable(true);
-				keywordService.saveKeyword(keyword);
-			}
-		}
-		user.getUser().setAvailable(isAvailable);
-		return userInfoService.saveUser(user);
-	}
-
-	@GetMapping("login")
-	public UserInfo checkLogin(@RequestParam(value = "username") String username,
-			@RequestParam(value = "password") String password) {
-		UserInfo result = userInfoService.getByUsernameAndPassword(username, password);
-		return result;
-	}
-
-//	@GetMapping("check")
-//	public List<UserInfo> checkExist() {
-//		List<UserInfo> result = userInfoService.getAll();
-//		return result;
+//	@PostMapping("changeStatus")
+//	public UserInfo changeUserStatus(@RequestParam(value = "username") String username) {
+//		UserInfo user = userInfoService.getByUser(userService.getByUsername(username));
+//		boolean isAvailable = user.getUser().isAvailable();
+//		if (isAvailable) {
+//			isAvailable = false;
+//			List<Keyword> listKeyword = keywordService.getAll(username);
+//			Keyword keyword;
+//			for (int i = 0; i < listKeyword.size(); i++) {
+//				keyword = listKeyword.get(i);
+//				keyword.setAvailable(false);
+//				keywordService.saveKeyword(keyword);
+//			}
+//		} else {
+//			isAvailable = true;
+//			List<Keyword> listKeyword = keywordService.getAll(username);
+//			Keyword keyword;
+//			for (int i = 0; i < listKeyword.size(); i++) {
+//				keyword = listKeyword.get(i);
+//				keyword.setAvailable(true);
+//				keywordService.saveKeyword(keyword);
+//			}
+//		}
+//		user.getUser().setAvailable(isAvailable);
+//		return userInfoService.saveUser(user);
 //	}
 
+	@PostMapping("login")
+	public MessageOutputModel checkLogin(@RequestParam(value = "username") String username,
+			@RequestParam(value = "password") String password) {
+		MessageOutputModel mod = new MessageOutputModel();
+		User result = userService.checkLogin(username, password);
+		if (result == null) {
+			mod.setStatusCode(4);
+			mod.setStatusMessage("Invalid username or password, please try again!");
+		} else {
+			if (result.isAvailable()) {
+				mod.setStatusCode(2);
+				mod.setStatusMessage("Welcome");
+				result.setKeyword(null);
+				mod.setObj(result);
+			} else {
+				mod.setStatusCode(3);
+				mod.setStatusMessage("Your account has been banned permanently, please contact admin for more infomation!");
+			}
+		}
+		return mod;
+	}
+
+	@GetMapping("findAll")
+	public List<User> findAll() {
+		List<User> result = userService.findAll();
+		return result;
+	}
+	
+	@GetMapping("getUserKeyword")
+	public MessageOutputModel findKeyword(@RequestParam(value = "username") String username) {
+		User result = userService.getUserByUsername(username);
+		MessageOutputModel mod = new MessageOutputModel();
+		if (result.isAvailable()) {
+			mod.setStatusCode(2);
+			mod.setStatusMessage("Get keyword success");
+			mod.setObj(result.getKeyword());
+		
+		} else {
+			mod.setStatusCode(3);
+			mod.setStatusMessage("Your account has been banned permanently, please contact admin for more infomation!");
+		}
+		return mod;
+	}
+//
 	@PostMapping("registration")
-	public UserInfo registration(@RequestParam(value = "username") String username,
+	public MessageOutputModel registration(@RequestParam(value = "username") String username,
 			@RequestParam(value = "name") String name, @RequestParam(value = "password") String password,
 			@RequestParam(value = "email") String email) {
-		UserInfo userInfo = new UserInfo();
+		MessageOutputModel mod = new MessageOutputModel();
 		User user = new User();
-		if (userService.getByUsername(username) == null) {
-
-			user.setUserName(username);
-			user.setPassword(password);
-			user.setRole("user");
-			user.setAvailable(true);
-			user = userService.saveUser(user);
-
-			userInfo.setUserId(username);
-			userInfo.setName(name);
-			userInfo.setEmail(email);
-			userInfo = userInfoService.saveUser(userInfo);
+		UserInfo userInfo = new UserInfo();
+		if (userService.checkUserExist(username)) {
+			try {
+				user.setUserName(username);
+				user.setPassword(password);
+				user.setRole("user");
+				user.setAvailable(true);
+				user = userService.saveUser(user);
+				userInfo.setUserId(username);
+				userInfo.setName(name);
+				userInfo.setEmail(email);
+				userInfo = userInfoService.saveUser(userInfo);
+				mod.setStatusCode(2);
+				mod.setStatusMessage("Sign up successfully, please login!");
+			} catch (Exception e) {
+				mod.setStatusCode(4);
+				mod.setStatusMessage(e.getMessage());
+			}
 		} else {
-			userInfo.setUserId("");
-			userInfo.setName("");
-			userInfo.setEmail("");
+			mod.setStatusCode(4);
+			mod.setStatusMessage("This username is existed, please pick another!");
 		}
-		return userInfo;
-	}
-
-	@GetMapping("findAllUserInfo")
-	public Page<UserInfo> findUserInfo(@RequestParam(value = "username") String userId, @RequestParam(value = "page") int page) {
-		Page<UserInfo> result = userInfoService.searchByUsernameAndPage(userId, page);
-		return result;
-	}
-
-	@GetMapping("findAllUser")
-	public List<User> findAllUser() {
-		List<User> result = userService.getAll();
-		return result;
-	}
-	
-	@PostMapping("updateProfile")
-	public MessageOutputModel updateProfile(@RequestParam(value = "userId") String userId, @RequestParam(value = "name") String name, 
-			@RequestParam(value = "email") String email) {
-		UserInfo info = userInfoService.getUserByUserId(userId);
-		MessageOutputModel mod = new MessageOutputModel();
-		if (!info.getUser().isAvailable()) {
-			mod.setStatusCode(3);
-			mod.setStatusMessage("Your account has been disabled. Please contact admin for more information!");
-		}
-		else {
-			info.setEmail(email);
-			info.setName(name);
-			info = userInfoService.saveUser(info);
-			mod.setStatusCode(2);
-			mod.setStatusMessage("Changed password successfully.");
-		}
-		
 		return mod;
 	}
-	
-	@PostMapping("updatePassword")
-	public MessageOutputModel updatePassword(@RequestParam(value = "userName") String username, @RequestParam(value = "password") String password) {
-		User user = userService.getUserByUserName(username);
-		MessageOutputModel mod = new MessageOutputModel();
-		if (!user.isAvailable()) {
-			mod.setStatusCode(3);
-			mod.setStatusMessage("Your account has been disabled. Please contact admin for more information!");
-		}
-		else {
-			user.setPassword(password);
-			user = userService.saveUser(user);
-			mod.setStatusCode(2);
-			mod.setStatusMessage("Changed password successfully.");
-		}
-		
-		return mod;
-	}
+//
+//	@GetMapping("findAllUserInfo")
+//	public Page<UserInfo> findUserInfo(@RequestParam(value = "username") String userId, @RequestParam(value = "page") int page) {
+//		Page<UserInfo> result = userInfoService.searchByUsernameAndPage(userId, page);
+//		return result;
+//	}
+//
+//	@GetMapping("findAllUser")
+//	public List<User> findAllUser() {
+//		List<User> result = userService.getAll();
+//		return result;
+//	}
+//	
+//	@PostMapping("updateProfile")
+//	public MessageOutputModel updateProfile(@RequestParam(value = "userId") String userId, @RequestParam(value = "name") String name, 
+//			@RequestParam(value = "email") String email) {
+//		UserInfo info = userInfoService.getUserByUserId(userId);
+//		MessageOutputModel mod = new MessageOutputModel();
+//		if (!info.getUser().isAvailable()) {
+//			mod.setStatusCode(3);
+//			mod.setStatusMessage("Your account has been disabled. Please contact admin for more information!");
+//		}
+//		else {
+//			info.setEmail(email);
+//			info.setName(name);
+//			info = userInfoService.saveUser(info);
+//			mod.setStatusCode(2);
+//			mod.setStatusMessage("Changed password successfully.");
+//		}
+//		
+//		return mod;
+//	}
+//	
+//	@PostMapping("updatePassword")
+//	public MessageOutputModel updatePassword(@RequestParam(value = "userName") String username, @RequestParam(value = "password") String password) {
+//		User user = userService.getUserByUserName(username);
+//		MessageOutputModel mod = new MessageOutputModel();
+//		if (!user.isAvailable()) {
+//			mod.setStatusCode(3);
+//			mod.setStatusMessage("Your account has been disabled. Please contact admin for more information!");
+//		}
+//		else {
+//			user.setPassword(password);
+//			user = userService.saveUser(user);
+//			mod.setStatusCode(2);
+//			mod.setStatusMessage("Changed password successfully.");
+//		}
+//		
+//		return mod;
+//	}
 }

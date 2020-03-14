@@ -13,9 +13,9 @@ import fpt.capstone.betatest.entities.UserInfo;
 
 @Repository("usersInfoRepository")
 public interface UserInfoRepository extends JpaRepository<UserInfo, Integer> {
-	List<UserInfo> findAll();
-	UserInfo findByUser(User user);
-	Page<UserInfo> findByUserIdContaining(String userId, Pageable pageable);
-	
-	UserInfo findByUserId(String userId);
+//	List<UserInfo> findAll();
+//	UserInfo findByUser(User user);
+//	Page<UserInfo> findByUserIdContaining(String userId, Pageable pageable);
+//	
+//	UserInfo findByUserId(String userId);
 }

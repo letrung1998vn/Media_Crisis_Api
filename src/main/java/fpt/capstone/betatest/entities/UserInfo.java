@@ -15,42 +15,28 @@ public class UserInfo implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	@Id
-	@Column(name="UserId")
+	@Column(name="user_id")
 	private String userId;
 
-	@Column(name="Email")
-	private String email;
-
-	@Column(name="Name")
+	@Column(name="name")
 	private String name;
+
+	@Column(name="email")
+	private String email;
 	
-	@Column(name="Version")
-	private int version;
-
-	//bi-directional many-to-one association to Notification
-	@OneToMany(mappedBy="userInfo")
-	private List<Notification> notifications;
-
-	//bi-directional one-to-one association to User
-	@OneToOne
-	@JoinColumn(name="UserId")
-	private User user;
+	@Column(name="version")
+	private int version;	
 
 	public UserInfo() {
 	}
 
-	public UserInfo(String userId, String email, String name, int version, List<Notification> notifications,
-			User user) {
+	public UserInfo(String userId, String email, String name, int version) {
 		super();
 		this.userId = userId;
 		this.email = email;
 		this.name = name;
 		this.version = version;
-		this.notifications = notifications;
-		this.user = user;
 	}
-
-
 
 	public String getUserId() {
 		return this.userId;
@@ -76,36 +62,6 @@ public class UserInfo implements Serializable {
 		this.name = name;
 	}
 
-	public List<Notification> getNotifications() {
-		return this.notifications;
-	}
-
-	public void setNotifications(List<Notification> notifications) {
-		this.notifications = notifications;
-	}
-
-	public Notification addNotification(Notification notification) {
-		getNotifications().add(notification);
-		notification.setUserInfo(this);
-
-		return notification;
-	}
-
-	public Notification removeNotification(Notification notification) {
-		getNotifications().remove(notification);
-		notification.setUserInfo(null);
-
-		return notification;
-	}
-
-	public User getUser() {
-		return this.user;
-	}
-
-	public void setUser(User user) {
-		this.user = user;
-	}
-
 	public int getVersion() {
 		return version;
 	}
@@ -116,16 +72,7 @@ public class UserInfo implements Serializable {
 
 	@Override
 	public String toString() {
-		return "UserInfo [userId=" + userId + ", email=" + email + ", name=" + name + ", version=" + version
-				+ ", notifications=" + notifications + ", user=" + user + "]";
+		return "UserInfo [userId=" + userId + ", name=" + name + ", email=" + email + ", version=" + version + "]";
 	}
-
-	
-	
-//	@Override
-//	public String toString() {
-//		return "UserInfo [userId=" + userId + ", email=" + email + ", name=" + name + "]";
-//	}
-
 	
 }

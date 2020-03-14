@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import fpt.capstone.betatest.entities.Keyword;
+import fpt.capstone.betatest.entities.User;
 
 @Repository("keywordsRepository")
 public interface KeywordRepository extends JpaRepository<Keyword, Integer> {
@@ -20,16 +21,16 @@ public interface KeywordRepository extends JpaRepository<Keyword, Integer> {
 //	Keyword checkKeywordExist(@Param("keyword") String keyword, @Param("userId") String userId);
 	
 	Page<Keyword> findByKeywordContainingAndAvailable(String keyword, Pageable pageable, Boolean available);
-	Page<Keyword> findByUserIdAndKeywordContainingAndAvailable(String userId, String keyword, Pageable pageable, Boolean available);
+	Page<Keyword> findByUserAndKeywordContainingAndAvailable(User user, String keyword, Pageable pageable, Boolean available);
 
-	Keyword findByUserIdAndKeyword(String keyword, String userId);
-	
+//	Keyword findByUserIdAndKeyword(String keyword, String userId);
+//	
 	Keyword findById(int id);
-	
-	List<Keyword> findByUserId(String userId);
-	
-	@Query("SELECT l.userId from Keyword l GROUP BY l.userId")
-    List<String> findAllUserHaveKeyword();
+//	
+	List<Keyword> findByUser(User user);
+//	
+	@Query("SELECT user from Keyword")
+    List<User> findAllUserHaveKeyword();
 //	Keyword findUserAndKeywordById(int id);
 	 
 }

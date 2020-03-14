@@ -3,6 +3,7 @@ package fpt.capstone.betatest.model;
 public class MessageOutputModel {
 	int statusCode;
 	String statusMessage;
+	Object obj;
 	
 	public MessageOutputModel() {
 	}
@@ -23,4 +24,12 @@ public class MessageOutputModel {
 		this.statusMessage = statusMessage;
 	}
 
+	public Object getObj() {
+		return obj;
+	}
+
+	public void setObj(Object obj) {
+		this.obj = obj;
+	}
+	
 }

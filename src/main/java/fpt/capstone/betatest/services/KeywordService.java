@@ -19,12 +19,12 @@ public class KeywordService {
 	@Autowired
 	private KeywordRepository keywordsRepository;
 	
-	@Transactional
-	public Page<Keyword> keywordPaging(int Page) {
-		Pageable page = PageRequest.of((Page - 1), 10);
-		return keywordsRepository.findAll(page);
-	}
-	
+//	@Transactional
+//	public Page<Keyword> keywordPaging(int Page) {
+//		Pageable page = PageRequest.of((Page - 1), 10);
+//		return keywordsRepository.findAll(page);
+//	}
+//	
 	@Transactional
 	public Page<Keyword> searchKeyword(String keyword, int Page) {
 		Pageable page = PageRequest.of((Page - 1), 10);
@@ -32,9 +32,9 @@ public class KeywordService {
 	}
 	
 	@Transactional
-	public Page<Keyword> searchKeywordByUserIdAndKeywordContain(String keyword, String userId, int Page) {
+	public Page<Keyword> searchKeywordByUserAndKeywordContain(String keyword, User user, int Page) {
 		Pageable page = PageRequest.of((Page - 1), 10);
-		return keywordsRepository.findByUserIdAndKeywordContainingAndAvailable(userId, keyword, page, true);
+		return keywordsRepository.findByUserAndKeywordContainingAndAvailable(user, keyword, page, true);
 	}
 	
 	@Transactional
@@ -43,19 +43,19 @@ public class KeywordService {
 	}
 	
 	@Transactional
-	public List<Keyword> getAll(String userId) {
-		return keywordsRepository.findByUserId(userId);
+	public List<Keyword> getAll(User user) {
+		return keywordsRepository.findByUser(user);
 	}
 	
 	@Transactional
-	public List<String> getAllUserHaveKeyword() {
+	public List<User> getAllUserHaveKeyword() {
 		return keywordsRepository.findAllUserHaveKeyword();
 	}
 	
-	@Transactional
-	public Keyword getByKeywordAndUserId(String keyword, String userId) {
-		return keywordsRepository.findByUserIdAndKeyword(keyword, userId);
-	}
+//	@Transactional
+//	public Keyword getByKeywordAndUserId(String keyword, String userId) {
+//		return keywordsRepository.findByUserIdAndKeyword(keyword, userId);
+//	}
 	
 	@Transactional
 	public Keyword saveKeyword(Keyword kw) {
@@ -67,14 +67,14 @@ public class KeywordService {
 		return keywordsRepository.findById(id);
 	}
 	
-	@Transactional
-	public Keyword updateKeyword(Keyword kw) {
-		return keywordsRepository.save(kw);
-	}
-	
-	@Transactional
-	public void deleteKeyword(Keyword kw) {
-		keywordsRepository.delete(kw);
-	}
+//	@Transactional
+//	public Keyword updateKeyword(Keyword kw) {
+//		return keywordsRepository.save(kw);
+//	}
+//	
+//	@Transactional
+//	public void deleteKeyword(Keyword kw) {
+//		keywordsRepository.delete(kw);
+//	}
 
 }

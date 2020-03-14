@@ -1,5 +1,6 @@
 package fpt.capstone.betatest.controller;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,17 +27,28 @@ public class KeywordController {
 	@Autowired
 	private UserService userService;
 
+	@GetMapping("findAll")
+	public MessageOutputModel findAll() {
+		MessageOutputModel mod = new MessageOutputModel();
+		mod.setStatusCode(1);
+		mod.setStatusMessage("message");
+		List<Keyword> result = keywordService.getAllKeyword();
+		mod.setObj(result);
+		return mod;
+	}
+
 	@GetMapping("getUsers")
 	public List<String> getUsers() {
-		List<String> list = keywordService.getAllUserHaveKeyword();
-		User user;
+		List<String> listString = new ArrayList<String>();
+		List<User> list = keywordService.getAllUserHaveKeyword();
 		for (int i = 0; i < list.size(); i++) {
-			user = userService.getByUsername(list.get(i).toString());
-			if (!user.isAvailable()) {
-				list.remove(i);
+			if (list.get(i).isAvailable()) {
+				if (!listString.contains(list.get(i).getUserName())) {
+					listString.add(list.get(i).getUserName());
+				}
 			}
 		}
-		return list;
+		return listString;
 	}
 
 	@PostMapping("search")
@@ -46,33 +58,41 @@ public class KeywordController {
 		if (username.equals("")) {
 			result = keywordService.searchKeyword(keyword, page);
 		} else {
-			User user = userService.getByUsername(username);
+			User user = userService.getUserByUsername(username);
 			if (user.isAvailable()) {
-				result = keywordService.searchKeywordByUserIdAndKeywordContain(keyword, username, page);
+				result = keywordService.searchKeywordByUserAndKeywordContain(keyword, user, page);
 			}
 		}
 		return result;
 	}
-
-	@GetMapping("check")
-	public Keyword checkExist(@RequestParam(value = "userId") String userId,
-			@RequestParam(value = "keyword") String keyword) {
-		Keyword result = keywordService.getByKeywordAndUserId(userId, keyword);
-		return result;
-	}
+//
+//	@GetMapping("check")
+//	public Keyword checkExist(@RequestParam(value = "userId") String userId,
+//			@RequestParam(value = "keyword") String keyword) {
+//		Keyword result = keywordService.getByKeywordAndUserId(userId, keyword);
+//		return result;
+//	}
 
 	@PostMapping("createKeyword")
 	public MessageOutputModel createKeyword(@RequestParam(value = "keyword") String keyword,
 			@RequestParam(value = "userId") String userId) {
 		Keyword kw = new Keyword();
 		MessageOutputModel mod = new MessageOutputModel();
-		User user = userService.getByUsername(userId);
+		User user = userService.getUserByUsername(userId);
 		boolean havePermissionToCreate = false;
 
-		if ((user.getRole().equals("user") && user.isAvailable()) || user.getRole().equals("admin")) {
+		if (!(user.getRole().equals("user") && !user.isAvailable())) {
 			havePermissionToCreate = true;
-			if (user.getRole().equals("admin")) {
-				List<Keyword> list = keywordService.getAll(userId);
+			List<Keyword> list = keywordService.getAll(user);
+			if (user.getRole().equals("user")) {
+				if (list.size() >= 10) {
+					mod.setStatusCode(4);
+					mod.setStatusMessage(
+							"You have reached the limit for the number of keywords! Please contact admin for more infomation!");
+					havePermissionToCreate = false;
+				}
+			}
+			if (havePermissionToCreate) {
 				for (int i = 0; i < list.size(); i++) {
 					if (list.get(i).getKeyword().equals(keyword)) {
 						mod.setStatusCode(4);
@@ -88,7 +108,7 @@ public class KeywordController {
 		}
 		if (havePermissionToCreate) {
 			kw.setKeyword(keyword);
-			kw.setUserId(userId);
+			kw.setUser(user);
 			kw.setAvailable(true);
 			kw.setVersion(1);
 			kw = keywordService.saveKeyword(kw);
@@ -104,18 +124,25 @@ public class KeywordController {
 			@RequestParam(value = "author") String author) {
 		Keyword kw = keywordService.getKeywordById(keywordId);
 		MessageOutputModel mod = new MessageOutputModel();
-		User user = userService.getByUsername(author);
+		User user = userService.getUserByUsername(author);
 		boolean havePermissionToUpdate = false;
 
-		if ((user.getRole().equals("user") && user.isAvailable()) || user.getRole().equals("admin")) {
+		if (!(user.getRole().equals("user") && !user.isAvailable())) {
 			havePermissionToUpdate = true;
-			List<Keyword> list = keywordService.getAll(kw.getUserId());
-			for (int i = 0; i < list.size(); i++) {
-				if ((list.get(i).getKeyword().toLowerCase().equals(keyword.toLowerCase()))
-						&& (list.get(i).getId() != keywordId) && (list.get(i).isAvailable())) {
-					mod.setStatusCode(4);
-					mod.setStatusMessage("This user already have this keyword!");
-					havePermissionToUpdate = false;
+			if (kw.getVersion() != log_version) {
+				mod.setStatusCode(4);
+				mod.setStatusMessage("Currently the value of this keyword has been changed to " + kw.getKeyword()
+						+ ", please try again if you still want to update.");
+				havePermissionToUpdate = false;
+			} else {
+				List<Keyword> list = keywordService.getAll(kw.getUser());
+				for (int i = 0; i < list.size(); i++) {
+					if ((list.get(i).getKeyword().toLowerCase().equals(keyword.toLowerCase()))
+							&& (list.get(i).getId() != keywordId) && (list.get(i).isAvailable())) {
+						mod.setStatusCode(4);
+						mod.setStatusMessage("This user already have this keyword!");
+						havePermissionToUpdate = false;
+					}
 				}
 			}
 		} else {
@@ -123,54 +150,48 @@ public class KeywordController {
 			mod.setStatusMessage("Your account has been disabled. Please contact admin for more information!");
 		}
 		if (havePermissionToUpdate) {
-			if (kw.getVersion() == log_version) {
-				kw.setKeyword(keyword);
-				kw.setVersion(kw.getVersion() + 1);
-				keywordService.saveKeyword(kw);
-				mod.setStatusCode(2);
-				mod.setStatusMessage("Update successfully!");
-			} else {
-				mod.setStatusCode(4);
-				mod.setStatusMessage("Currently the value of this keyword has been changed to " + kw.getKeyword()
-						+ ", please try again if you still want to update.");
-			}
+			kw.setKeyword(keyword);
+			kw.setVersion(kw.getVersion() + 1);
+			keywordService.saveKeyword(kw);
+			mod.setStatusCode(2);
+			mod.setStatusMessage("Update successfully!");
 		}
 		return mod;
 	}
 
-	@PostMapping("deleteKeyword")
-	public MessageOutputModel deleteKeyword(@RequestParam(value = "id") int id,
-			@RequestParam(value = "logVersion") int log_version, @RequestParam(value = "author") String author) {
-
-		MessageOutputModel mod = new MessageOutputModel();
-		User user = userService.getByUsername(author);
-		boolean havePermissionToDelete = false;
-
-		if ((user.getRole().equals("user") && user.isAvailable()) || user.getRole().equals("admin")) {
-			havePermissionToDelete = true;
-		} else {
-			mod.setStatusCode(3);
-			mod.setStatusMessage("Your account has been disabled. Please contact admin for more information!");
-		}
-		if (havePermissionToDelete) {
-			Keyword kw = keywordService.getKeywordById(id);
-			if (kw == null) {
-				mod.setStatusCode(4);
-				mod.setStatusMessage("This keyword is not exist anymore.");
-
-			} else {
-				if (kw.getVersion() == log_version) {
-					keywordService.deleteKeyword(kw);
-					mod.setStatusCode(2);
-					mod.setStatusMessage("Deleted successfully!");
-				} else {
-					mod.setStatusCode(4);
-					mod.setStatusMessage(
-							"Your current keyword list is already old, please try again with the new one.");
-				}
-			}
-		}
-		return mod;
-	}
+//	@PostMapping("deleteKeyword")
+//	public MessageOutputModel deleteKeyword(@RequestParam(value = "id") int id,
+//			@RequestParam(value = "logVersion") int log_version, @RequestParam(value = "author") String author) {
+//
+//		MessageOutputModel mod = new MessageOutputModel();
+//		User user = userService.getByUsername(author);
+//		boolean havePermissionToDelete = false;
+//
+//		if ((user.getRole().equals("user") && user.isAvailable()) || user.getRole().equals("admin")) {
+//			havePermissionToDelete = true;
+//		} else {
+//			mod.setStatusCode(3);
+//			mod.setStatusMessage("Your account has been disabled. Please contact admin for more information!");
+//		}
+//		if (havePermissionToDelete) {
+//			Keyword kw = keywordService.getKeywordById(id);
+//			if (kw == null) {
+//				mod.setStatusCode(4);
+//				mod.setStatusMessage("This keyword is not exist anymore.");
+//
+//			} else {
+//				if (kw.getVersion() == log_version) {
+//					keywordService.deleteKeyword(kw);
+//					mod.setStatusCode(2);
+//					mod.setStatusMessage("Deleted successfully!");
+//				} else {
+//					mod.setStatusCode(4);
+//					mod.setStatusMessage(
+//							"Your current keyword list is already old, please try again with the new one.");
+//				}
+//			}
+//		}
+//		return mod;
+//	}
 
 }

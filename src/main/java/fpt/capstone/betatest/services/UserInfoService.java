@@ -27,24 +27,24 @@ public class UserInfoService {
 		return usersInfoRepository.save(u);
 	}
 
-	@Transactional
-	public Page<UserInfo> searchByUsernameAndPage(String userId, int Page) {
-		Pageable page = PageRequest.of((Page - 1), 10);
-		return usersInfoRepository.findByUserIdContaining(userId, page);
-	}
-	
-	@Transactional
-	public UserInfo getByUser(User user) {
-		return usersInfoRepository.findByUser(user);
-	}
-	
-	@Transactional
-	public UserInfo getByUsernameAndPassword(String username, String password) {
-		return usersInfoRepository.findByUser(userRepository.findByUserNameAndPassword(username, password));
-	}
-	
-	@Transactional
-	public UserInfo getUserByUserId(String userId) {
-		return usersInfoRepository.findByUserId(userId);
-	}
+//	@Transactional
+//	public Page<UserInfo> searchByUsernameAndPage(String userId, int Page) {
+//		Pageable page = PageRequest.of((Page - 1), 10);
+//		return usersInfoRepository.findByUserIdContaining(userId, page);
+//	}
+//	
+//	@Transactional
+//	public UserInfo getByUser(User user) {
+//		return usersInfoRepository.findByUser(user);
+//	}
+//	
+//	@Transactional
+//	public UserInfo getByUsernameAndPassword(String username, String password) {
+//		return usersInfoRepository.findByUser(userRepository.findByUserNameAndPassword(username, password));
+//	}
+//	
+//	@Transactional
+//	public UserInfo getUserByUserId(String userId) {
+//		return usersInfoRepository.findByUserId(userId);
+//	}
 }

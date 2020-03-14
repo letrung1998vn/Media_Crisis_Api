@@ -21,13 +21,24 @@ public class UserService {
 	}
 	
 	@Transactional
-	public List<User> getAll() {
+	public List<User> findAll() {
 		return usersRepository.findAll();
+	}
+//	
+	@Transactional
+	public boolean checkUserExist(String username) {
+		boolean result = false;
+		User user = usersRepository.findByUserName(username);
+		if (user == null) {
+			result = true;
+		}
+		return result;
 	}
 	
 	@Transactional
-	public User getByUsername(String username) {
-		return usersRepository.checkUserexist(username);
+	public User getUserByUsername(String username) {
+		User user = usersRepository.findByUserName(username);
+		return user;
 	}
 	
 	@Transactional
@@ -35,8 +46,8 @@ public class UserService {
 		return usersRepository.save(u);
 	}
 	
-	@Transactional
-	public User getUserByUserName(String userName) {
-		return usersRepository.findByUserName(userName);
-	}
+//	@Transactional
+//	public User getUserByUserName(String userName) {
+//		return usersRepository.findByUserName(userName);
+//	}
 }
