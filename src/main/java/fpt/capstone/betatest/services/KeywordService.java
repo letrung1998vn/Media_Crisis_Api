@@ -71,10 +71,10 @@ public class KeywordService {
 //	public Keyword updateKeyword(Keyword kw) {
 //		return keywordsRepository.save(kw);
 //	}
-//	
-//	@Transactional
-//	public void deleteKeyword(Keyword kw) {
-//		keywordsRepository.delete(kw);
-//	}
+	
+	@Transactional
+	public void deleteKeyword(Keyword kw) {
+		keywordsRepository.delete(kw);
+	}
 
 }

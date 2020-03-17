@@ -25,7 +25,7 @@ public class Keyword implements Serializable {
 	private String keyword;
 
 	// bi-directional many-to-one association to UserInfo
-	@ManyToOne()
+	@ManyToOne
 	@JoinColumn(name="user_id")
 	private User user;
 //	@Column(name = "user_id")
