@@ -197,7 +197,7 @@ public class UserController {
 			user.getUser().setName(name);
 			user = userService.saveUser(user);
 			mod.setStatusCode(2);
-			mod.setStatusMessage("Changed password successfully.");
+			mod.setStatusMessage("Changed userprofile successfully.");
 		}
 		
 		return mod;
