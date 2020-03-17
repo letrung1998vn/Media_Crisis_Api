@@ -289,7 +289,7 @@ class CheckMeaningCurrentComment extends Thread {
 									if (result == null) {
 										Crisis crisis = new Crisis();
 										crisis.setContentId(comment.getId());
-										crisis.setType("post");
+										crisis.setType("comment");
 										crisisService.saveCrisis(crisis);
 										Crisis crisisInDb = crisisService.findCrisis(comment.getId(), "comment");
 										listCrisis.add(crisisInDb);
@@ -304,7 +304,7 @@ class CheckMeaningCurrentComment extends Thread {
 									if (result == null) {
 										Crisis crisis = new Crisis();
 										crisis.setContentId(comment.getId());
-										crisis.setType("post");
+										crisis.setType("comment");
 										crisisService.saveCrisis(crisis);
 										Crisis crisisInDb = crisisService.findCrisis(comment.getId(), "comment");
 										listCrisis.add(crisisInDb);
@@ -333,7 +333,7 @@ class CheckMeaningCurrentComment extends Thread {
 								if (result == null) {
 									Crisis crisis = new Crisis();
 									crisis.setContentId(comment.getId());
-									crisis.setType("post");
+									crisis.setType("comment");
 									crisisService.saveCrisis(crisis);
 									Crisis crisisInDb = crisisService.findCrisis(comment.getId(), "comment");
 									listCrisis.add(crisisInDb);
@@ -347,7 +347,7 @@ class CheckMeaningCurrentComment extends Thread {
 								if (result == null) {
 									Crisis crisis = new Crisis();
 									crisis.setContentId(comment.getId());
-									crisis.setType("post");
+									crisis.setType("comment");
 									crisisService.saveCrisis(crisis);
 									Crisis crisisInDb = crisisService.findCrisis(comment.getId(), "comment");
 									listCrisis.add(crisisInDb);
@@ -741,7 +741,7 @@ class CheckMeaningIncreaseComment extends Thread {
 									if (result == null) {
 										Crisis crisis = new Crisis();
 										crisis.setContentId(newComment.getId());
-										crisis.setType("post");
+										crisis.setType("comment");
 										crisisService.saveCrisis(crisis);
 										Crisis crisisInDb = crisisService.findCrisis(newComment.getId(), "comment");
 										listCrisis.add(crisisInDb);
@@ -756,7 +756,7 @@ class CheckMeaningIncreaseComment extends Thread {
 									if (result == null) {
 										Crisis crisis = new Crisis();
 										crisis.setContentId(newComment.getId());
-										crisis.setType("post");
+										crisis.setType("comment");
 										crisisService.saveCrisis(crisis);
 										Crisis crisisInDb = crisisService.findCrisis(newComment.getId(), "comment");
 										listCrisis.add(crisisInDb);
