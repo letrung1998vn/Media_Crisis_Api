@@ -767,7 +767,3 @@ class CheckMeaningIncreaseComment extends Thread {
 		}
 	}
 }
-
-class Test {
-
-}
