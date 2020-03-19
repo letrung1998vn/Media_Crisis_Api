@@ -76,5 +76,8 @@ public class KeywordService {
 	public void deleteKeyword(Keyword kw) {
 		keywordsRepository.delete(kw);
 	}
-
+	@Transactional
+	public List<Keyword> getAllKeyword(Keyword kw) {
+		return keywordsRepository.getAllKeyword();
+	}
 }

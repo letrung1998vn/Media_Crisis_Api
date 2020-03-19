@@ -24,6 +24,7 @@ import fpt.capstone.betatest.entities.Keyword;
 import fpt.capstone.betatest.entities.Post;
 import fpt.capstone.betatest.services.CommentService;
 import fpt.capstone.betatest.services.CrisisService;
+import fpt.capstone.betatest.services.KeywordService;
 import fpt.capstone.betatest.services.PostService;
 import fpt.capstone.betatest.services.UserService;
 
@@ -36,18 +37,53 @@ public class CheckMeaningController {
 	CommentService commentService;
 	@Autowired
 	CrisisService crisisService;
+	@Autowired
+	KeywordService keywordService;
 
 	@GetMapping("check")
-	public void checkMeaning(@RequestParam String keyword) throws Exception {
+	public void checkMeaning() throws Exception {
 		TextAPIClient client = new TextAPIClient("43faa103", "f2aaee05b21dabe934b89bd3198801e8");
-		DetectCrisisInCurrent(keyword, client);
+		CheckThread check = new CheckThread(client, crisisService, commentService, postService, keywordService);
+		check.start();
 	}
 
-	private void DetectCrisisInCurrent(String keyword, TextAPIClient client) throws Exception {
+}
+
+class CheckThread extends Thread {
+	TextAPIClient client;
+	CrisisService crisisService;
+	CommentService commentService;
+	PostService postService;
+	KeywordService keywordService;
+
+	public CheckThread(TextAPIClient client, CrisisService crisisService, CommentService commentService,
+			PostService postService, KeywordService keywordService) {
+		this.client = client;
+		this.crisisService = crisisService;
+		this.commentService = commentService;
+		this.postService = postService;
+		this.keywordService = keywordService;
+	}
+
+	@Override
+	public synchronized void start() {
+		List<Keyword> listKeyword = keywordService.getAllKeyword();
+		for (int i = 0; i < listKeyword.size(); i++) {
+			try {
+				DetectCrisisInCurrent(listKeyword.get(i).getKeyword(), client, this);
+				this.wait();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		this.stop();
+	}
+
+	private void DetectCrisisInCurrent(String keyword, TextAPIClient client, CheckThread check) throws Exception {
 		List<Post> listPost = getRecentPost(keyword);
-		CheckMeaningCurrentPost checkMeaningCurrentPost = new CheckMeaningCurrentPost(client, keyword, listPost,
-				crisisService, commentService, postService);
-		checkMeaningCurrentPost.start();
+		CheckMeaningCurrentPostThreadThread CheckMeaningCurrentPostThread = new CheckMeaningCurrentPostThreadThread(client, keyword, listPost,
+				crisisService, commentService, postService, check);
+		CheckMeaningCurrentPostThread.start();
 	}
 
 	private List<Post> getRecentPost(String keyword) {
@@ -57,7 +93,7 @@ public class CheckMeaningController {
 	}
 }
 
-class CheckMeaningCurrentPost extends Thread {
+class CheckMeaningCurrentPostThreadThread extends Thread {
 	TextAPIClient client;
 	String keyword;
 	List<Post> listPost;
@@ -68,15 +104,17 @@ class CheckMeaningCurrentPost extends Thread {
 	int sentiment_count = 1;
 	int countHit = 0;
 	PostService postService;
+	CheckThread check;
 
-	public CheckMeaningCurrentPost(TextAPIClient client, String keyword, List<Post> listPost,
-			CrisisService crisisService, CommentService commentService, PostService postService) {
+	public CheckMeaningCurrentPostThreadThread(TextAPIClient client, String keyword, List<Post> listPost,
+			CrisisService crisisService, CommentService commentService, PostService postService, CheckThread check) {
 		this.client = client;
 		this.keyword = keyword;
 		this.listPost = listPost;
 		this.crisisService = crisisService;
 		this.commentService = commentService;
 		this.postService = postService;
+		this.check = check;
 	}
 
 	@Override
@@ -165,9 +203,9 @@ class CheckMeaningCurrentPost extends Thread {
 				Post post = listPost.get(i);
 				listComment.addAll(getRecentComment(post.getId()));
 			}
-			CheckMeaningCurrentComment checkMeaningCurrentComment = new CheckMeaningCurrentComment(client, keyword,
-					listComment, crisisService, postService, commentService);
-			checkMeaningCurrentComment.start();
+			CheckMeaningCurrentCommentThread CheckMeaningCurrentCommentThread = new CheckMeaningCurrentCommentThread(client, keyword,
+					listComment, crisisService, postService, commentService, check);
+			CheckMeaningCurrentCommentThread.start();
 			this.stop();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -206,7 +244,7 @@ class CheckMeaningCurrentPost extends Thread {
 	}
 }
 
-class CheckMeaningCurrentComment extends Thread {
+class CheckMeaningCurrentCommentThread extends Thread {
 	TextAPIClient client;
 	String keyword;
 	List<Comment> listComment;
@@ -217,15 +255,17 @@ class CheckMeaningCurrentComment extends Thread {
 	int sentiment_count = 1;
 	int countHit = 0;
 	PostService postService;
+	CheckThread check;
 
-	public CheckMeaningCurrentComment(TextAPIClient client, String keyword, List<Comment> listComment,
-			CrisisService crisisService, PostService postService, CommentService commentService) {
+	public CheckMeaningCurrentCommentThread(TextAPIClient client, String keyword, List<Comment> listComment,
+			CrisisService crisisService, PostService postService, CommentService commentService, CheckThread check) {
 		this.client = client;
 		this.keyword = keyword;
 		this.listComment = listComment;
 		this.crisisService = crisisService;
 		this.postService = postService;
 		this.commentService = commentService;
+		this.check = check;
 	}
 
 	@Override
@@ -336,9 +376,9 @@ class CheckMeaningCurrentComment extends Thread {
 			}
 			this.sleep(1000 * 60 * 2);
 			List<Post> listPost = getIncreasePost(keyword);
-			CheckMeaningIncreasePost checkMeaningIncreasePost = new CheckMeaningIncreasePost(client, keyword, listPost,
-					crisisService, commentService);
-			checkMeaningIncreasePost.start();
+			CheckMeaningIncreasePostThread CheckMeaningIncreasePostThread = new CheckMeaningIncreasePostThread(client, keyword, listPost,
+					crisisService, commentService, check);
+			CheckMeaningIncreasePostThread.start();
 			this.stop();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -440,7 +480,7 @@ class CheckMeaningCurrentComment extends Thread {
 
 }
 
-class CheckMeaningIncreasePost extends Thread {
+class CheckMeaningIncreasePostThread extends Thread {
 	TextAPIClient client;
 	String keyword;
 	List<Post> listPost;
@@ -450,14 +490,16 @@ class CheckMeaningIncreasePost extends Thread {
 	int entity_sentiment_count = 3;
 	int sentiment_count = 1;
 	int countHit = 0;
+	CheckThread check;
 
-	public CheckMeaningIncreasePost(TextAPIClient client, String keyword, List<Post> listPost,
-			CrisisService crisisService, CommentService commentService) {
+	public CheckMeaningIncreasePostThread(TextAPIClient client, String keyword, List<Post> listPost,
+			CrisisService crisisService, CommentService commentService, CheckThread check) {
 		this.client = client;
 		this.keyword = keyword;
 		this.listPost = listPost;
 		this.crisisService = crisisService;
 		this.commentService = commentService;
+		this.check = check;
 	}
 
 	private static double calculateSD(double numArray[]) {
@@ -586,9 +628,9 @@ class CheckMeaningIncreasePost extends Thread {
 					listComment.add(newPostComment.get(result));
 				}
 			}
-			CheckMeaningIncreaseComment checkMeaningIncreaseComment = new CheckMeaningIncreaseComment(client, keyword,
-					listComment, crisisService);
-			checkMeaningIncreaseComment.start();
+			CheckMeaningIncreaseCommentThread CheckMeaningIncreaseCommentThread = new CheckMeaningIncreaseCommentThread(client, keyword,
+					listComment, crisisService, check);
+			CheckMeaningIncreaseCommentThread.start();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -610,7 +652,7 @@ class CheckMeaningIncreasePost extends Thread {
 	}
 }
 
-class CheckMeaningIncreaseComment extends Thread {
+class CheckMeaningIncreaseCommentThread extends Thread {
 	TextAPIClient client;
 	String keyword;
 	List<Comment> listComment;
@@ -619,13 +661,15 @@ class CheckMeaningIncreaseComment extends Thread {
 	int entity_sentiment_count = 3;
 	int sentiment_count = 1;
 	int countHit = 0;
+	CheckThread check;
 
-	public CheckMeaningIncreaseComment(TextAPIClient client, String keyword, List<Comment> listComment,
-			CrisisService crisisService) {
+	public CheckMeaningIncreaseCommentThread(TextAPIClient client, String keyword, List<Comment> listComment,
+			CrisisService crisisService, CheckThread check) {
 		this.client = client;
 		this.keyword = keyword;
 		this.listComment = listComment;
 		this.crisisService = crisisService;
+		this.check = check;
 	}
 
 	private static double calculateSD(double numArray[]) {
@@ -762,6 +806,9 @@ class CheckMeaningIncreaseComment extends Thread {
 					}
 				}
 			}
+			this.sleep(1000 * 60 * 1);
+			check.notify();
+			this.stop();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

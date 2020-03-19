@@ -15,22 +15,31 @@ import fpt.capstone.betatest.entities.User;
 @Repository("keywordsRepository")
 public interface KeywordRepository extends JpaRepository<Keyword, Integer> {
 
-//	public final static String GET_KEYWORD_BY_USERID_AND_KEYWORD = "SELECT kw FROM Keyword kw WHERE kw.Keyword = :keyword AND kw.UserId = :userId";
-//
-//	@Query(GET_KEYWORD_BY_USERID_AND_KEYWORD)
-//	Keyword checkKeywordExist(@Param("keyword") String keyword, @Param("userId") String userId);
-	
-	Page<Keyword> findByKeywordContainingAndAvailable(String keyword, Pageable pageable, Boolean available);
-	Page<Keyword> findByUserAndKeywordContainingAndAvailable(User user, String keyword, Pageable pageable, Boolean available);
+	// public final static String GET_KEYWORD_BY_USERID_AND_KEYWORD = "SELECT kw
+	// FROM Keyword kw WHERE kw.Keyword = :keyword AND kw.UserId = :userId";
+	//
+	// @Query(GET_KEYWORD_BY_USERID_AND_KEYWORD)
+	// Keyword checkKeywordExist(@Param("keyword") String keyword, @Param("userId")
+	// String userId);
 
-//	Keyword findByUserIdAndKeyword(String keyword, String userId);
-//	
+	Page<Keyword> findByKeywordContainingAndAvailable(String keyword, Pageable pageable, Boolean available);
+
+	Page<Keyword> findByUserAndKeywordContainingAndAvailable(User user, String keyword, Pageable pageable,
+			Boolean available);
+
+	// Keyword findByUserIdAndKeyword(String keyword, String userId);
+	//
 	Keyword findById(int id);
-//	
+
+	//
 	List<Keyword> findByUser(User user);
-//	
+
+	//
 	@Query("SELECT user from Keyword")
-    List<User> findAllUserHaveKeyword();
-//	Keyword findUserAndKeywordById(int id);
-	 
+	List<User> findAllUserHaveKeyword();
+
+	@Query(nativeQuery = true, value = "SELECT * from Keyword")
+	List<Keyword> getAllKeyword();
+	// Keyword findUserAndKeywordById(int id);
+
 }
