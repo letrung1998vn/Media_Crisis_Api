@@ -23,7 +23,7 @@ public class Crisis {
 	@Column(name="type")
 	private String type;
 	
-	@Column(name="keyword")
+	@Column(name = "keyword")
 	private String keyword;
 	
 	public int getId() {

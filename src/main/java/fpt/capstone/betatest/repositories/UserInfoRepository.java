@@ -17,5 +17,5 @@ public interface UserInfoRepository extends JpaRepository<UserInfo, Integer> {
 //	UserInfo findByUser(User user);
 //	Page<UserInfo> findByUserIdContaining(String userId, Pageable pageable);
 //	
-//	UserInfo findByUserId(String userId);
+	UserInfo findByUserId(String userId);
 }

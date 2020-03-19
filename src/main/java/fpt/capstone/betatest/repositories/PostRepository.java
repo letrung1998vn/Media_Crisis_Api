@@ -1,5 +1,6 @@
 package fpt.capstone.betatest.repositories;
 
+import java.math.BigInteger;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -19,4 +20,6 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
 			+ "JOIN ( select post_content, MAX(crawl_date) as date from Post GROUP BY post_content) s2 "
 			+ "on s1.post_content=s2.post_content where keyword=?1")
 	List<Post> getPostContentWithTwoLatestDate(String keyword);
+	
+	Post getById(BigInteger id);
 }

@@ -13,4 +13,6 @@ import fpt.capstone.betatest.entities.Post;
 @Repository("commentRepository")
 public interface CommentRepository extends JpaRepository<Comment, Integer> {
 	List<Comment> findByPostId(BigInteger postId);
+	
+	Comment findById(BigInteger id);
 }

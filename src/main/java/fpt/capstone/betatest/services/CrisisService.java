@@ -1,6 +1,7 @@
 package fpt.capstone.betatest.services;
 
 import java.math.BigInteger;
+import java.util.List;
 
 import javax.transaction.Transactional;
 
@@ -23,5 +24,10 @@ public class CrisisService {
 	@Transactional
 	public Crisis findCrisis(BigInteger ContentId, String Type,String keyword) {
 		return crisisRepository.findByContentIdAndTypeAndKeyword(ContentId, Type, keyword);
+	}
+	
+	@Transactional
+	public List<Crisis> getCrisisByKeyword(String keyword) {
+		return crisisRepository.findByKeyword(keyword);
 	}
 }

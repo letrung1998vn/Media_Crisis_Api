@@ -20,4 +20,9 @@ public class CommentService {
 	public List<Comment> getCommentByPostId(BigInteger postId) {
 		return commentRepository.findByPostId(postId);
 	}
+	
+	@Transactional
+	public Comment getCommentById(BigInteger id) {
+		return commentRepository.findById(id);
+	}
 }
