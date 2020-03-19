@@ -77,7 +77,7 @@ public class UserController {
 				mod.setObj(result);
 			} else {
 				mod.setStatusCode(3);
-				mod.setStatusMessage("Your account has been banned permanently, please contact admin for more infomation!");
+				mod.setStatusMessage("Your account has been banned permanently, please contact admin for more information!");
 			}
 		}
 		return mod;
@@ -100,7 +100,7 @@ public class UserController {
 		
 		} else {
 			mod.setStatusCode(3);
-			mod.setStatusMessage("Your account has been banned permanently, please contact admin for more infomation!");
+			mod.setStatusMessage("Your account has been banned permanently, please contact admin for more information!");
 		}
 		return mod;
 	}

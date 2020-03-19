@@ -1,7 +1,7 @@
 package fpt.capstone.betatest.entities;
 
 import java.io.Serializable;
-import java.sql.Date;
+import java.util.Date;
 
 import javax.persistence.*;
 
@@ -16,7 +16,8 @@ public class Notification implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	@Id
-	@Column(name="id")
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "id")
 	private int id;
 
 	@Column(name="email")
@@ -35,9 +36,8 @@ public class Notification implements Serializable {
 	public Notification() {
 	}
 
-	public Notification(int id, boolean email, boolean webhook, User user, Date date) {
+	public Notification(boolean email, boolean webhook, User user, Date date) {
 		super();
-		this.id = id;
 		this.email = email;
 		this.webhook = webhook;
 		this.user = user;

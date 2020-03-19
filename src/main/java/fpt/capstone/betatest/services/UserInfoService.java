@@ -26,6 +26,11 @@ public class UserInfoService {
 	public UserInfo saveUser(UserInfo u) {
 		return usersInfoRepository.save(u);
 	}
+	
+	@Transactional
+	public String getEmail(String userId) {
+		return usersInfoRepository.findByUserId(userId).getEmail();
+	}
 
 //	@Transactional
 //	public Page<UserInfo> searchByUsernameAndPage(String userId, int Page) {

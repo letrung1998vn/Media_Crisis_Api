@@ -22,6 +22,9 @@ public class Crisis {
 	
 	@Column(name="type")
 	private String type;
+	
+	@Column(name = "keyword")
+	private String keyword;
 
 	public int getId() {
 		return id;
@@ -46,4 +49,13 @@ public class Crisis {
 	public void setType(String type) {
 		this.type = type;
 	}
+
+	public String getKeyword() {
+		return keyword;
+	}
+
+	public void setKeyword(String keyword) {
+		this.keyword = keyword;
+	}
+	
 }

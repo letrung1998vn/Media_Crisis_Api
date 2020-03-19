@@ -1,6 +1,7 @@
 package fpt.capstone.betatest.repositories;
 
 import java.math.BigInteger;
+import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -12,4 +13,6 @@ import fpt.capstone.betatest.entities.User;
 @Repository("crisisRepository")
 public interface CrisisRepository extends JpaRepository<Crisis, Integer>{
 	Crisis findByContentIdAndType(BigInteger ContentId,String Type);
+	
+	List<Crisis> findByKeyword(String keyword);
 }

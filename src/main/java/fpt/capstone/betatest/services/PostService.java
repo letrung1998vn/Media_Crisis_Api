@@ -1,5 +1,6 @@
 package fpt.capstone.betatest.services;
 
+import java.math.BigInteger;
 import java.util.List;
 
 import javax.transaction.Transactional;
@@ -21,5 +22,10 @@ public class PostService {
 	@Transactional
 	public List<Post> getPostContentWithTwoLatestDate(String keyword) {
 		return postRepository.getPostContentWithTwoLatestDate(keyword);
+	}
+	
+	@Transactional
+	public Post getPostById(BigInteger id) {
+		return postRepository.getById(id);
 	}
 }
