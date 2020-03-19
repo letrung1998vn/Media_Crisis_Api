@@ -25,7 +25,7 @@ public class Crisis {
 	
 	@Column(name = "keyword")
 	private String keyword;
-
+	
 	public int getId() {
 		return id;
 	}

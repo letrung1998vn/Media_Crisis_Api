@@ -22,13 +22,8 @@ public class CrisisService {
 	}
 
 	@Transactional
-	public boolean checkCrisisExist(BigInteger ContentId, String Type) {
-		boolean result = false;
-		Crisis crisis = crisisRepository.findByContentIdAndType(ContentId, Type);
-		if (crisis == null) {
-			result = true;
-		}
-		return result;
+	public Crisis findCrisis(BigInteger ContentId, String Type,String keyword) {
+		return crisisRepository.findByContentIdAndTypeAndKeyword(ContentId, Type, keyword);
 	}
 	
 	@Transactional

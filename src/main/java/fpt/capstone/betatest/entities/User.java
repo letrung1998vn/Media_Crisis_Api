@@ -36,6 +36,7 @@ public class User implements Serializable {
 	private UserInfo user;
 
 	// bi-directional many-to-one association to Notification
+	@JsonIgnore
 	@OneToMany(mappedBy = "user")
 	private List<Notification> notifications;
 		

@@ -40,36 +40,47 @@ public class CheckMeaningController {
 	@GetMapping("check")
 	public void checkMeaning(@RequestParam String keyword) throws Exception {
 		TextAPIClient client = new TextAPIClient("43faa103", "f2aaee05b21dabe934b89bd3198801e8");
-		// DetectCrisisInCurrent(keyword, client);
-		DetectCrisisIncrease(keyword, client);
-		// List<Keyword> listRelateKeyword = getRelate(keyword);
-		// for (int a = 0; a < listRelateKeyword.size(); a++) {
-		// Keyword relateKeyword = listRelateKeyword.get(a);
-		// checkMeaningRelate(relateKeyword.getKeyword(), client);
-		// }
+		DetectCrisisInCurrent(keyword, client);
 	}
 
 	private void DetectCrisisInCurrent(String keyword, TextAPIClient client) throws Exception {
 		List<Post> listPost = getRecentPost(keyword);
-		List<Comment> listComment = new ArrayList<>();
-		for (int i = 0; i < listPost.size(); i++) {
-			if (i < listPost.size() - 1) {
-				Post post = listPost.get(i);
-				Post nextPost = listPost.get(i + 1);
-				if (post.getPostContent().equals(nextPost.getPostContent())) {
-					listComment.addAll(getIncreaseComment(post.getId()));
-				} else {
-
-				}
-			} else {
-
-			}
-		}
-		checkMeaningPost(keyword, client, listPost);
-		checkMeaningComment(listComment, keyword, client);
+		CheckMeaningCurrentPost checkMeaningCurrentPost = new CheckMeaningCurrentPost(client, keyword, listPost,
+				crisisService, commentService, postService);
+		checkMeaningCurrentPost.start();
 	}
 
-	private void checkMeaningPost(String keyword, TextAPIClient client, List<Post> listPost) throws Exception {
+	private List<Post> getRecentPost(String keyword) {
+		// Get The list of post with latest date in DB
+		List<Post> posts = postService.getEachPostContentWithLatestDate(keyword);
+		return posts;
+	}
+}
+
+class CheckMeaningCurrentPost extends Thread {
+	TextAPIClient client;
+	String keyword;
+	List<Post> listPost;
+	CrisisService crisisService;
+	CommentService commentService;
+	int totalCount = 60;
+	int entity_sentiment_count = 3;
+	int sentiment_count = 1;
+	int countHit = 0;
+	PostService postService;
+
+	public CheckMeaningCurrentPost(TextAPIClient client, String keyword, List<Post> listPost,
+			CrisisService crisisService, CommentService commentService, PostService postService) {
+		this.client = client;
+		this.keyword = keyword;
+		this.listPost = listPost;
+		this.crisisService = crisisService;
+		this.commentService = commentService;
+		this.postService = postService;
+	}
+
+	@Override
+	public synchronized void start() {
 		EntityLevelSentimentParams.Builder builder = EntityLevelSentimentParams.newBuilder();
 		double reactArray[] = new double[listPost.size()];
 		double shareArray[] = new double[listPost.size()];
@@ -97,291 +108,69 @@ public class CheckMeaningController {
 		double comment_anomaly_cut_off = commentStandart * 2;
 		double comment_lower_limit = commentMean - comment_anomaly_cut_off;
 		double comment_upper_limit = commentMean + comment_anomaly_cut_off;
-		for (int i = 0; i < listPost.size(); i++) {
-			Post post = listPost.get(i);
-			builder.setText(post.getPostContent());
-			EntitiesSentiment elsa = client.entityLevelSentiment(builder.build());
-			List<EntitiySentiments> list = elsa.getEntitiySentiments();
-			if (list.size() > 0) {
-				for (int x = 0; x < list.size(); x++) {
-					EntitiySentiments sen = list.get(x);
-					String word = sen.getMentions()[0].getText();
-					String mean = sen.getOverallSentiment().getPolarity();
-					float confidence = sen.getOverallSentiment().getConfidence();
-					if (mean.equals("negative") && confidence > 0.3
-							&& word.toLowerCase().equals(keyword.toLowerCase())) {
-						if (reactMean < 50000 && shareMean < 50000 && commentMean < 50000) {
-							if (post.getNumberOfReply() > comment_upper_limit
-									|| post.getNumberOfReweet() > share_upper_limit
-									|| post.getNumberOfReact() > react_upper_limit) {
-								// Save crisis and check if already add or not
-								boolean result = crisisService.checkCrisisExist(post.getId(), "post");
-								if (result) {
-									Crisis crisis = new Crisis();
-									crisis.setContentId(post.getId());
-									crisis.setType("post");
-									crisisService.saveCrisis(crisis);
-								}
-							}
-						} else {
-							// Save crisis and check if already add or not
-							boolean result = crisisService.checkCrisisExist(post.getId(), "post");
-							if (result) {
-								Crisis crisis = new Crisis();
-								crisis.setContentId(post.getId());
-								crisis.setType("post");
-								crisisService.saveCrisis(crisis);
-							}
-						}
-					}
+		try {
+			for (int i = 0; i < listPost.size(); i++) {
+				if (totalCount - countHit < entity_sentiment_count) {
+					countHit = 0;
+					this.sleep(1000 * 60 * 2);
 				}
-			}
-		}
-	}
-
-	private void checkMeaningComment(List<Comment> listComment, String keyword, TextAPIClient client) throws Exception {
-		EntityLevelSentimentParams.Builder builder = EntityLevelSentimentParams.newBuilder();
-		double reactArray[] = new double[listComment.size()];
-		double commentArray[] = new double[listComment.size()];
-		for (int i = 0; i < listComment.size(); i++) {
-			Comment comment = listComment.get(i);
-			reactArray[i] = comment.getNumberOfReact();
-			commentArray[i] = comment.getNumberOfReply();
-		}
-		double reactStandart = calculateSD(reactArray);
-		double reactMean = mean(reactArray);
-		double react_anomaly_cut_off = reactStandart * 2;
-		double react_lower_limit = reactMean - react_anomaly_cut_off;
-		double react_upper_limit = reactMean + react_anomaly_cut_off;
-
-		double commentStandart = calculateSD(commentArray);
-		double commentMean = mean(commentArray);
-		double comment_anomaly_cut_off = commentStandart * 2;
-		double comment_lower_limit = commentMean - comment_anomaly_cut_off;
-		double comment_upper_limit = commentMean + comment_anomaly_cut_off;
-		for (int i = 0; i < listComment.size(); i++) {
-			Comment comment = listComment.get(i);
-			builder.setText(comment.getCommentContent());
-			EntitiesSentiment elsa = client.entityLevelSentiment(builder.build());
-			List<EntitiySentiments> list = elsa.getEntitiySentiments();
-			if (list.size() > 0) {
-				for (int x = 0; x < list.size(); x++) {
-					EntitiySentiments sen = list.get(x);
-					String word = sen.getMentions()[0].getText();
-					String mean = sen.getOverallSentiment().getPolarity();
-					float confidence = sen.getOverallSentiment().getConfidence();
-					if (mean.equals("negative") && confidence > 0.3
-							&& word.toLowerCase().equals(keyword.toLowerCase())) {
-						if (reactMean < 50000 && commentMean < 50000) {
-							if (comment.getNumberOfReply() > comment_upper_limit
-									|| comment.getNumberOfReact() > react_upper_limit) {
-								// Add Crisis To Db
-								boolean result = crisisService.checkCrisisExist(comment.getId(), "comment");
-								if (result) {
-									Crisis crisis = new Crisis();
-									crisis.setContentId(comment.getId());
-									crisis.setType("comment");
-									crisisService.saveCrisis(crisis);
-								}
-							}
-						} else {
-							boolean result = crisisService.checkCrisisExist(comment.getId(), "comment");
-							if (result) {
-								Crisis crisis = new Crisis();
-								crisis.setContentId(comment.getId());
-								crisis.setType("comment");
-								crisisService.saveCrisis(crisis);
-							}
-						}
-					}
-				}
-			} else {
-				SentimentParams.Builder sentimentBuilder = SentimentParams.newBuilder();
-				sentimentBuilder.setText(comment.getCommentContent());
-				sentimentBuilder.setMode("tweet");
-				Sentiment sentiment = client.sentiment(sentimentBuilder.build());
-				if (sentiment.getPolarity().equals("negative") && sentiment.getPolarityConfidence() > 0.3) {
-					if (reactMean < 50000 && commentMean < 50000) {
-						if (comment.getNumberOfReply() > comment_upper_limit
-								|| comment.getNumberOfReact() > react_upper_limit) {
-							boolean result = crisisService.checkCrisisExist(comment.getId(), "comment");
-							if (result) {
-								Crisis crisis = new Crisis();
-								crisis.setContentId(comment.getId());
-								crisis.setType("comment");
-								crisisService.saveCrisis(crisis);
-							}
-						}
-					} else {
-						boolean result = crisisService.checkCrisisExist(comment.getId(), "comment");
-						if (result) {
-							Crisis crisis = new Crisis();
-							crisis.setContentId(comment.getId());
-							crisis.setType("comment");
-							crisisService.saveCrisis(crisis);
-						}
-					}
-				}
-			}
-		}
-	}
-
-	private void DetectCrisisIncrease(String keyword, TextAPIClient client) throws Exception {
-		List<Post> listPost = getIncreasePost(keyword);
-		List<Comment> lastPostComment = new ArrayList<>();
-		List<Comment> newPostComment = new ArrayList<>();
-		List<Comment> listComment = new ArrayList<>();
-		for (int i = 0; i < listPost.size(); i = i + 2) {
-			Post post = listPost.get(i);
-			Post nextPost = listPost.get(i + 1);
-			lastPostComment.addAll(getIncreaseComment(post.getId()));
-			newPostComment.addAll(getIncreaseComment(nextPost.getId()));
-		}
-		for (int i = 0; i < lastPostComment.size(); i++) {
-			Comment lastComment = lastPostComment.get(i);
-			int result=findComment(newPostComment, lastComment);
-			if(result!=0) {
-				listComment.add(lastComment);
-				listComment.add(newPostComment.get(i));
-			}
-		}
-		// CheckMeaningIncreasePost(keyword, client, listPost);
-		checkMeaningIncreaseComment(listComment, keyword, client);
-	}
-	private int findComment(List<Comment> listComment, Comment comment) {
-		for(int i=0;i<listComment.size();i++) {
-			if(listComment.get(i).getCommentContent().equals(comment.getCommentContent())) {
-				return i;
-			}
-		}
-		return 0;
-	}
-	private void CheckMeaningIncreasePost(String keyword, TextAPIClient client, List<Post> listPost) throws Exception {
-		EntityLevelSentimentParams.Builder builder = EntityLevelSentimentParams.newBuilder();
-		double reactArray[] = new double[listPost.size()];
-		double shareArray[] = new double[listPost.size()];
-		double commentArray[] = new double[listPost.size()];
-		for (int i = 0; i < listPost.size(); i = i + 2) {
-			Post lastPost = listPost.get(i);
-			Post newPost = listPost.get(i + 1);
-			reactArray[i] = newPost.getNumberOfReact() - lastPost.getNumberOfReact();
-			shareArray[i] = newPost.getNumberOfReweet() - lastPost.getNumberOfReweet();
-			commentArray[i] = newPost.getNumberOfReply() - lastPost.getNumberOfReply();
-		}
-		double reactStandart = calculateSD(reactArray);
-		double reactMean = mean(reactArray);
-		double react_anomaly_cut_off = reactStandart * 2;
-		double react_lower_limit = reactMean - react_anomaly_cut_off;
-		double react_upper_limit = reactMean + react_anomaly_cut_off;
-
-		double shareStandart = calculateSD(shareArray);
-		double shareMean = mean(shareArray);
-		double share_anomaly_cut_off = shareStandart * 2;
-		double share_lower_limit = shareMean - share_anomaly_cut_off;
-		double share_upper_limit = shareMean + share_anomaly_cut_off;
-
-		double commentStandart = calculateSD(commentArray);
-		double commentMean = mean(commentArray);
-		double comment_anomaly_cut_off = commentStandart * 2;
-		double comment_lower_limit = commentMean - comment_anomaly_cut_off;
-		double comment_upper_limit = commentMean + comment_anomaly_cut_off;
-		for (int i = 0; i < listPost.size(); i = i + 2) {
-			Post post = listPost.get(i);
-			Post nextPost = listPost.get(i + 1);
-			builder.setText(post.getPostContent());
-			EntitiesSentiment elsa = client.entityLevelSentiment(builder.build());
-			List<EntitiySentiments> list = elsa.getEntitiySentiments();
-			if (list.size() > 0) {
-				for (int x = 0; x < list.size(); x++) {
-					EntitiySentiments sen = list.get(x);
-					String mean = sen.getOverallSentiment().getPolarity();
-					float confidence = sen.getOverallSentiment().getConfidence();
-					String word = sen.getMentions()[0].getText();
-					if (mean.equals("negative") && confidence > 0.3
-							&& word.toLowerCase().equals(keyword.toLowerCase())) {
-						if (reactMean < 50000 && shareMean < 50000 && commentMean < 50000) {
-							if ((post.getNumberOfReply() - nextPost.getNumberOfReply()) > comment_upper_limit
-									|| (post.getNumberOfReweet() - nextPost.getNumberOfReweet()) > share_upper_limit
-									|| (post.getNumberOfReact() - nextPost.getNumberOfReact()) > react_upper_limit) {
-								// Add Crisis To Db
-								boolean result = crisisService.checkCrisisExist(nextPost.getId(), "post");
-								if (result) {
-									Crisis crisis = new Crisis();
-									crisis.setContentId(nextPost.getId());
-									crisis.setType("post");
-									crisisService.saveCrisis(crisis);
-								}
-							} else {
-								// Save crisis and check if already add or not
-								boolean result = crisisService.checkCrisisExist(nextPost.getId(), "post");
-								if (result) {
-									Crisis crisis = new Crisis();
-									crisis.setContentId(nextPost.getId());
-									crisis.setType("post");
-									crisisService.saveCrisis(crisis);
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	private void checkMeaningIncreaseComment(List<Comment> listComment, String keyword, TextAPIClient client)
-			throws Exception {
-		EntityLevelSentimentParams.Builder builder = EntityLevelSentimentParams.newBuilder();
-		int size = 0;
-		double reactArray[] = new double[listComment.size() / 2];
-		double commentArray[] = new double[listComment.size() / 2];
-		for (int i = 0; i < listComment.size(); i = i + 2) {
-			Comment lastComment = listComment.get(i);
-			Comment newComment = listComment.get(i + 1);
-			reactArray[i] = newComment.getNumberOfReact() - lastComment.getNumberOfReact();
-			commentArray[i] = newComment.getNumberOfReply() - lastComment.getNumberOfReply();
-		}
-		double reactStandart = calculateSD(reactArray);
-		double reactMean = mean(reactArray);
-		double react_anomaly_cut_off = reactStandart * 3;
-		double react_lower_limit = reactMean - react_anomaly_cut_off;
-		double react_upper_limit = reactMean + react_anomaly_cut_off;
-
-		double commentStandart = calculateSD(commentArray);
-		double commentMean = mean(reactArray);
-		double comment_anomaly_cut_off = commentStandart * 3;
-		double comment_lower_limit = commentMean - comment_anomaly_cut_off;
-		double comment_upper_limit = commentMean + comment_anomaly_cut_off;
-		for (int i = 0; i < listComment.size(); i++) {
-			Comment comment = listComment.get(i);
-			builder.setText(comment.getCommentContent());
-			EntitiesSentiment elsa = client.entityLevelSentiment(builder.build());
-			if (elsa.getText().equals(keyword)) {
+				Post post = listPost.get(i);
+				builder.setText(post.getPostContent());
+				EntitiesSentiment elsa = client.entityLevelSentiment(builder.build());
 				List<EntitiySentiments> list = elsa.getEntitiySentiments();
+				countHit += entity_sentiment_count;
 				if (list.size() > 0) {
 					for (int x = 0; x < list.size(); x++) {
 						EntitiySentiments sen = list.get(x);
+						String word = sen.getMentions()[0].getText();
 						String mean = sen.getOverallSentiment().getPolarity();
 						float confidence = sen.getOverallSentiment().getConfidence();
-						if (mean.equals("negative") && confidence > 0.3) {
-							if (comment.getNumberOfReply() > comment_upper_limit
-									|| comment.getNumberOfReact() > react_upper_limit) {
-								// Add Crisis to Db
+						if (mean.equals("negative") && confidence > 0.3
+								&& word.toLowerCase().equals(keyword.toLowerCase())) {
+							if (reactMean < 50000 && shareMean < 50000 && commentMean < 50000) {
+								if (post.getNumberOfReply() > comment_upper_limit
+										|| post.getNumberOfReweet() > share_upper_limit
+										|| post.getNumberOfReact() > react_upper_limit) {
+									// Save crisis and check if already add or not
+									Crisis result = crisisService.findCrisis(post.getId(), "post", keyword);
+									if (result == null) {
+										Crisis crisis = new Crisis();
+										crisis.setContentId(post.getId());
+										crisis.setType("post");
+										crisis.setKeyword(keyword);
+										crisisService.saveCrisis(crisis);
+									}
+								}
+							} else {
+								if (post.getNumberOfReply() > commentMean || post.getNumberOfReweet() > shareMean
+										|| post.getNumberOfReact() > reactMean) {
+									// Save crisis and check if already add or not
+									Crisis result = crisisService.findCrisis(post.getId(), "post", keyword);
+									if (result == null) {
+										Crisis crisis = new Crisis();
+										crisis.setContentId(post.getId());
+										crisis.setType("post");
+										crisis.setKeyword(keyword);
+										crisisService.saveCrisis(crisis);
+									}
+								}
 							}
 						}
 					}
 				}
-			} else {
-				SentimentParams.Builder sentimentBuilder = SentimentParams.newBuilder();
-				sentimentBuilder.setText(comment.getCommentContent());
-				sentimentBuilder.setMode("tweet");
-				Sentiment sentiment = client.sentiment(sentimentBuilder.build());
-				if (sentiment.getPolarity().equals("negative") && sentiment.getPolarityConfidence() > 0.3) {
-					if (comment.getNumberOfReply() > comment_upper_limit
-							|| comment.getNumberOfReact() > react_upper_limit) {
-
-					}
-				}
 			}
+			Thread.sleep(1000 * 60 * 2);
+			List<Comment> listComment = new ArrayList<>();
+			for (int i = 0; i < listPost.size(); i++) {
+				Post post = listPost.get(i);
+				listComment.addAll(getRecentComment(post.getId()));
+			}
+			CheckMeaningCurrentComment checkMeaningCurrentComment = new CheckMeaningCurrentComment(client, keyword,
+					listComment, crisisService, postService, commentService);
+			checkMeaningCurrentComment.start();
+			this.stop();
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -410,41 +199,191 @@ public class CheckMeaningController {
 		return sum / m.length;
 	}
 
-	private List<Keyword> getRelate(String keyword) {
-		List<Keyword> list = new ArrayList<>();
-		return list;
-	}
-
-	private List<Post> getRecentPost(String keyword) {
-		// Get The list of post with latest date in DB
-		List<Post> posts = postService.getEachPostContentWithLatestDate(keyword);
-		return posts;
-	}
-
 	private List<Comment> getRecentComment(BigInteger PostId) {
 		// Get The list of comment with latest date in DB
 		List<Comment> listComment = commentService.getCommentByPostId(PostId);
 		return listComment;
+	}
+}
+
+class CheckMeaningCurrentComment extends Thread {
+	TextAPIClient client;
+	String keyword;
+	List<Comment> listComment;
+	CrisisService crisisService;
+	CommentService commentService;
+	int totalCount = 60;
+	int entity_sentiment_count = 3;
+	int sentiment_count = 1;
+	int countHit = 0;
+	PostService postService;
+
+	public CheckMeaningCurrentComment(TextAPIClient client, String keyword, List<Comment> listComment,
+			CrisisService crisisService, PostService postService, CommentService commentService) {
+		this.client = client;
+		this.keyword = keyword;
+		this.listComment = listComment;
+		this.crisisService = crisisService;
+		this.postService = postService;
+		this.commentService = commentService;
+	}
+
+	@Override
+	public synchronized void start() {
+		EntityLevelSentimentParams.Builder builder = EntityLevelSentimentParams.newBuilder();
+		double reactArray[] = new double[listComment.size()];
+		double commentArray[] = new double[listComment.size()];
+		for (int i = 0; i < listComment.size(); i++) {
+			Comment comment = listComment.get(i);
+			reactArray[i] = comment.getNumberOfReact();
+			commentArray[i] = comment.getNumberOfReply();
+		}
+		double reactStandart = calculateSD(reactArray);
+		double reactMean = mean(reactArray);
+		double react_anomaly_cut_off = reactStandart * 2;
+		double react_lower_limit = reactMean - react_anomaly_cut_off;
+		double react_upper_limit = reactMean + react_anomaly_cut_off;
+
+		double commentStandart = calculateSD(commentArray);
+		double commentMean = mean(commentArray);
+		double comment_anomaly_cut_off = commentStandart * 2;
+		double comment_lower_limit = commentMean - comment_anomaly_cut_off;
+		double comment_upper_limit = commentMean + comment_anomaly_cut_off;
+		try {
+			for (int i = 0; i < listComment.size(); i++) {
+				if (totalCount - countHit < entity_sentiment_count) {
+					countHit = 0;
+					this.sleep(1000 * 60 * 2);
+				}
+				Comment comment = listComment.get(i);
+				builder.setText(comment.getCommentContent());
+				EntitiesSentiment elsa = client.entityLevelSentiment(builder.build());
+				List<EntitiySentiments> list = elsa.getEntitiySentiments();
+				countHit += entity_sentiment_count;
+				if (list.size() > 0) {
+					for (int x = 0; x < list.size(); x++) {
+						EntitiySentiments sen = list.get(x);
+						String word = sen.getMentions()[0].getText();
+						String mean = sen.getOverallSentiment().getPolarity();
+						float confidence = sen.getOverallSentiment().getConfidence();
+						if (mean.equals("negative") && confidence > 0.3
+								&& word.toLowerCase().equals(keyword.toLowerCase())) {
+							if (reactMean < 50000 && commentMean < 50000) {
+								if (comment.getNumberOfReply() > comment_upper_limit
+										|| comment.getNumberOfReact() > react_upper_limit) {
+									// Add Crisis To Db
+									Crisis result = crisisService.findCrisis(comment.getId(), "comment", keyword);
+									if (result == null) {
+										Crisis crisis = new Crisis();
+										crisis.setContentId(comment.getId());
+										crisis.setType("comment");
+										crisis.setKeyword(keyword);
+										crisisService.saveCrisis(crisis);
+									}
+								}
+							} else {
+								if (comment.getNumberOfReply() > commentMean
+										|| comment.getNumberOfReact() > reactMean) {
+									Crisis result = crisisService.findCrisis(comment.getId(), "comment", keyword);
+									if (result == null) {
+										Crisis crisis = new Crisis();
+										crisis.setContentId(comment.getId());
+										crisis.setType("comment");
+										crisis.setKeyword(keyword);
+										crisisService.saveCrisis(crisis);
+									}
+								}
+							}
+						}
+					}
+				} else {
+					if (totalCount - countHit < sentiment_count) {
+						countHit = 0;
+						this.sleep(1000 * 60 * 2);
+					}
+					SentimentParams.Builder sentimentBuilder = SentimentParams.newBuilder();
+					sentimentBuilder.setText(comment.getCommentContent());
+					sentimentBuilder.setMode("tweet");
+					Sentiment sentiment = client.sentiment(sentimentBuilder.build());
+					countHit += sentiment_count;
+					if (sentiment.getPolarity().equals("negative") && sentiment.getPolarityConfidence() > 0.3) {
+						if (reactMean < 50000 && commentMean < 50000) {
+							if (comment.getNumberOfReply() > comment_upper_limit
+									|| comment.getNumberOfReact() > react_upper_limit) {
+								Crisis result = crisisService.findCrisis(comment.getId(), "comment", keyword);
+								if (result == null) {
+									Crisis crisis = new Crisis();
+									crisis.setContentId(comment.getId());
+									crisis.setType("comment");
+									crisis.setKeyword(keyword);
+									crisisService.saveCrisis(crisis);
+								}
+							}
+						} else {
+							if (comment.getNumberOfReply() > commentMean || comment.getNumberOfReact() > reactMean) {
+								Crisis result = crisisService.findCrisis(comment.getId(), "comment", keyword);
+								if (result == null) {
+									Crisis crisis = new Crisis();
+									crisis.setContentId(comment.getId());
+									crisis.setType("comment");
+									crisis.setKeyword(keyword);
+									crisisService.saveCrisis(crisis);
+								}
+							}
+						}
+					}
+				}
+			}
+			this.sleep(1000 * 60 * 2);
+			List<Post> listPost = getIncreasePost(keyword);
+			CheckMeaningIncreasePost checkMeaningIncreasePost = new CheckMeaningIncreasePost(client, keyword, listPost,
+					crisisService, commentService);
+			checkMeaningIncreasePost.start();
+			this.stop();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	private static double calculateSD(double numArray[]) {
+		double sum = 0.0, standardDeviation = 0.0;
+		int length = numArray.length;
+
+		for (double num : numArray) {
+			sum += num;
+		}
+
+		double mean = sum / length;
+
+		for (double num : numArray) {
+			standardDeviation += Math.pow(num - mean, 2);
+		}
+
+		return Math.sqrt(standardDeviation / length);
+	}
+
+	private static double mean(double[] m) {
+		double sum = 0;
+		for (int i = 0; i < m.length; i++) {
+			sum += m[i];
+		}
+		return sum / m.length;
 	}
 
 	private List<Post> getIncreasePost(String keyword) {
 		// Get the list of post with two latest date in DB
 		List<Post> listPost = postService.getPostContentWithTwoLatestDate(keyword);
 		List<Post> resultList = new ArrayList<>();
+		List<Post> sameContentPost = new ArrayList<>();
+		List<Post> sameContentPostSorted = new ArrayList<>();
 		for (int i = 0; i < listPost.size(); i++) {
 			if (i < listPost.size() - 1) {
 				Post post = listPost.get(i);
-				Post nextPost = listPost.get(i + 1);
-				if (post.getPostContent().equals(nextPost.getPostContent())) {
-					if (!checkExist(resultList, post.getPostContent())) {
-						if (post.getCrawlDate().after(nextPost.getCrawlDate())) {
-							resultList.add(post);
-							resultList.add(nextPost);
-						} else {
-							resultList.add(nextPost);
-							resultList.add(post);
-						}
-					}
+				sameContentPost = getListSameContent(listPost, post);
+				sameContentPostSorted = sortByCrawlDate(sameContentPost);
+				if (!checkExist(resultList, sameContentPostSorted.get(0).getPostContent())
+						&& sameContentPostSorted.size() == 2) {
+					resultList.addAll(sameContentPostSorted);
 				}
 			}
 		}
@@ -461,254 +400,374 @@ public class CheckMeaningController {
 		return false;
 	}
 
+	private List<Post> getListSameContent(List<Post> listPost, Post checkPost) {
+		List<Post> result = new ArrayList<>();
+		for (int i = 0; i < listPost.size(); i++) {
+			Post post = listPost.get(i);
+			if (checkPost.getPostContent().equals(post.getPostContent())) {
+				result.add(post);
+			}
+		}
+		return result;
+	}
+
+	private List<Post> sortByCrawlDate(List<Post> listPost) {
+		List<Post> result = new ArrayList<>();
+		for (int i = 0; i < listPost.size(); i++) {
+			Post post = listPost.get(i);
+			if (result.size() == 0) {
+				result.add(post);
+			} else if (result.size() == 1) {
+				if (post.getCrawlDate().before(result.get(0).getCrawlDate())) {
+					Post newPost = result.get(0);
+					result.set(0, post);
+					result.add(newPost);
+				} else if (post.getCrawlDate().after(result.get(0).getCrawlDate())) {
+					result.add(post);
+				}
+			} else if (result.size() == 2) {
+				if (post.getCrawlDate().after(result.get(1).getCrawlDate())) {
+					result.set(0, result.get(1));
+					result.set(1, post);
+				} else if (post.getCrawlDate().after(result.get(0).getCrawlDate())
+						&& post.getCrawlDate().before(result.get(1).getCrawlDate())) {
+					result.set(0, post);
+				}
+			}
+		}
+		return result;
+	}
+
+}
+
+class CheckMeaningIncreasePost extends Thread {
+	TextAPIClient client;
+	String keyword;
+	List<Post> listPost;
+	CrisisService crisisService;
+	CommentService commentService;
+	int totalCount = 60;
+	int entity_sentiment_count = 3;
+	int sentiment_count = 1;
+	int countHit = 0;
+
+	public CheckMeaningIncreasePost(TextAPIClient client, String keyword, List<Post> listPost,
+			CrisisService crisisService, CommentService commentService) {
+		this.client = client;
+		this.keyword = keyword;
+		this.listPost = listPost;
+		this.crisisService = crisisService;
+		this.commentService = commentService;
+	}
+
+	private static double calculateSD(double numArray[]) {
+		double sum = 0.0, standardDeviation = 0.0;
+		int length = numArray.length;
+
+		for (double num : numArray) {
+			sum += num;
+		}
+
+		double mean = sum / length;
+
+		for (double num : numArray) {
+			standardDeviation += Math.pow(num - mean, 2);
+		}
+
+		return Math.sqrt(standardDeviation / length);
+	}
+
+	private static double mean(double[] m) {
+		double sum = 0;
+		for (int i = 0; i < m.length; i++) {
+			sum += m[i];
+		}
+		return sum / m.length;
+	}
+
+	@Override
+	public synchronized void start() {
+		EntityLevelSentimentParams.Builder builder = EntityLevelSentimentParams.newBuilder();
+		double reactArray[] = new double[listPost.size()];
+		double shareArray[] = new double[listPost.size()];
+		double commentArray[] = new double[listPost.size()];
+		for (int i = 0; i < listPost.size(); i = i + 2) {
+			Post lastPost = listPost.get(i);
+			Post newPost = listPost.get(i + 1);
+			reactArray[i] = newPost.getNumberOfReact() - lastPost.getNumberOfReact();
+			shareArray[i] = newPost.getNumberOfReweet() - lastPost.getNumberOfReweet();
+			commentArray[i] = newPost.getNumberOfReply() - lastPost.getNumberOfReply();
+		}
+		double reactStandart = calculateSD(reactArray);
+		double reactMean = mean(reactArray);
+		double react_anomaly_cut_off = reactStandart * 2;
+		double react_lower_limit = reactMean - react_anomaly_cut_off;
+		double react_upper_limit = reactMean + react_anomaly_cut_off;
+
+		double shareStandart = calculateSD(shareArray);
+		double shareMean = mean(shareArray);
+		double share_anomaly_cut_off = shareStandart * 2;
+		double share_lower_limit = shareMean - share_anomaly_cut_off;
+		double share_upper_limit = shareMean + share_anomaly_cut_off;
+
+		double commentStandart = calculateSD(commentArray);
+		double commentMean = mean(commentArray);
+		double comment_anomaly_cut_off = commentStandart * 2;
+		double comment_lower_limit = commentMean - comment_anomaly_cut_off;
+		double comment_upper_limit = commentMean + comment_anomaly_cut_off;
+		try {
+			for (int i = 0; i < listPost.size(); i = i + 2) {
+				if (totalCount - countHit < entity_sentiment_count) {
+					countHit = 0;
+					this.sleep(1000 * 60 * 2);
+				}
+				Post post = listPost.get(i);
+				Post nextPost = listPost.get(i + 1);
+				builder.setText(post.getPostContent());
+				EntitiesSentiment elsa = client.entityLevelSentiment(builder.build());
+				List<EntitiySentiments> list = elsa.getEntitiySentiments();
+				countHit += entity_sentiment_count;
+				if (list.size() > 0) {
+					for (int x = 0; x < list.size(); x++) {
+						EntitiySentiments sen = list.get(x);
+						String mean = sen.getOverallSentiment().getPolarity();
+						float confidence = sen.getOverallSentiment().getConfidence();
+						String word = sen.getMentions()[0].getText();
+						if (mean.equals("negative") && confidence > 0.3
+								&& word.toLowerCase().equals(keyword.toLowerCase())) {
+							if (reactMean < 50000 && shareMean < 50000 && commentMean < 50000) {
+								if ((post.getNumberOfReply() - nextPost.getNumberOfReply()) > comment_upper_limit
+										|| (post.getNumberOfReweet() - nextPost.getNumberOfReweet()) > share_upper_limit
+										|| (post.getNumberOfReact()
+												- nextPost.getNumberOfReact()) > react_upper_limit) {
+									// Add Crisis To Db
+									Crisis result = crisisService.findCrisis(nextPost.getId(), "post", keyword);
+									if (result == null) {
+										Crisis crisis = new Crisis();
+										crisis.setContentId(nextPost.getId());
+										crisis.setType("post");
+										crisis.setKeyword(keyword);
+										crisisService.saveCrisis(crisis);
+									}
+								} else {
+									// Save crisis and check if already add or not
+									if (post.getNumberOfReply() > commentMean || post.getNumberOfReweet() > shareMean
+											|| post.getNumberOfReact() > reactMean) {
+										Crisis result = crisisService.findCrisis(nextPost.getId(), "post", keyword);
+										if (result == null) {
+											Crisis crisis = new Crisis();
+											crisis.setContentId(nextPost.getId());
+											crisis.setType("post");
+											crisis.setKeyword(keyword);
+											crisisService.saveCrisis(crisis);
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			this.sleep(100 * 60 * 2);
+			List<Comment> lastPostComment = new ArrayList<>();
+			List<Comment> newPostComment = new ArrayList<>();
+			List<Comment> listComment = new ArrayList<>();
+			for (int i = 0; i < listPost.size(); i = i + 2) {
+				Post post = listPost.get(i);
+				Post nextPost = listPost.get(i + 1);
+				lastPostComment.addAll(getIncreaseComment(post.getId()));
+				newPostComment.addAll(getIncreaseComment(nextPost.getId()));
+			}
+			for (int i = 0; i < lastPostComment.size(); i++) {
+				Comment lastComment = lastPostComment.get(i);
+				int result = findComment(newPostComment, lastComment);
+				if (result != -1) {
+					listComment.add(lastComment);
+					listComment.add(newPostComment.get(result));
+				}
+			}
+			CheckMeaningIncreaseComment checkMeaningIncreaseComment = new CheckMeaningIncreaseComment(client, keyword,
+					listComment, crisisService);
+			checkMeaningIncreaseComment.start();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	private int findComment(List<Comment> listComment, Comment comment) {
+		for (int i = 0; i < listComment.size(); i++) {
+			if (comment.getCommentContent().equals(listComment.get(i).getCommentContent())) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
 	private List<Comment> getIncreaseComment(BigInteger PostId) {
 		// Get the list of comment with two latest date in DB
 		List<Comment> listComment = commentService.getCommentByPostId(PostId);
 		return listComment;
 	}
+}
 
-	private List<Post> getRecentPostRelate(String keyword) {
-		// Get The list of relate post with latest date in DB
-		List<Post> listPost = new ArrayList<>();
-		return listPost;
+class CheckMeaningIncreaseComment extends Thread {
+	TextAPIClient client;
+	String keyword;
+	List<Comment> listComment;
+	CrisisService crisisService;
+	int totalCount = 60;
+	int entity_sentiment_count = 3;
+	int sentiment_count = 1;
+	int countHit = 0;
+
+	public CheckMeaningIncreaseComment(TextAPIClient client, String keyword, List<Comment> listComment,
+			CrisisService crisisService) {
+		this.client = client;
+		this.keyword = keyword;
+		this.listComment = listComment;
+		this.crisisService = crisisService;
 	}
 
-	private List<Comment> getRecentCommentRelate(String PostId) {
-		// Get The list of relate comment with latest date in DB
-		List<Comment> listComment = new ArrayList<>();
-		return listComment;
+	private static double calculateSD(double numArray[]) {
+		double sum = 0.0, standardDeviation = 0.0;
+		int length = numArray.length;
+
+		for (double num : numArray) {
+			sum += num;
+		}
+
+		double mean = sum / length;
+
+		for (double num : numArray) {
+			standardDeviation += Math.pow(num - mean, 2);
+		}
+
+		return Math.sqrt(standardDeviation / length);
 	}
 
-	private List<Post> getIncreasePostRelate(String keyword) {
-		// Get the list of relate post with two latest date in DB
-		List<Post> listPost = new ArrayList<>();
-		return listPost;
+	private static double mean(double[] m) {
+		double sum = 0;
+		for (int i = 0; i < m.length; i++) {
+			sum += m[i];
+		}
+		return sum / m.length;
 	}
 
-	private List<Comment> getIncreaseCommentRelate(String PostId) {
-		// Get the list of relate comment with two latest date in DB
-		List<Comment> listComment = new ArrayList<>();
-		return listComment;
-	}
+	@Override
+	public synchronized void start() {
+		EntityLevelSentimentParams.Builder builder = EntityLevelSentimentParams.newBuilder();
+		int size = 0;
+		double reactArray[] = new double[listComment.size() / 2];
+		double commentArray[] = new double[listComment.size() / 2];
+		for (int i = 0; i < listComment.size(); i = i + 2) {
+			Comment lastComment = listComment.get(i);
+			Comment newComment = listComment.get(i + 1);
+			reactArray[i] = newComment.getNumberOfReact() - lastComment.getNumberOfReact();
+			commentArray[i] = newComment.getNumberOfReply() - lastComment.getNumberOfReply();
+		}
+		double reactStandart = calculateSD(reactArray);
+		double reactMean = mean(reactArray);
+		double react_anomaly_cut_off = reactStandart * 2;
+		double react_lower_limit = reactMean - react_anomaly_cut_off;
+		double react_upper_limit = reactMean + react_anomaly_cut_off;
 
-	// private void checkMeaningRelate(String relateKeyword, TextAPIClient client)
-	// throws Exception {
-	// List<Post> listPost = getRecentPostRelate(relateKeyword);
-	// List<Comment> listComment = new ArrayList<>();
-	// for (int i = 0; i < listPost.size(); i++) {
-	// Post post = listPost.get(i);
-	// listComment.addAll(getRecentCommentRelate(post.getId()));
-	// }
-	// checkMeaningRecentPost(listPost, relateKeyword, client);
-	// checkMeaningRecentComment(listComment, relateKeyword, client);
-	// CheckMeaningIncreaseRelatePost(listPost, relateKeyword, client);
-	// checkMeaningIncreaseRelateComment(listComment, relateKeyword, client);
-	// }
-	//
-	// private void checkMeaningRecentPost(List<Post> listPost, String
-	// relateKeyword, TextAPIClient client)
-	// throws Exception {
-	// double reactArray[] = new double[listPost.size()];
-	// double shareArray[] = new double[listPost.size()];
-	// double commentArray[] = new double[listPost.size()];
-	// for (int i = 0; i < listPost.size(); i++) {
-	// Post post = listPost.get(i);
-	// reactArray[i] = post.getNumbet_Of_React();
-	// shareArray[i] = post.getNumber_of_Share();
-	// commentArray[i] = post.getNumber_Of_Comment();
-	// }
-	// double reactStandart = calculateSD(reactArray);
-	// double reactMean = mean(reactArray);
-	// double react_anomaly_cut_off = reactStandart * 3;
-	// double react_lower_limit = reactMean - react_anomaly_cut_off;
-	// double react_upper_limit = reactMean + react_anomaly_cut_off;
-	//
-	// double shareStandart = calculateSD(shareArray);
-	// double shareMean = mean(reactArray);
-	// double share_anomaly_cut_off = shareStandart * 3;
-	// double share_lower_limit = shareMean - share_anomaly_cut_off;
-	// double share_upper_limit = shareMean + share_anomaly_cut_off;
-	//
-	// double commentStandart = calculateSD(commentArray);
-	// double commentMean = mean(reactArray);
-	// double comment_anomaly_cut_off = commentStandart * 3;
-	// double comment_lower_limit = commentMean - comment_anomaly_cut_off;
-	// double comment_upper_limit = commentMean + comment_anomaly_cut_off;
-	// for (int i = 0; i < listPost.size(); i++) {
-	// Post post = listPost.get(i);
-	// EntityLevelSentimentParams.Builder builder =
-	// EntityLevelSentimentParams.newBuilder();
-	// builder.setText(post.getContent());
-	// EntitiesSentiment elsa = client.entityLevelSentiment(builder.build());
-	// if (elsa.getText().equals(relateKeyword)) {
-	// List<EntitiySentiments> list = elsa.getEntitiySentiments();
-	// if (list.size() > 0) {
-	// for (int x = 0; x < list.size(); x++) {
-	// EntitiySentiments sen = list.get(x);
-	// String mean = sen.getOverallSentiment().getPolarity();
-	// float confidence = sen.getOverallSentiment().getConfidence();
-	// if (mean.equals("negative") && confidence > 0.3) {
-	// if (post.getNumber_Of_Comment() > comment_upper_limit
-	// || post.getNumber_of_Share() > share_upper_limit
-	// || post.getNumbet_Of_React() > react_upper_limit) {
-	//
-	// }
-	// }
-	// }
-	// }
-	// }
-	// }
-	// }
-	//
-	// private void checkMeaningRecentComment(List<Comment> listComment, String
-	// relateKeyword, TextAPIClient client)
-	// throws Exception {
-	// EntityLevelSentimentParams.Builder builder =
-	// EntityLevelSentimentParams.newBuilder();
-	// double reactArray[] = new double[listComment.size()];
-	// double commentArray[] = new double[listComment.size()];
-	// for (int i = 0; i < listComment.size(); i++) {
-	// Comment comment = listComment.get(i);
-	// reactArray[i] = comment.getNumbet_Of_React();
-	// commentArray[i] = comment.getNumber_Of_Reply();
-	// }
-	// double reactStandart = calculateSD(reactArray);
-	// double reactMean = mean(reactArray);
-	// double react_anomaly_cut_off = reactStandart * 3;
-	// double react_lower_limit = reactMean - react_anomaly_cut_off;
-	// double react_upper_limit = reactMean + react_anomaly_cut_off;
-	//
-	// double commentStandart = calculateSD(commentArray);
-	// double commentMean = mean(reactArray);
-	// double comment_anomaly_cut_off = commentStandart * 3;
-	// double comment_lower_limit = commentMean - comment_anomaly_cut_off;
-	// double comment_upper_limit = commentMean + comment_anomaly_cut_off;
-	// for (int i = 0; i < listComment.size(); i++) {
-	// Comment comment = listComment.get(i);
-	// builder.setText(comment.getContent());
-	// EntitiesSentiment elsa = client.entityLevelSentiment(builder.build());
-	// if (elsa.getText().equals(relateKeyword)) {
-	// List<EntitiySentiments> list = elsa.getEntitiySentiments();
-	// if (list.size() > 0) {
-	// for (int x = 0; x < list.size(); x++) {
-	// EntitiySentiments sen = list.get(x);
-	// String mean = sen.getOverallSentiment().getPolarity();
-	// float confidence = sen.getOverallSentiment().getConfidence();
-	// if (mean.equals("negative") && confidence > 0.3) {
-	// if (comment.getNumber_Of_Reply() > comment_upper_limit
-	// || comment.getNumbet_Of_React() > react_upper_limit) {
-	//
-	// }
-	// }
-	// }
-	// }
-	// }
-	// }
-	// }
-	//
-	// private void CheckMeaningIncreaseRelatePost(List<Post> listPost, String
-	// keyword, TextAPIClient client)
-	// throws Exception {
-	// EntityLevelSentimentParams.Builder builder =
-	// EntityLevelSentimentParams.newBuilder();
-	// double reactArray[] = new double[listPost.size()];
-	// double shareArray[] = new double[listPost.size()];
-	// double commentArray[] = new double[listPost.size()];
-	// for (int i = 0; i < listPost.size(); i = i + 2) {
-	// Post lastPost = listPost.get(i);
-	// Post newPost = listPost.get(i + 1);
-	// reactArray[i] = newPost.getNumbet_Of_React() - lastPost.getNumbet_Of_React();
-	// shareArray[i] = newPost.getNumber_of_Share() - lastPost.getNumber_of_Share();
-	// commentArray[i] = newPost.getNumber_Of_Comment() -
-	// lastPost.getNumber_Of_Comment();
-	// }
-	// double reactStandart = calculateSD(reactArray);
-	// double reactMean = mean(reactArray);
-	// double react_anomaly_cut_off = reactStandart * 3;
-	// double react_lower_limit = reactMean - react_anomaly_cut_off;
-	// double react_upper_limit = reactMean + react_anomaly_cut_off;
-	//
-	// double shareStandart = calculateSD(shareArray);
-	// double shareMean = mean(reactArray);
-	// double share_anomaly_cut_off = shareStandart * 3;
-	// double share_lower_limit = shareMean - share_anomaly_cut_off;
-	// double share_upper_limit = shareMean + share_anomaly_cut_off;
-	//
-	// double commentStandart = calculateSD(commentArray);
-	// double commentMean = mean(reactArray);
-	// double comment_anomaly_cut_off = commentStandart * 3;
-	// double comment_lower_limit = commentMean - comment_anomaly_cut_off;
-	// double comment_upper_limit = commentMean + comment_anomaly_cut_off;
-	// for (int i = 0; i < listPost.size(); i++) {
-	// Post post = listPost.get(i);
-	// builder.setText(post.getContent());
-	// EntitiesSentiment elsa = client.entityLevelSentiment(builder.build());
-	// if (elsa.getText().equals(keyword)) {
-	// List<EntitiySentiments> list = elsa.getEntitiySentiments();
-	// if (list.size() > 0) {
-	// for (int x = 0; x < list.size(); x++) {
-	// EntitiySentiments sen = list.get(x);
-	// String mean = sen.getOverallSentiment().getPolarity();
-	// float confidence = sen.getOverallSentiment().getConfidence();
-	// if (mean.equals("negative") && confidence > 0.3) {
-	// if (post.getNumber_Of_Comment() > comment_upper_limit
-	// || post.getNumber_of_Share() > share_upper_limit
-	// || post.getNumbet_Of_React() > react_upper_limit) {
-	// // Add Crisis To Db
-	// }
-	// }
-	// }
-	// }
-	// }
-	// }
-	// }
-	//
-	// private void checkMeaningIncreaseRelateComment(List<Comment> listComment,
-	// String keyword, TextAPIClient client)
-	// throws Exception {
-	// EntityLevelSentimentParams.Builder builder =
-	// EntityLevelSentimentParams.newBuilder();
-	// double reactArray[] = new double[listComment.size()];
-	// double commentArray[] = new double[listComment.size()];
-	// for (int i = 0; i < listComment.size(); i = i + 2) {
-	// Comment lastComment = listComment.get(i);
-	// Comment newComment = listComment.get(i);
-	// reactArray[i] = newComment.getNumbet_Of_React() -
-	// lastComment.getNumbet_Of_React();
-	// commentArray[i] = newComment.getNumber_Of_Reply() -
-	// lastComment.getNumber_Of_Reply();
-	// }
-	// double reactStandart = calculateSD(reactArray);
-	// double reactMean = mean(reactArray);
-	// double react_anomaly_cut_off = reactStandart * 3;
-	// double react_lower_limit = reactMean - react_anomaly_cut_off;
-	// double react_upper_limit = reactMean + react_anomaly_cut_off;
-	//
-	// double commentStandart = calculateSD(commentArray);
-	// double commentMean = mean(reactArray);
-	// double comment_anomaly_cut_off = commentStandart * 3;
-	// double comment_lower_limit = commentMean - comment_anomaly_cut_off;
-	// double comment_upper_limit = commentMean + comment_anomaly_cut_off;
-	// for (int i = 0; i < listComment.size(); i++) {
-	// Comment comment = listComment.get(i);
-	// builder.setText(comment.getContent());
-	// EntitiesSentiment elsa = client.entityLevelSentiment(builder.build());
-	// if (elsa.getText().equals(keyword)) {
-	// List<EntitiySentiments> list = elsa.getEntitiySentiments();
-	// if (list.size() > 0) {
-	// for (int x = 0; x < list.size(); x++) {
-	// EntitiySentiments sen = list.get(x);
-	// String mean = sen.getOverallSentiment().getPolarity();
-	// float confidence = sen.getOverallSentiment().getConfidence();
-	// if (mean.equals("negative") && confidence > 0.3) {
-	// if (comment.getNumber_Of_Reply() > comment_upper_limit
-	// || comment.getNumbet_Of_React() > react_upper_limit) {
-	// // Add Crisis to Db
-	// }
-	// }
-	// }
-	// }
-	// }
-	// }
-	// }
+		double commentStandart = calculateSD(commentArray);
+		double commentMean = mean(commentArray);
+		double comment_anomaly_cut_off = commentStandart * 2;
+		double comment_lower_limit = commentMean - comment_anomaly_cut_off;
+		double comment_upper_limit = commentMean + comment_anomaly_cut_off;
+		try {
+			for (int i = 0; i < listComment.size(); i++) {
+				if (totalCount - countHit < entity_sentiment_count) {
+					countHit = 0;
+					this.sleep(1000 * 60 * 2);
+				}
+				Comment lastComment = listComment.get(i);
+				Comment newComment = listComment.get(i + 1);
+				builder.setText(newComment.getCommentContent());
+				EntitiesSentiment elsa = client.entityLevelSentiment(builder.build());
+				List<EntitiySentiments> list = elsa.getEntitiySentiments();
+				countHit += entity_sentiment_count;
+				if (list.size() > 0) {
+					for (int x = 0; x < list.size(); x++) {
+						EntitiySentiments sen = list.get(x);
+						String mean = sen.getOverallSentiment().getPolarity();
+						float confidence = sen.getOverallSentiment().getConfidence();
+						String word = sen.getMentions()[0].getText();
+						if (mean.equals("negative") && confidence > 0.3
+								&& word.toLowerCase().equals(keyword.toLowerCase())) {
+							if (reactMean < 50000 && commentMean < 50000) {
+								if ((lastComment.getNumberOfReply()
+										- newComment.getNumberOfReply()) > comment_upper_limit
+										|| (lastComment.getNumberOfReact()
+												- newComment.getNumberOfReact()) > react_upper_limit) {
+									// Add Crisis to Db
+									Crisis result = crisisService.findCrisis(newComment.getId(), "comment", keyword);
+									if (result == null) {
+										Crisis crisis = new Crisis();
+										crisis.setContentId(newComment.getId());
+										crisis.setType("comment");
+										crisis.setKeyword(keyword);
+										crisisService.saveCrisis(crisis);
+									}
+								}
+							} else {
+								if (lastComment.getNumberOfReply() > commentMean
+										|| lastComment.getNumberOfReact() > reactMean) {
+									Crisis result = crisisService.findCrisis(newComment.getId(), "comment", keyword);
+									if (result == null) {
+										Crisis crisis = new Crisis();
+										crisis.setContentId(newComment.getId());
+										crisis.setType("comment");
+										crisis.setKeyword(keyword);
+										crisisService.saveCrisis(crisis);
+									}
+								}
+							}
+						}
+					}
+				} else {
+					SentimentParams.Builder sentimentBuilder = SentimentParams.newBuilder();
+					sentimentBuilder.setText(newComment.getCommentContent());
+					sentimentBuilder.setMode("tweet");
+					Sentiment sentiment = client.sentiment(sentimentBuilder.build());
+					countHit += sentiment_count;
+					if (sentiment.getPolarity().equals("negative") && sentiment.getPolarityConfidence() > 0.3) {
+						if (reactMean < 50000 && commentMean < 50000) {
+							if ((lastComment.getNumberOfReply() - newComment.getNumberOfReply()) > comment_upper_limit
+									|| (lastComment.getNumberOfReact()
+											- newComment.getNumberOfReact()) > react_upper_limit) {
+								Crisis result = crisisService.findCrisis(newComment.getId(), "comment", keyword);
+								if (result == null) {
+									Crisis crisis = new Crisis();
+									crisis.setContentId(newComment.getId());
+									crisis.setType("comment");
+									crisis.setKeyword(keyword);
+									crisisService.saveCrisis(crisis);
+								}
+							}
+						} else {
+							if (lastComment.getNumberOfReply() > commentMean
+									|| lastComment.getNumberOfReact() > reactMean) {
+								Crisis result = crisisService.findCrisis(newComment.getId(), "comment", keyword);
+								if (result == null) {
+									Crisis crisis = new Crisis();
+									crisis.setContentId(newComment.getId());
+									crisis.setType("comment");
+									crisis.setKeyword(keyword);
+									crisisService.saveCrisis(crisis);
+								}
+							}
+						}
+					}
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+}
+
+class Test {
+
 }

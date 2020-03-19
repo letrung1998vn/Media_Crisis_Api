@@ -159,39 +159,38 @@ public class KeywordController {
 		return mod;
 	}
 
-//	@PostMapping("deleteKeyword")
-//	public MessageOutputModel deleteKeyword(@RequestParam(value = "id") int id,
-//			@RequestParam(value = "logVersion") int log_version, @RequestParam(value = "author") String author) {
-//
-//		MessageOutputModel mod = new MessageOutputModel();
-//		User user = userService.getByUsername(author);
-//		boolean havePermissionToDelete = false;
-//
-//		if ((user.getRole().equals("user") && user.isAvailable()) || user.getRole().equals("admin")) {
-//			havePermissionToDelete = true;
-//		} else {
-//			mod.setStatusCode(3);
-//			mod.setStatusMessage("Your account has been disabled. Please contact admin for more information!");
-//		}
-//		if (havePermissionToDelete) {
-//			Keyword kw = keywordService.getKeywordById(id);
-//			if (kw == null) {
-//				mod.setStatusCode(4);
-//				mod.setStatusMessage("This keyword is not exist anymore.");
-//
-//			} else {
-//				if (kw.getVersion() == log_version) {
-//					keywordService.deleteKeyword(kw);
-//					mod.setStatusCode(2);
-//					mod.setStatusMessage("Deleted successfully!");
-//				} else {
-//					mod.setStatusCode(4);
-//					mod.setStatusMessage(
-//							"Your current keyword list is already old, please try again with the new one.");
-//				}
-//			}
-//		}
-//		return mod;
-//	}
+	@PostMapping("deleteKeyword")
+	public MessageOutputModel deleteKeyword(@RequestParam(value = "id") int id,
+			@RequestParam(value = "logVersion") int log_version, @RequestParam(value = "author") String author) {
+
+		MessageOutputModel mod = new MessageOutputModel();
+		User user = userService.getUserByUsername(author);
+		boolean havePermissionToDelete = false;
+
+		if (!(user.getRole().equals("user") && !user.isAvailable())) {
+			havePermissionToDelete = true;
+		} else {
+			mod.setStatusCode(3);
+			mod.setStatusMessage("Your account has been disabled. Please contact admin for more information!");
+		}
+		if (havePermissionToDelete) {
+			Keyword kw = keywordService.getKeywordById(id);
+			if (kw == null) {
+				mod.setStatusCode(4);
+				mod.setStatusMessage("This keyword is not exist anymore.");
+			} else {
+				if (kw.getVersion() == log_version) {
+					keywordService.deleteKeyword(kw);
+					mod.setStatusCode(2);
+					mod.setStatusMessage("Deleted successfully!");
+				} else {
+					mod.setStatusCode(4);
+					mod.setStatusMessage(
+							"Your current keyword list is already old, please try again with the new one.");
+				}
+			}
+		}
+		return mod;
+	}
 
 }
