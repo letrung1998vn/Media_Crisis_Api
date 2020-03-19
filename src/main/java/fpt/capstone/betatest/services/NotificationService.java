@@ -1,6 +1,7 @@
 package fpt.capstone.betatest.services;
 
 import java.sql.Date;
+import java.util.List;
 
 import javax.transaction.Transactional;
 
@@ -24,5 +25,10 @@ public class NotificationService {
 	@Transactional
 	public int getId(User userName, boolean email, boolean webhook, Date date) {
 		return notificationRepository.findByUserAndEmailAndWebhookAndDate(userName, email, webhook, date);
+	}
+	
+	@Transactional
+	public List<Notification> getListNotification(User userName) {
+		return notificationRepository.findByUser(userName);
 	}
 }

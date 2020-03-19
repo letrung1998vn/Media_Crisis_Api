@@ -1,5 +1,7 @@
 package fpt.capstone.betatest.services;
 
+import java.util.List;
+
 import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +18,11 @@ public class NotificationContentService {
 	@Transactional
 	public Notification_Content save(Notification_Content notification_Content) {
 		return notificationContentRepository.save(notification_Content);
+	}
+	
+	@Transactional
+	public List<Notification_Content> getNotificationContent(int notificationId) {
+		return notificationContentRepository.findByNotificationId(notificationId);
 	}
 	
 }
