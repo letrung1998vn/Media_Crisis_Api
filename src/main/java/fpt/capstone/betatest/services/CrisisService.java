@@ -22,7 +22,7 @@ public class CrisisService {
 	}
 
 	@Transactional
-	public Crisis findCrisis(BigInteger ContentId, String Type,String keyword) {
+	public Crisis findCrisis(BigInteger ContentId, String Type, String keyword) {
 		return crisisRepository.findByContentIdAndTypeAndKeyword(ContentId, Type, keyword);
 	}
 	
