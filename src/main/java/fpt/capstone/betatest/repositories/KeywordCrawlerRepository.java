@@ -11,6 +11,7 @@ import fpt.capstone.betatest.entities.Keyword_Crawler;
 @Repository("keywordCrawlerRepository")
 public interface KeywordCrawlerRepository extends JpaRepository<Keyword_Crawler, Integer> {
 	Keyword_Crawler findByKeyword(String keyword);
-	@Query(nativeQuery=true, value="select * from Keyword_Crawler")
+
+	@Query(nativeQuery = true, value = "select * from Keyword_Crawler")
 	List<Keyword_Crawler> getAllKeyword();
 }
