@@ -12,9 +12,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import fpt.capstone.betatest.entities.Keyword;
+import fpt.capstone.betatest.entities.Keyword_Crawler;
 import fpt.capstone.betatest.entities.User;
 import fpt.capstone.betatest.model.MessageOutputModel;
 import fpt.capstone.betatest.repositories.KeywordRepository;
+import fpt.capstone.betatest.services.KeywordCrawlerService;
 import fpt.capstone.betatest.services.KeywordService;
 import fpt.capstone.betatest.services.UserInfoService;
 import fpt.capstone.betatest.services.UserService;
@@ -26,6 +28,8 @@ public class KeywordController {
 	KeywordService keywordService;
 	@Autowired
 	private UserService userService;
+	@Autowired
+	private KeywordCrawlerService keywordCrawlerService;
 
 	@GetMapping("findAll")
 	public MessageOutputModel findAll() {
@@ -107,6 +111,12 @@ public class KeywordController {
 			mod.setStatusMessage("Your account has been disabled. Please contact admin for more information!");
 		}
 		if (havePermissionToCreate) {
+			boolean existed = keywordCrawlerService.checkExist(keyword);
+			if (!existed) {
+				Keyword_Crawler kc = new Keyword_Crawler();
+				kc.setKeyword(keyword);
+				keywordCrawlerService.saveKeyword(kc);
+			}
 			kw.setKeyword(keyword);
 			kw.setUser(user);
 			kw.setAvailable(true);
@@ -150,6 +160,12 @@ public class KeywordController {
 			mod.setStatusMessage("Your account has been disabled. Please contact admin for more information!");
 		}
 		if (havePermissionToUpdate) {
+			boolean existed = keywordCrawlerService.checkExist(keyword);
+			if (!existed) {
+				Keyword_Crawler kc = new Keyword_Crawler();
+				kc.setKeyword(keyword);
+				keywordCrawlerService.saveKeyword(kc);
+			}
 			kw.setKeyword(keyword);
 			kw.setVersion(kw.getVersion() + 1);
 			keywordService.saveKeyword(kw);
