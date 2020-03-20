@@ -67,6 +67,7 @@ class CheckThread extends Thread {
 
 	@Override
 	public synchronized void start() {
+		//Get all Keyword from keyword crawler
 		List<Keyword> listKeyword = keywordService.getAllKeyword();
 		for (int i = 0; i < listKeyword.size(); i++) {
 			try {
@@ -81,8 +82,8 @@ class CheckThread extends Thread {
 
 	private void DetectCrisisInCurrent(String keyword, TextAPIClient client, CheckThread check) throws Exception {
 		List<Post> listPost = getRecentPost(keyword);
-		CheckMeaningCurrentPostThreadThread CheckMeaningCurrentPostThread = new CheckMeaningCurrentPostThreadThread(client, keyword, listPost,
-				crisisService, commentService, postService, check);
+		CheckMeaningCurrentPostThreadThread CheckMeaningCurrentPostThread = new CheckMeaningCurrentPostThreadThread(
+				client, keyword, listPost, crisisService, commentService, postService, check);
 		CheckMeaningCurrentPostThread.start();
 	}
 
@@ -147,10 +148,14 @@ class CheckMeaningCurrentPostThreadThread extends Thread {
 		double comment_lower_limit = commentMean - comment_anomaly_cut_off;
 		double comment_upper_limit = commentMean + comment_anomaly_cut_off;
 		try {
+			if (listPost.size() <= 0) {
+				check.notify();
+				this.stop();
+			}
 			for (int i = 0; i < listPost.size(); i++) {
 				if (totalCount - countHit < entity_sentiment_count) {
 					countHit = 0;
-					this.sleep(1000 * 60 * 2);
+					this.sleep(1000 * 60 * 1);
 				}
 				Post post = listPost.get(i);
 				builder.setText(post.getPostContent());
@@ -197,14 +202,14 @@ class CheckMeaningCurrentPostThreadThread extends Thread {
 					}
 				}
 			}
-			Thread.sleep(1000 * 60 * 2);
+			Thread.sleep(1000 * 60 * 1);
 			List<Comment> listComment = new ArrayList<>();
 			for (int i = 0; i < listPost.size(); i++) {
 				Post post = listPost.get(i);
 				listComment.addAll(getRecentComment(post.getId()));
 			}
-			CheckMeaningCurrentCommentThread CheckMeaningCurrentCommentThread = new CheckMeaningCurrentCommentThread(client, keyword,
-					listComment, crisisService, postService, commentService, check);
+			CheckMeaningCurrentCommentThread CheckMeaningCurrentCommentThread = new CheckMeaningCurrentCommentThread(
+					client, keyword, listComment, crisisService, postService, commentService, check);
 			CheckMeaningCurrentCommentThread.start();
 			this.stop();
 		} catch (Exception e) {
@@ -293,7 +298,7 @@ class CheckMeaningCurrentCommentThread extends Thread {
 			for (int i = 0; i < listComment.size(); i++) {
 				if (totalCount - countHit < entity_sentiment_count) {
 					countHit = 0;
-					this.sleep(1000 * 60 * 2);
+					this.sleep(1000 * 60 * 1);
 				}
 				Comment comment = listComment.get(i);
 				builder.setText(comment.getCommentContent());
@@ -339,7 +344,7 @@ class CheckMeaningCurrentCommentThread extends Thread {
 				} else {
 					if (totalCount - countHit < sentiment_count) {
 						countHit = 0;
-						this.sleep(1000 * 60 * 2);
+						this.sleep(1000 * 60 * 1);
 					}
 					SentimentParams.Builder sentimentBuilder = SentimentParams.newBuilder();
 					sentimentBuilder.setText(comment.getCommentContent());
@@ -374,10 +379,10 @@ class CheckMeaningCurrentCommentThread extends Thread {
 					}
 				}
 			}
-			this.sleep(1000 * 60 * 2);
+			this.sleep(1000 * 60 * 1);
 			List<Post> listPost = getIncreasePost(keyword);
-			CheckMeaningIncreasePostThread CheckMeaningIncreasePostThread = new CheckMeaningIncreasePostThread(client, keyword, listPost,
-					crisisService, commentService, check);
+			CheckMeaningIncreasePostThread CheckMeaningIncreasePostThread = new CheckMeaningIncreasePostThread(client,
+					keyword, listPost, crisisService, commentService, check);
 			CheckMeaningIncreasePostThread.start();
 			this.stop();
 		} catch (Exception e) {
@@ -558,10 +563,14 @@ class CheckMeaningIncreasePostThread extends Thread {
 		double comment_lower_limit = commentMean - comment_anomaly_cut_off;
 		double comment_upper_limit = commentMean + comment_anomaly_cut_off;
 		try {
+			if (listPost.size() <= 0) {
+				check.notify();
+				this.stop();
+			}
 			for (int i = 0; i < listPost.size(); i = i + 2) {
 				if (totalCount - countHit < entity_sentiment_count) {
 					countHit = 0;
-					this.sleep(1000 * 60 * 2);
+					this.sleep(1000 * 60 * 1);
 				}
 				Post post = listPost.get(i);
 				Post nextPost = listPost.get(i + 1);
@@ -610,7 +619,7 @@ class CheckMeaningIncreasePostThread extends Thread {
 					}
 				}
 			}
-			this.sleep(100 * 60 * 2);
+			this.sleep(100 * 60 * 1);
 			List<Comment> lastPostComment = new ArrayList<>();
 			List<Comment> newPostComment = new ArrayList<>();
 			List<Comment> listComment = new ArrayList<>();
@@ -628,8 +637,8 @@ class CheckMeaningIncreasePostThread extends Thread {
 					listComment.add(newPostComment.get(result));
 				}
 			}
-			CheckMeaningIncreaseCommentThread CheckMeaningIncreaseCommentThread = new CheckMeaningIncreaseCommentThread(client, keyword,
-					listComment, crisisService, check);
+			CheckMeaningIncreaseCommentThread CheckMeaningIncreaseCommentThread = new CheckMeaningIncreaseCommentThread(
+					client, keyword, listComment, crisisService, check);
 			CheckMeaningIncreaseCommentThread.start();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -724,7 +733,7 @@ class CheckMeaningIncreaseCommentThread extends Thread {
 			for (int i = 0; i < listComment.size(); i++) {
 				if (totalCount - countHit < entity_sentiment_count) {
 					countHit = 0;
-					this.sleep(1000 * 60 * 2);
+					this.sleep(1000 * 60 * 1);
 				}
 				Comment lastComment = listComment.get(i);
 				Comment newComment = listComment.get(i + 1);
