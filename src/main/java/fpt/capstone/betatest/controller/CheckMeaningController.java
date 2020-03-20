@@ -21,9 +21,11 @@ import com.aylien.textapi.responses.Sentiment;
 import fpt.capstone.betatest.entities.Comment;
 import fpt.capstone.betatest.entities.Crisis;
 import fpt.capstone.betatest.entities.Keyword;
+import fpt.capstone.betatest.entities.Keyword_Crawler;
 import fpt.capstone.betatest.entities.Post;
 import fpt.capstone.betatest.services.CommentService;
 import fpt.capstone.betatest.services.CrisisService;
+import fpt.capstone.betatest.services.KeywordCrawlerService;
 import fpt.capstone.betatest.services.KeywordService;
 import fpt.capstone.betatest.services.PostService;
 import fpt.capstone.betatest.services.UserService;
@@ -38,12 +40,12 @@ public class CheckMeaningController {
 	@Autowired
 	CrisisService crisisService;
 	@Autowired
-	KeywordService keywordService;
+	KeywordCrawlerService keywordCrawlerService;
 
 	@GetMapping("check")
 	public void checkMeaning() throws Exception {
 		TextAPIClient client = new TextAPIClient("43faa103", "f2aaee05b21dabe934b89bd3198801e8");
-		CheckThread check = new CheckThread(client, crisisService, commentService, postService, keywordService);
+		CheckThread check = new CheckThread(client, crisisService, commentService, postService, keywordCrawlerService);
 		check.start();
 	}
 
@@ -54,21 +56,21 @@ class CheckThread extends Thread {
 	CrisisService crisisService;
 	CommentService commentService;
 	PostService postService;
-	KeywordService keywordService;
+	KeywordCrawlerService keywordCrawlerService;
 
 	public CheckThread(TextAPIClient client, CrisisService crisisService, CommentService commentService,
-			PostService postService, KeywordService keywordService) {
+			PostService postService, KeywordCrawlerService keywordCrawlerService) {
 		this.client = client;
 		this.crisisService = crisisService;
 		this.commentService = commentService;
 		this.postService = postService;
-		this.keywordService = keywordService;
+		this.keywordCrawlerService = keywordCrawlerService;
 	}
 
 	@Override
 	public synchronized void start() {
-		//Get all Keyword from keyword crawler
-		List<Keyword> listKeyword = keywordService.getAllKeyword();
+		// Get all Keyword from keyword crawler
+		List<Keyword_Crawler> listKeyword = keywordCrawlerService.getAllKeyword();
 		for (int i = 0; i < listKeyword.size(); i++) {
 			try {
 				DetectCrisisInCurrent(listKeyword.get(i).getKeyword(), client, this);
@@ -182,6 +184,9 @@ class CheckMeaningCurrentPostThreadThread extends Thread {
 										crisis.setType("post");
 										crisis.setKeyword(keyword);
 										crisisService.saveCrisis(crisis);
+										// send crisis to notification
+									} else {
+										// send crisis to notification
 									}
 								}
 							} else {
@@ -195,6 +200,9 @@ class CheckMeaningCurrentPostThreadThread extends Thread {
 										crisis.setType("post");
 										crisis.setKeyword(keyword);
 										crisisService.saveCrisis(crisis);
+										// send crisis to notification
+									} else {
+										// send crisis to notification
 									}
 								}
 							}
@@ -324,6 +332,9 @@ class CheckMeaningCurrentCommentThread extends Thread {
 										crisis.setType("comment");
 										crisis.setKeyword(keyword);
 										crisisService.saveCrisis(crisis);
+										// send crisis to notification
+									} else {
+
 									}
 								}
 							} else {
