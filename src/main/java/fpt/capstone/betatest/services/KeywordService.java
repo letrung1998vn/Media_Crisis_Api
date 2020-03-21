@@ -76,5 +76,10 @@ public class KeywordService {
 	public void deleteKeyword(Keyword kw) {
 		keywordsRepository.delete(kw);
 	}
+	
+	@Transactional
+	public List<Keyword> getUserByKeyword(String keyword) {
+		return keywordsRepository.findByKeyword(keyword);
+	}
 
 }
