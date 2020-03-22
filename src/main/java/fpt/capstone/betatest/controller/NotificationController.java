@@ -30,6 +30,7 @@ import fpt.capstone.betatest.entities.Notification;
 import fpt.capstone.betatest.entities.Notification_Content;
 import fpt.capstone.betatest.entities.Post;
 import fpt.capstone.betatest.entities.User;
+import fpt.capstone.betatest.model.TestModel;
 import fpt.capstone.betatest.model.Webhook;
 import fpt.capstone.betatest.services.CommentService;
 import fpt.capstone.betatest.services.CrisisService;
@@ -76,16 +77,27 @@ public class NotificationController {
 	private static String username = "passmon2020@gmail.com";
 	private static String password = "Vutiendat";
 	private static String port = "587";
-	
-	@PostMapping("sendWebhook")
-	public String sendWebhook(@RequestParam(value = "username") String username, @RequestParam(value = "jsonstring") String jsonstring) {
-		User user = userService.getUserByUsername(username);
-		String url = user.getUser().getLink_webhook();
-		
-		Webhook wh = new Webhook(url, jsonstring);
-		return wh.connect();
+
+	@GetMapping("test")
+	public TestModel getList() {
+		listLinkDetail.add("abd");
+		listLinkDetail.add("def");
+		listLinkDetail.add("123");
+		TestModel test = new TestModel();
+		test.setListKeyWord(listLinkDetail);
+		test.setKeyword("corona");
+		return test;
 	}
-	
+
+	@GetMapping("testcall")
+	public void testCall() {
+		listLinkDetail.add("abd");
+		listLinkDetail.add("def");
+		listLinkDetail.add("123");
+		User user = userService.getUserByUsername("le");
+		sendWebhook(user, "corona");
+	}
+
 	public void sendEmailNotification(List<Crisis> listcrisis, String keyword, PostService postService,
 			CommentService commentService, NotificationService notificationService,
 			NotificationContentService notificationContentService, UserInfoService userInfoService,
@@ -135,6 +147,7 @@ public class NotificationController {
 				}
 				// send mail
 				sendMail(user.getUserName(), userInfoService);
+				sendWebhook(user, keyword);
 			}
 		}
 	}
@@ -250,6 +263,38 @@ public class NotificationController {
 			ex.printStackTrace();
 		}
 
+	}
+
+	private String createJsonStringWithLinkDetail(String keyword) {
+		String json = "";
+		json += "{\n";
+		json += "    keyword: " + "\"" + keyword + "\"";
+		json += ",\n";
+		json += "    link: [\n";
+		for (int i = 0; i < listLinkDetail.size(); i++) {
+			String linkDetail = listLinkDetail.get(i);
+			linkDetail = linkDetail.replace("', '", "");
+			linkDetail = linkDetail.replace("', ", "");
+			linkDetail = linkDetail.replace("'", "");
+			json += "        \"";
+			json += linkDetail;
+			json += "\"";
+			if (i < listLinkDetail.size() - 1) {
+				json += ",";
+				json+="\n";
+			}
+		}
+		json+="\n";
+		json += "    ]\n";
+		json += "}\n";
+		return json;
+	}
+
+	public String sendWebhook(User user, String keyword) {
+		String url = user.getUser().getLink_webhook();
+		String jsonstring = createJsonStringWithLinkDetail(keyword);
+		Webhook wh = new Webhook(url, jsonstring);
+		return wh.connect();
 	}
 
 }
