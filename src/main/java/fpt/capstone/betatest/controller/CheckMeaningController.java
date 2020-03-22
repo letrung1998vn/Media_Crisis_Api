@@ -27,7 +27,10 @@ import fpt.capstone.betatest.services.CommentService;
 import fpt.capstone.betatest.services.CrisisService;
 import fpt.capstone.betatest.services.KeywordCrawlerService;
 import fpt.capstone.betatest.services.KeywordService;
+import fpt.capstone.betatest.services.NotificationContentService;
+import fpt.capstone.betatest.services.NotificationService;
 import fpt.capstone.betatest.services.PostService;
+import fpt.capstone.betatest.services.UserInfoService;
 import fpt.capstone.betatest.services.UserService;
 
 @RestController
@@ -41,11 +44,22 @@ public class CheckMeaningController {
 	CrisisService crisisService;
 	@Autowired
 	KeywordCrawlerService keywordCrawlerService;
+	@Autowired
+	KeywordService keywordService;
+	@Autowired
+	NotificationService notificationService;
+	@Autowired
+	NotificationContentService notificationContentService;
+	@Autowired
+	UserInfoService userInfoService;
+	@Autowired
+	UserService userService;
 
 	@GetMapping("check")
 	public void checkMeaning() throws Exception {
 		TextAPIClient client = new TextAPIClient("43faa103", "f2aaee05b21dabe934b89bd3198801e8");
-		CheckThread check = new CheckThread(client, crisisService, commentService, postService, keywordCrawlerService);
+		CheckThread check = new CheckThread(client, crisisService, commentService, postService, keywordCrawlerService,
+				keywordService, notificationService, notificationContentService, userInfoService, userService);
 		check.start();
 	}
 
@@ -57,35 +71,61 @@ class CheckThread extends Thread {
 	CommentService commentService;
 	PostService postService;
 	KeywordCrawlerService keywordCrawlerService;
+	KeywordService keywordService;
+	NotificationService notificationService;
+	NotificationContentService notificationContentService;
+	UserInfoService userInfoService;
+	UserService userService;
 
 	public CheckThread(TextAPIClient client, CrisisService crisisService, CommentService commentService,
-			PostService postService, KeywordCrawlerService keywordCrawlerService) {
+			PostService postService, KeywordCrawlerService keywordCrawlerService, KeywordService keywordService,
+			NotificationService notificationService, NotificationContentService notificationContentService,
+			UserInfoService userInfoService, UserService userService) {
 		this.client = client;
 		this.crisisService = crisisService;
 		this.commentService = commentService;
 		this.postService = postService;
 		this.keywordCrawlerService = keywordCrawlerService;
+		this.keywordService = keywordService;
+		this.notificationService = notificationService;
+		this.notificationContentService = notificationContentService;
+		this.userInfoService = userInfoService;
+		this.userService = userService;
 	}
-
 	@Override
 	public synchronized void start() {
 		// Get all Keyword from keyword crawler
 		List<Keyword_Crawler> listKeyword = keywordCrawlerService.getAllKeyword();
+		List<Crisis> listCrisis = new ArrayList<>();
 		for (int i = 0; i < listKeyword.size(); i++) {
 			try {
-				DetectCrisisInCurrent(listKeyword.get(i).getKeyword(), client, this);
-				this.wait();
+				System.out.println("Keyword: " + listKeyword.get(i).getKeyword());
+				listCrisis = new ArrayList<>();
+				DetectCrisisInCurrent(listKeyword.get(i).getKeyword(), client, listCrisis);
+				System.out.println("Size: " + listCrisis.size());
+				for (int x = 0; x < listCrisis.size(); x++) {
+					System.out.print("Keyword: " + listKeyword.get(i).getKeyword());
+					System.out.println("Crisis" + x +": "+ listCrisis.get(x).getId());
+				}
+				if (listCrisis.size() > 0) {
+					NotificationController notiController = new NotificationController();
+					notiController.sendEmailNotification(listCrisis, listKeyword.get(i).getKeyword(), postService,
+							commentService, notificationService, notificationContentService, userInfoService,
+							crisisService, userService, keywordService);
+				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
-		this.stop();
+		this.interrupt();
 	}
 
-	private void DetectCrisisInCurrent(String keyword, TextAPIClient client, CheckThread check) throws Exception {
+	private void DetectCrisisInCurrent(String keyword, TextAPIClient client, List<Crisis> listCrisis)
+			throws Exception {
 		List<Post> listPost = getRecentPost(keyword);
-		CheckMeaningCurrentPostThreadThread CheckMeaningCurrentPostThread = new CheckMeaningCurrentPostThreadThread(
-				client, keyword, listPost, crisisService, commentService, postService, check);
+		CheckMeaningCurrentPostThread CheckMeaningCurrentPostThread = new CheckMeaningCurrentPostThread(client, keyword,
+				listPost, crisisService, commentService, postService, keywordService, notificationService,
+				notificationContentService, userInfoService, userService, listCrisis);
 		CheckMeaningCurrentPostThread.start();
 	}
 
@@ -96,7 +136,7 @@ class CheckThread extends Thread {
 	}
 }
 
-class CheckMeaningCurrentPostThreadThread extends Thread {
+class CheckMeaningCurrentPostThread extends Thread {
 	TextAPIClient client;
 	String keyword;
 	List<Post> listPost;
@@ -107,17 +147,30 @@ class CheckMeaningCurrentPostThreadThread extends Thread {
 	int sentiment_count = 1;
 	int countHit = 0;
 	PostService postService;
-	CheckThread check;
+	KeywordService keywordService;
+	NotificationService notificationService;
+	NotificationContentService notificationContentService;
+	UserInfoService userInfoService;
+	UserService userService;
+	List<Crisis> listCrisis;
 
-	public CheckMeaningCurrentPostThreadThread(TextAPIClient client, String keyword, List<Post> listPost,
-			CrisisService crisisService, CommentService commentService, PostService postService, CheckThread check) {
+	public CheckMeaningCurrentPostThread(TextAPIClient client, String keyword, List<Post> listPost,
+			CrisisService crisisService, CommentService commentService, PostService postService,
+			KeywordService keywordService, NotificationService notificationService,
+			NotificationContentService notificationContentService, UserInfoService userInfoService,
+			UserService userService, List<Crisis> listCrisis) {
 		this.client = client;
 		this.keyword = keyword;
 		this.listPost = listPost;
 		this.crisisService = crisisService;
 		this.commentService = commentService;
 		this.postService = postService;
-		this.check = check;
+		this.keywordService = keywordService;
+		this.notificationService = notificationService;
+		this.notificationContentService = notificationContentService;
+		this.userInfoService = userInfoService;
+		this.userService = userService;
+		this.listCrisis = listCrisis;
 	}
 
 	@Override
@@ -150,9 +203,14 @@ class CheckMeaningCurrentPostThreadThread extends Thread {
 		double comment_lower_limit = commentMean - comment_anomaly_cut_off;
 		double comment_upper_limit = commentMean + comment_anomaly_cut_off;
 		try {
-			if (listPost.size() <= 0) {
-				check.notify();
-				this.stop();
+			if (listPost.size() == 0) {
+				if (listCrisis.size() > 0) {
+					NotificationController notiController = new NotificationController();
+					notiController.sendEmailNotification(listCrisis, keyword, postService, commentService,
+							notificationService, notificationContentService, userInfoService, crisisService,
+							userService, keywordService);
+				}
+				this.interrupt();
 			}
 			for (int i = 0; i < listPost.size(); i++) {
 				if (totalCount - countHit < entity_sentiment_count) {
@@ -177,32 +235,42 @@ class CheckMeaningCurrentPostThreadThread extends Thread {
 										|| post.getNumberOfReweet() > share_upper_limit
 										|| post.getNumberOfReact() > react_upper_limit) {
 									// Save crisis and check if already add or not
-									Crisis result = crisisService.findCrisis(post.getId(), "post", keyword);
+									Crisis result = crisisService.findCrisis(post.getPostId(), "post", keyword);
 									if (result == null) {
 										Crisis crisis = new Crisis();
-										crisis.setContentId(post.getId());
+										crisis.setContentId(post.getPostId());
 										crisis.setType("post");
 										crisis.setKeyword(keyword);
+										if (!containCrisis(listCrisis, crisis)) {
+											listCrisis.add(crisis);
+										}
 										crisisService.saveCrisis(crisis);
 										// send crisis to notification
 									} else {
-										// send crisis to notification
+										if (!containCrisis(listCrisis, result)) {
+											listCrisis.add(result);
+										}
 									}
 								}
 							} else {
 								if (post.getNumberOfReply() > commentMean || post.getNumberOfReweet() > shareMean
 										|| post.getNumberOfReact() > reactMean) {
 									// Save crisis and check if already add or not
-									Crisis result = crisisService.findCrisis(post.getId(), "post", keyword);
+									Crisis result = crisisService.findCrisis(post.getPostId(), "post", keyword);
 									if (result == null) {
 										Crisis crisis = new Crisis();
-										crisis.setContentId(post.getId());
+										crisis.setContentId(post.getPostId());
 										crisis.setType("post");
 										crisis.setKeyword(keyword);
+										if (!containCrisis(listCrisis, crisis)) {
+											listCrisis.add(crisis);
+										}
 										crisisService.saveCrisis(crisis);
 										// send crisis to notification
 									} else {
-										// send crisis to notification
+										if (!containCrisis(listCrisis, result)) {
+											listCrisis.add(result);
+										}
 									}
 								}
 							}
@@ -217,12 +285,27 @@ class CheckMeaningCurrentPostThreadThread extends Thread {
 				listComment.addAll(getRecentComment(post.getId()));
 			}
 			CheckMeaningCurrentCommentThread CheckMeaningCurrentCommentThread = new CheckMeaningCurrentCommentThread(
-					client, keyword, listComment, crisisService, postService, commentService, check);
+					client, keyword, listComment, crisisService, postService, commentService, keywordService,
+					notificationService, notificationContentService, userInfoService, userService, listCrisis);
 			CheckMeaningCurrentCommentThread.start();
-			this.stop();
+			this.interrupt();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	private boolean containCrisis(List<Crisis> listCrisis, Crisis crisis) {
+		boolean result = false;
+		for (int i = 0; i < listCrisis.size(); i++) {
+			Crisis crisisInList = listCrisis.get(i);
+			if (crisisInList.getContentId() == crisis.getContentId()
+					&& crisisInList.getKeyword().equals(crisis.getKeyword())
+					&& crisisInList.getType().equals(crisis.getType())) {
+				result = true;
+				break;
+			}
+		}
+		return result;
 	}
 
 	private static double calculateSD(double numArray[]) {
@@ -268,17 +351,30 @@ class CheckMeaningCurrentCommentThread extends Thread {
 	int sentiment_count = 1;
 	int countHit = 0;
 	PostService postService;
-	CheckThread check;
+	KeywordService keywordService;
+	NotificationService notificationService;
+	NotificationContentService notificationContentService;
+	UserInfoService userInfoService;
+	UserService userService;
+	List<Crisis> listCrisis;
 
 	public CheckMeaningCurrentCommentThread(TextAPIClient client, String keyword, List<Comment> listComment,
-			CrisisService crisisService, PostService postService, CommentService commentService, CheckThread check) {
+			CrisisService crisisService, PostService postService, CommentService commentService,
+			KeywordService keywordService, NotificationService notificationService,
+			NotificationContentService notificationContentService, UserInfoService userInfoService,
+			UserService userService, List<Crisis> listCrisis) {
 		this.client = client;
 		this.keyword = keyword;
 		this.listComment = listComment;
 		this.crisisService = crisisService;
 		this.postService = postService;
 		this.commentService = commentService;
-		this.check = check;
+		this.keywordService = keywordService;
+		this.notificationService = notificationService;
+		this.notificationContentService = notificationContentService;
+		this.userInfoService = userInfoService;
+		this.userService = userService;
+		this.listCrisis = listCrisis;
 	}
 
 	@Override
@@ -325,28 +421,42 @@ class CheckMeaningCurrentCommentThread extends Thread {
 								if (comment.getNumberOfReply() > comment_upper_limit
 										|| comment.getNumberOfReact() > react_upper_limit) {
 									// Add Crisis To Db
-									Crisis result = crisisService.findCrisis(comment.getId(), "comment", keyword);
+									Crisis result = crisisService.findCrisis(comment.getCommentId(), "comment",
+											keyword);
 									if (result == null) {
 										Crisis crisis = new Crisis();
-										crisis.setContentId(comment.getId());
+										crisis.setContentId(comment.getCommentId());
 										crisis.setType("comment");
 										crisis.setKeyword(keyword);
+										if (!containCrisis(listCrisis, crisis)) {
+											listCrisis.add(crisis);
+										}
 										crisisService.saveCrisis(crisis);
 										// send crisis to notification
 									} else {
-
+										if (!containCrisis(listCrisis, result)) {
+											listCrisis.add(result);
+										}
 									}
 								}
 							} else {
 								if (comment.getNumberOfReply() > commentMean
 										|| comment.getNumberOfReact() > reactMean) {
-									Crisis result = crisisService.findCrisis(comment.getId(), "comment", keyword);
+									Crisis result = crisisService.findCrisis(comment.getCommentId(), "comment",
+											keyword);
 									if (result == null) {
 										Crisis crisis = new Crisis();
-										crisis.setContentId(comment.getId());
+										crisis.setContentId(comment.getCommentId());
 										crisis.setType("comment");
 										crisis.setKeyword(keyword);
+										if (!containCrisis(listCrisis, crisis)) {
+											listCrisis.add(crisis);
+										}
 										crisisService.saveCrisis(crisis);
+									} else {
+										if (!containCrisis(listCrisis, result)) {
+											listCrisis.add(result);
+										}
 									}
 								}
 							}
@@ -366,24 +476,38 @@ class CheckMeaningCurrentCommentThread extends Thread {
 						if (reactMean < 50000 && commentMean < 50000) {
 							if (comment.getNumberOfReply() > comment_upper_limit
 									|| comment.getNumberOfReact() > react_upper_limit) {
-								Crisis result = crisisService.findCrisis(comment.getId(), "comment", keyword);
+								Crisis result = crisisService.findCrisis(comment.getCommentId(), "comment", keyword);
 								if (result == null) {
 									Crisis crisis = new Crisis();
-									crisis.setContentId(comment.getId());
+									crisis.setContentId(comment.getCommentId());
 									crisis.setType("comment");
 									crisis.setKeyword(keyword);
+									if (!containCrisis(listCrisis, crisis)) {
+										listCrisis.add(crisis);
+									}
 									crisisService.saveCrisis(crisis);
+								} else {
+									if (!containCrisis(listCrisis, result)) {
+										listCrisis.add(result);
+									}
 								}
 							}
 						} else {
 							if (comment.getNumberOfReply() > commentMean || comment.getNumberOfReact() > reactMean) {
-								Crisis result = crisisService.findCrisis(comment.getId(), "comment", keyword);
+								Crisis result = crisisService.findCrisis(comment.getCommentId(), "comment", keyword);
 								if (result == null) {
 									Crisis crisis = new Crisis();
-									crisis.setContentId(comment.getId());
+									crisis.setContentId(comment.getCommentId());
 									crisis.setType("comment");
 									crisis.setKeyword(keyword);
+									if (!containCrisis(listCrisis, crisis)) {
+										listCrisis.add(crisis);
+									}
 									crisisService.saveCrisis(crisis);
+								} else {
+									if (!containCrisis(listCrisis, result)) {
+										listCrisis.add(result);
+									}
 								}
 							}
 						}
@@ -393,12 +517,27 @@ class CheckMeaningCurrentCommentThread extends Thread {
 			this.sleep(1000 * 60 * 1);
 			List<Post> listPost = getIncreasePost(keyword);
 			CheckMeaningIncreasePostThread CheckMeaningIncreasePostThread = new CheckMeaningIncreasePostThread(client,
-					keyword, listPost, crisisService, commentService, check);
+					keyword, listPost, crisisService, commentService, keywordService, notificationService,
+					notificationContentService, userInfoService, userService, postService, listCrisis);
 			CheckMeaningIncreasePostThread.start();
-			this.stop();
+			this.interrupt();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	private boolean containCrisis(List<Crisis> listCrisis, Crisis crisis) {
+		boolean result = false;
+		for (int i = 0; i < listCrisis.size(); i++) {
+			Crisis crisisInList = listCrisis.get(i);
+			if (crisisInList.getContentId() == crisis.getContentId()
+					&& crisisInList.getKeyword().equals(crisis.getKeyword())
+					&& crisisInList.getType().equals(crisis.getType())) {
+				result = true;
+				break;
+			}
+		}
+		return result;
 	}
 
 	private static double calculateSD(double numArray[]) {
@@ -502,20 +641,35 @@ class CheckMeaningIncreasePostThread extends Thread {
 	List<Post> listPost;
 	CrisisService crisisService;
 	CommentService commentService;
+	PostService postService;
 	int totalCount = 60;
 	int entity_sentiment_count = 3;
 	int sentiment_count = 1;
 	int countHit = 0;
-	CheckThread check;
+	KeywordService keywordService;
+	NotificationService notificationService;
+	NotificationContentService notificationContentService;
+	UserInfoService userInfoService;
+	UserService userService;
+	List<Crisis> listCrisis;
 
 	public CheckMeaningIncreasePostThread(TextAPIClient client, String keyword, List<Post> listPost,
-			CrisisService crisisService, CommentService commentService, CheckThread check) {
+			CrisisService crisisService, CommentService commentService,
+			KeywordService keywordService, NotificationService notificationService,
+			NotificationContentService notificationContentService, UserInfoService userInfoService,
+			UserService userService, PostService postService, List<Crisis> listCrisis) {
 		this.client = client;
 		this.keyword = keyword;
 		this.listPost = listPost;
 		this.crisisService = crisisService;
 		this.commentService = commentService;
-		this.check = check;
+		this.keywordService = keywordService;
+		this.notificationService = notificationService;
+		this.notificationContentService = notificationContentService;
+		this.userInfoService = userInfoService;
+		this.userService = userService;
+		this.postService = postService;
+		this.listCrisis = listCrisis;
 	}
 
 	private static double calculateSD(double numArray[]) {
@@ -541,6 +695,20 @@ class CheckMeaningIncreasePostThread extends Thread {
 			sum += m[i];
 		}
 		return sum / m.length;
+	}
+
+	private boolean containCrisis(List<Crisis> listCrisis, Crisis crisis) {
+		boolean result = false;
+		for (int i = 0; i < listCrisis.size(); i++) {
+			Crisis crisisInList = listCrisis.get(i);
+			if (crisisInList.getContentId() == crisis.getContentId()
+					&& crisisInList.getKeyword().equals(crisis.getKeyword())
+					&& crisisInList.getType().equals(crisis.getType())) {
+				result = true;
+				break;
+			}
+		}
+		return result;
 	}
 
 	@Override
@@ -574,9 +742,14 @@ class CheckMeaningIncreasePostThread extends Thread {
 		double comment_lower_limit = commentMean - comment_anomaly_cut_off;
 		double comment_upper_limit = commentMean + comment_anomaly_cut_off;
 		try {
-			if (listPost.size() <= 0) {
-				check.notify();
-				this.stop();
+			if (listPost.size() < 2) {
+				if (listCrisis.size() > 0) {
+					NotificationController notiController = new NotificationController();
+					notiController.sendEmailNotification(listCrisis, keyword, postService, commentService,
+							notificationService, notificationContentService, userInfoService, crisisService,
+							userService, keywordService);
+				}
+				this.interrupt();
 			}
 			for (int i = 0; i < listPost.size(); i = i + 2) {
 				if (totalCount - countHit < entity_sentiment_count) {
@@ -603,25 +776,39 @@ class CheckMeaningIncreasePostThread extends Thread {
 										|| (post.getNumberOfReact()
 												- nextPost.getNumberOfReact()) > react_upper_limit) {
 									// Add Crisis To Db
-									Crisis result = crisisService.findCrisis(nextPost.getId(), "post", keyword);
+									Crisis result = crisisService.findCrisis(nextPost.getPostId(), "post", keyword);
 									if (result == null) {
 										Crisis crisis = new Crisis();
-										crisis.setContentId(nextPost.getId());
+										crisis.setContentId(nextPost.getPostId());
 										crisis.setType("post");
 										crisis.setKeyword(keyword);
+										if (!containCrisis(listCrisis, crisis)) {
+											listCrisis.add(crisis);
+										}
 										crisisService.saveCrisis(crisis);
+									} else {
+										if (!containCrisis(listCrisis, result)) {
+											listCrisis.add(result);
+										}
 									}
 								} else {
 									// Save crisis and check if already add or not
 									if (post.getNumberOfReply() > commentMean || post.getNumberOfReweet() > shareMean
 											|| post.getNumberOfReact() > reactMean) {
-										Crisis result = crisisService.findCrisis(nextPost.getId(), "post", keyword);
+										Crisis result = crisisService.findCrisis(nextPost.getPostId(), "post", keyword);
 										if (result == null) {
 											Crisis crisis = new Crisis();
-											crisis.setContentId(nextPost.getId());
+											crisis.setContentId(nextPost.getPostId());
 											crisis.setType("post");
 											crisis.setKeyword(keyword);
+											if (!containCrisis(listCrisis, crisis)) {
+												listCrisis.add(crisis);
+											}
 											crisisService.saveCrisis(crisis);
+										} else {
+											if (!containCrisis(listCrisis, result)) {
+												listCrisis.add(result);
+											}
 										}
 									}
 								}
@@ -649,8 +836,10 @@ class CheckMeaningIncreasePostThread extends Thread {
 				}
 			}
 			CheckMeaningIncreaseCommentThread CheckMeaningIncreaseCommentThread = new CheckMeaningIncreaseCommentThread(
-					client, keyword, listComment, crisisService, check);
+					client, keyword, listComment, crisisService, keywordService, notificationService,
+					notificationContentService, userInfoService, userService, commentService, postService, listCrisis);
 			CheckMeaningIncreaseCommentThread.start();
+			this.interrupt();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -681,15 +870,32 @@ class CheckMeaningIncreaseCommentThread extends Thread {
 	int entity_sentiment_count = 3;
 	int sentiment_count = 1;
 	int countHit = 0;
-	CheckThread check;
+	KeywordService keywordService;
+	NotificationService notificationService;
+	NotificationContentService notificationContentService;
+	UserInfoService userInfoService;
+	UserService userService;
+	CommentService commentService;
+	PostService postService;
+	List<Crisis> listCrisis;
 
 	public CheckMeaningIncreaseCommentThread(TextAPIClient client, String keyword, List<Comment> listComment,
-			CrisisService crisisService, CheckThread check) {
+			CrisisService crisisService,  KeywordService keywordService,
+			NotificationService notificationService, NotificationContentService notificationContentService,
+			UserInfoService userInfoService, UserService userService, CommentService commentService,
+			PostService postService, List<Crisis> listCrisis) {
 		this.client = client;
 		this.keyword = keyword;
 		this.listComment = listComment;
 		this.crisisService = crisisService;
-		this.check = check;
+		this.keywordService = keywordService;
+		this.notificationService = notificationService;
+		this.notificationContentService = notificationContentService;
+		this.userInfoService = userInfoService;
+		this.userService = userService;
+		this.commentService = commentService;
+		this.postService = postService;
+		this.listCrisis = listCrisis;
 	}
 
 	private static double calculateSD(double numArray[]) {
@@ -717,6 +923,20 @@ class CheckMeaningIncreaseCommentThread extends Thread {
 		return sum / m.length;
 	}
 
+	private boolean containCrisis(List<Crisis> listCrisis, Crisis crisis) {
+		boolean result = false;
+		for (int i = 0; i < listCrisis.size(); i++) {
+			Crisis crisisInList = listCrisis.get(i);
+			if (crisisInList.getContentId() == crisis.getContentId()
+					&& crisisInList.getKeyword().equals(crisis.getKeyword())
+					&& crisisInList.getType().equals(crisis.getType())) {
+				result = true;
+				break;
+			}
+		}
+		return result;
+	}
+
 	@Override
 	public synchronized void start() {
 		EntityLevelSentimentParams.Builder builder = EntityLevelSentimentParams.newBuilder();
@@ -741,7 +961,7 @@ class CheckMeaningIncreaseCommentThread extends Thread {
 		double comment_lower_limit = commentMean - comment_anomaly_cut_off;
 		double comment_upper_limit = commentMean + comment_anomaly_cut_off;
 		try {
-			for (int i = 0; i < listComment.size(); i++) {
+			for (int i = 0; i < listComment.size(); i += 2) {
 				if (totalCount - countHit < entity_sentiment_count) {
 					countHit = 0;
 					this.sleep(1000 * 60 * 1);
@@ -766,25 +986,41 @@ class CheckMeaningIncreaseCommentThread extends Thread {
 										|| (lastComment.getNumberOfReact()
 												- newComment.getNumberOfReact()) > react_upper_limit) {
 									// Add Crisis to Db
-									Crisis result = crisisService.findCrisis(newComment.getId(), "comment", keyword);
+									Crisis result = crisisService.findCrisis(newComment.getCommentId(), "comment",
+											keyword);
 									if (result == null) {
 										Crisis crisis = new Crisis();
-										crisis.setContentId(newComment.getId());
+										crisis.setContentId(newComment.getCommentId());
 										crisis.setType("comment");
 										crisis.setKeyword(keyword);
+										if (!containCrisis(listCrisis, crisis)) {
+											listCrisis.add(crisis);
+										}
 										crisisService.saveCrisis(crisis);
+									} else {
+										if (!containCrisis(listCrisis, result)) {
+											listCrisis.add(result);
+										}
 									}
 								}
 							} else {
 								if (lastComment.getNumberOfReply() > commentMean
 										|| lastComment.getNumberOfReact() > reactMean) {
-									Crisis result = crisisService.findCrisis(newComment.getId(), "comment", keyword);
+									Crisis result = crisisService.findCrisis(newComment.getCommentId(), "comment",
+											keyword);
 									if (result == null) {
 										Crisis crisis = new Crisis();
-										crisis.setContentId(newComment.getId());
+										crisis.setContentId(newComment.getCommentId());
 										crisis.setType("comment");
 										crisis.setKeyword(keyword);
+										if (!containCrisis(listCrisis, crisis)) {
+											listCrisis.add(crisis);
+										}
 										crisisService.saveCrisis(crisis);
+									} else {
+										if (!containCrisis(listCrisis, result)) {
+											listCrisis.add(result);
+										}
 									}
 								}
 							}
@@ -801,25 +1037,39 @@ class CheckMeaningIncreaseCommentThread extends Thread {
 							if ((lastComment.getNumberOfReply() - newComment.getNumberOfReply()) > comment_upper_limit
 									|| (lastComment.getNumberOfReact()
 											- newComment.getNumberOfReact()) > react_upper_limit) {
-								Crisis result = crisisService.findCrisis(newComment.getId(), "comment", keyword);
+								Crisis result = crisisService.findCrisis(newComment.getCommentId(), "comment", keyword);
 								if (result == null) {
 									Crisis crisis = new Crisis();
-									crisis.setContentId(newComment.getId());
+									crisis.setContentId(newComment.getCommentId());
 									crisis.setType("comment");
 									crisis.setKeyword(keyword);
+									if (!containCrisis(listCrisis, crisis)) {
+										listCrisis.add(crisis);
+									}
 									crisisService.saveCrisis(crisis);
+								} else {
+									if (!containCrisis(listCrisis, result)) {
+										listCrisis.add(result);
+									}
 								}
 							}
 						} else {
 							if (lastComment.getNumberOfReply() > commentMean
 									|| lastComment.getNumberOfReact() > reactMean) {
-								Crisis result = crisisService.findCrisis(newComment.getId(), "comment", keyword);
+								Crisis result = crisisService.findCrisis(newComment.getCommentId(), "comment", keyword);
 								if (result == null) {
 									Crisis crisis = new Crisis();
-									crisis.setContentId(newComment.getId());
+									crisis.setContentId(newComment.getCommentId());
 									crisis.setType("comment");
 									crisis.setKeyword(keyword);
+									if (!containCrisis(listCrisis, crisis)) {
+										listCrisis.add(crisis);
+									}
 									crisisService.saveCrisis(crisis);
+								} else {
+									if (!containCrisis(listCrisis, result)) {
+										listCrisis.add(result);
+									}
 								}
 							}
 						}
@@ -827,8 +1077,7 @@ class CheckMeaningIncreaseCommentThread extends Thread {
 				}
 			}
 			this.sleep(1000 * 60 * 1);
-			check.notify();
-			this.stop();
+			this.interrupt();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

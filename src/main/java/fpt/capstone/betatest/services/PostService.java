@@ -25,7 +25,7 @@ public class PostService {
 	}
 	
 	@Transactional
-	public Post getPostById(BigInteger id) {
-		return postRepository.getById(id);
+	public List<Post> getPostById(BigInteger id) {
+		return postRepository.getByPostId(id);
 	}
 }

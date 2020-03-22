@@ -17,6 +17,7 @@ import javax.mail.MessagingException;
 import javax.mail.PasswordAuthentication;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -74,121 +75,84 @@ public class NotificationController {
 	private static String username = "passmon2020@gmail.com";
 	private static String password = "Vutiendat";
 	private static String port = "587";
-
-//	public NotificationController(User user, List<Crisis> listCrisis) {
-//		super();
-//		this.user = user;
-//		this.listCrisis = listCrisis;
-//	}
-	public User getUserByUsername(String username) {
-		user = userService.getUserByUsername(username);
-		return user;
-	}
-
-	@PostMapping("sendEmail")
-	public void sendNoti() {
-		Crisis crisis = new Crisis();
-		crisis.setId(30);
-		crisis.setKeyword("corona");
-		crisis.setType("post");
-		crisis.setContentId(new BigInteger("13"));
-		sendEmailNotification(crisis);
-	}
-
-	public void sendEmailNotification(Crisis crisis) {
-		String keyword = crisis.getKeyword();
+	public void sendEmailNotification(List<Crisis> listcrisis, String keyword, PostService postService,
+			CommentService commentService, NotificationService notificationService,
+			NotificationContentService notificationContentService, UserInfoService userInfoService,
+			CrisisService crisisService, UserService userService, KeywordService keywordService) {
+		listPost = new ArrayList<Post>();
+		listComment = new ArrayList<Comment>();
+		listLinkDetail = new ArrayList<>();
 		// get list user by keyword
 		List<User> listUser = new ArrayList<User>();
-		List<Keyword> listKeyWord = keywordService.getUserByKeyword(crisis.getKeyword());
+		List<Keyword> listKeyWord = keywordService.getUserByKeyword(keyword);
 		for (int i = 0; i < listKeyWord.size(); i++) {
 			Keyword keyword1 = listKeyWord.get(i);
+			// get list user id
 			listUser.add(userService.getUserByUsername(keyword1.getUser().getUserName()));
 		}
-		// phân loại crisis:Post, Comment, Second Post, Second Comment
-		classifyCrisisType(crisis);
-		// lấy link detail trong crisis
-		listLinkDetail = getLinkDetail();
-		// get list user id
-		for (int i = 0; i < listUser.size(); i++) {
-			User user = listUser.get(i);
-			String userID = user.getUserName();
-			Notification notificationDTO = createEmailNotification(user);
-			int notiId = notificationDTO.getId();
-			Notification_Content notiContent = createEmailNotificationContent(notiId, crisis.getId());
-			// send mail
-			sendMail(user.getUserName());
+		for (int i = 0; i < listcrisis.size(); i++) {
+			Crisis crisis = listcrisis.get(i);
+			// phân loại crisis:Post, Comment, Second Post, Second Comment
+			classifyCrisisType(crisis, postService, commentService);
 		}
-//		User user = getUserByUsername(username);
-//		// get list crisis by keyword
-//		listCrisis = crisisService.getCrisisByKeyword(keyword);
-//		// get list crisis id in crisis table
-//		for (int i = 0; i < listCrisis.size(); i++) {
-//			int crisisId = listCrisis.get(i).getId();
-//			listCrisisIdInCrisis.add(crisisId);
-//		}
-//		// get list crisis id in notification content table
-//		listNotification = notificationService.getListNotification(user);
-//
-//		for (int i = 0; i < listNotification.size(); i++) {
-//			int notificationId = listNotification.get(i).getId();
-//			listNotiId.add(notificationId);
-//		}
-//		for (int j = 0; j < listNotiId.size(); j++) {
-//			listNotiContent = notificationContentService.getNotificationContent(listNotiId.get(j));
-//			for (int j1 = 0; j1 < listNotiContent.size(); j1++) {
-//				int crisisIdContent = listNotiContent.get(j1).getCrisisId();
-//				listCrisisIdInNotiContent.add(crisisIdContent);
-//			}
-//			for (int i = 0; i < listCrisisIdInNotiContent.size(); i++) {
-//				for (int k = 0; k < listCrisisIdInCrisis.size(); k++) {
-//					if (Integer.compare(listCrisisIdInNotiContent.get(i), listCrisisIdInCrisis.get(k)) == 0) {
-//						listCrisisIdInCrisis.remove(k);
-//					}
-//				}
-//			}
-//
-//		}
-//
-//		// check crisis đã dc gửi chưa
-//
-//		if (listCrisisIdInCrisis.size() >= 0) {
-//			// get notification by user id
-//			Notification notiDTO = createEmailNotification(user);
-//			// get notification id
-////			int notiId = getNotificationId(notiDTO);
-//			int notiId = notiDTO.getId();
-//
-//			// tạo notification content
-//			for (int i1 = 0; i1 < listCrisis.size(); i1++) {
-//				Notification_Content notiContent = createNotificationContent(notiId, listCrisis.get(i1).getId());
-//				// Notification_Content notiContent = new
-//				// Notification_Content(listCrisis.get(i).getId(), notiId);
-//			}
-//			// phân loại crisis: Post, Comment, Second Post, Second Comment
-//			classifyCrisisType(listCrisis);
-//			// lấy link detail trong crisis
-//			listLinkDetail = getLinkDetail();
-//
-//			sendMail(username);
-//		}
-
+		for (int i = 0; i < listUser.size(); i++) {
+			List<Notification> listNoti = notificationService.getListNotification(listUser.get(i));
+			for (int x = 0; x < listNoti.size(); x++) {
+				List<Notification_Content> listNotiContent = notificationContentService
+						.getNotificationContent(listNoti.get(x).getId());
+				for (int y = 0; y < listNotiContent.size(); y++) {
+					Notification_Content notiContent = listNotiContent.get(y);
+					int result = checkCrisisIsSend(listcrisis, notiContent);
+					if (result != -1) {
+						listcrisis.remove(result);
+					}
+				}
+			}
+		}
+		if (listcrisis.size() > 0) {
+			// lấy link detail trong crisis
+			getLinkDetail();
+			for (int i = 0; i < listUser.size(); i++) {
+				User user = listUser.get(i);
+				String userID = user.getUserName();
+				Notification notificationDTO = createEmailNotification(user, notificationService);
+				int notiId = notificationDTO.getId();
+				for (int x = 0; x < listcrisis.size(); x++) {
+					Crisis crisis = listcrisis.get(x);
+					Notification_Content notiContent = createEmailNotificationContent(notiId, crisis.getId(),
+							notificationContentService);
+				}
+				// send mail
+				sendMail(user.getUserName(), userInfoService);
+			}
+		}
 	}
 
-	private void classifyCrisisType(Crisis crisis) {
+	private int checkCrisisIsSend(List<Crisis> listCrisis, Notification_Content notiContent) {
+		for (int i = 0; i < listCrisis.size(); i++) {
+			Crisis crisis = listCrisis.get(i);
+			if (notiContent.getCrisisId() == crisis.getId()) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	private void classifyCrisisType(Crisis crisis, PostService postService, CommentService commentService) {
 		if (crisis.getType().trim().equals("post")) {
-			Post post = postService.getPostById(crisis.getContentId());
+			List<Post> post = postService.getPostById(crisis.getContentId());
 			if (post != null) {
-				listPost.add(post);
+				listPost.add(post.get(0));
 			}
 		} else if (crisis.getType().trim().equals("comment")) {
-			Comment comment = commentService.getCommentById(crisis.getContentId());
+			List<Comment> comment = commentService.getCommentById(crisis.getContentId());
 			if (comment != null) {
-				listComment.add(comment);
+				listComment.add(comment.get(0));
 			}
 		}
 	}
 
-	private Notification createEmailNotification(User user) {
+	private Notification createEmailNotification(User user, NotificationService notificationService) {
 		long millis = System.currentTimeMillis();
 		Date date = new Date(millis);
 		Notification notificationDTO = new Notification(true, false, user, date);
@@ -196,17 +160,14 @@ public class NotificationController {
 		return noti;
 	}
 
-//	private int getNotificationId(Notification notification) {
-//		return notificationService.getId(user, notification.isEmail(), notification.isWebhook(), notification.getDate());
-//	}
-
-	private Notification_Content createEmailNotificationContent(int notificationId, int crisisId) {
+	private Notification_Content createEmailNotificationContent(int notificationId, int crisisId,
+			NotificationContentService notificationContentService) {
 		Notification_Content notiContent = new Notification_Content(crisisId, notificationId);
 		Notification_Content content = notificationContentService.save(notiContent);
 		return content;
 	}
 
-	private List<String> getLinkDetail() {
+	private void getLinkDetail() {
 
 		for (int i = 0; i < listComment.size(); i++) {
 			listLinkDetail.add(listComment.get(i).getLinkDetail());
@@ -214,7 +175,6 @@ public class NotificationController {
 		for (int i = 0; i < listPost.size(); i++) {
 			listLinkDetail.add(listPost.get(i).getLinkDetail());
 		}
-		return listLinkDetail;
 	}
 
 	private String createEmailContentWithLinkDetail() {
@@ -232,8 +192,8 @@ public class NotificationController {
 		return emailContent;
 	}
 
-	private void sendMail(String userName) {
-//		String message;
+	private void sendMail(String userName, UserInfoService userInfoService) {
+		// String message;
 		final String toAddress = userInfoService.getEmail(userName);
 
 		Properties properties = new Properties();
@@ -273,7 +233,6 @@ public class NotificationController {
 
 			// send email
 			Transport.send(msg);
-			System.out.print("Send successfully");
 		} catch (AddressException e) {
 			e.printStackTrace();
 		} catch (MessagingException ex) {

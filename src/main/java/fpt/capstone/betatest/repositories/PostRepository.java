@@ -21,5 +21,5 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
 			+ "on s1.post_content=s2.post_content where keyword=?1")
 	List<Post> getPostContentWithTwoLatestDate(String keyword);
 	
-	Post getById(BigInteger id);
+	List<Post> getByPostId(BigInteger id);
 }

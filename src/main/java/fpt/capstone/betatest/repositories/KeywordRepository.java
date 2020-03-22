@@ -40,6 +40,7 @@ public interface KeywordRepository extends JpaRepository<Keyword, Integer> {
 
 	@Query(nativeQuery = true, value = "SELECT * from Keyword")
 	List<Keyword> getAllKeyword();
-	// Keyword findUserAndKeywordById(int id);
+	
+	List<Keyword> findByKeyword(String keyword);
 
 }
