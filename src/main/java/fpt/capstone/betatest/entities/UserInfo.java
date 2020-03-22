@@ -24,6 +24,9 @@ public class UserInfo implements Serializable {
 	@Column(name="email")
 	private String email;
 	
+	@Column(name="link_webhook")
+	private String link_webhook;
+	
 	@Column(name="version")
 	private int version;	
 
@@ -70,9 +73,20 @@ public class UserInfo implements Serializable {
 		this.version = version;
 	}
 
+	public String getLink_webhook() {
+		return link_webhook;
+	}
+
+	public void setLink_webhook(String link_webhook) {
+		this.link_webhook = link_webhook;
+	}
+
 	@Override
 	public String toString() {
-		return "UserInfo [userId=" + userId + ", name=" + name + ", email=" + email + ", version=" + version + "]";
+		return "UserInfo [userId=" + userId + ", name=" + name + ", email=" + email + ", link_webhook=" + link_webhook
+				+ ", version=" + version + "]";
 	}
+
+	
 	
 }

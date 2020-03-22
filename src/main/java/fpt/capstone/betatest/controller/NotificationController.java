@@ -30,6 +30,7 @@ import fpt.capstone.betatest.entities.Notification;
 import fpt.capstone.betatest.entities.Notification_Content;
 import fpt.capstone.betatest.entities.Post;
 import fpt.capstone.betatest.entities.User;
+import fpt.capstone.betatest.model.Webhook;
 import fpt.capstone.betatest.services.CommentService;
 import fpt.capstone.betatest.services.CrisisService;
 import fpt.capstone.betatest.services.KeywordService;
@@ -75,6 +76,16 @@ public class NotificationController {
 	private static String username = "passmon2020@gmail.com";
 	private static String password = "Vutiendat";
 	private static String port = "587";
+	
+	@PostMapping("sendWebhook")
+	public String sendWebhook(@RequestParam(value = "username") String username, @RequestParam(value = "jsonstring") String jsonstring) {
+		User user = userService.getUserByUsername(username);
+		String url = user.getUser().getLink_webhook();
+		
+		Webhook wh = new Webhook(url, jsonstring);
+		return wh.connect();
+	}
+	
 	public void sendEmailNotification(List<Crisis> listcrisis, String keyword, PostService postService,
 			CommentService commentService, NotificationService notificationService,
 			NotificationContentService notificationContentService, UserInfoService userInfoService,

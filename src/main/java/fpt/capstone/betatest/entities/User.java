@@ -116,5 +116,11 @@ public class User implements Serializable {
 		this.keyword = keyword;
 	}
 
+	@Override
+	public String toString() {
+		return "User [userName=" + userName + ", password=" + password + ", role=" + role + ", available=" + available
+				+ ", user=" + user + ", notifications=" + notifications + ", keyword=" + keyword + "]";
+	}
+
 	
 }
