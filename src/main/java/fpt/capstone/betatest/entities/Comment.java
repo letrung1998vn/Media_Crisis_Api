@@ -112,6 +112,4 @@ public class Comment implements Serializable {
 	public void setCrawlDate(Date crawlDate) {
 		this.crawlDate = crawlDate;
 	}
-	
-	
 }
