@@ -54,10 +54,6 @@ public class Notification_Content {
 		this.notificationId = notificationId;
 	}
 
-	@Override
-	public String toString() {
-		return "Notification_Content [id=" + id + ", crisisId=" + crisisId + ", notificationId=" + notificationId + "]";
-	}
 	
 	
 	
