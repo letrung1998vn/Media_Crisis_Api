@@ -5,6 +5,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.StringTokenizer;
 
 import javax.mail.Session;
 import javax.mail.Transport;
@@ -30,7 +31,7 @@ import fpt.capstone.betatest.entities.Notification;
 import fpt.capstone.betatest.entities.Notification_Content;
 import fpt.capstone.betatest.entities.Post;
 import fpt.capstone.betatest.entities.User;
-import fpt.capstone.betatest.model.TestModel;
+import fpt.capstone.betatest.model.EmailContentModel;
 import fpt.capstone.betatest.model.Webhook;
 import fpt.capstone.betatest.services.CommentService;
 import fpt.capstone.betatest.services.CrisisService;
@@ -79,11 +80,11 @@ public class NotificationController {
 	private static String port = "587";
 
 	@GetMapping("test")
-	public TestModel getList() {
+	public EmailContentModel getList() {
 		listLinkDetail.add("abd");
 		listLinkDetail.add("def");
 		listLinkDetail.add("123");
-		TestModel test = new TestModel();
+		EmailContentModel test = new EmailContentModel();
 		test.setListKeyWord(listLinkDetail);
 		test.setKeyword("corona");
 		return test;
@@ -91,11 +92,64 @@ public class NotificationController {
 
 	@GetMapping("testcall")
 	public void testCall() {
-		listLinkDetail.add("abd");
-		listLinkDetail.add("def");
-		listLinkDetail.add("123");
-		User user = userService.getUserByUsername("le");
-		sendWebhook(user, "corona");
+		listCrisis = new ArrayList<>();
+		Crisis crisis = new Crisis();
+		crisis.setId(47);
+		crisis.setKeyword("corona");
+		crisis.setContentId(new BigInteger("1238657550024871941"));
+		crisis.setType("post");
+		listCrisis.add(crisis);
+		crisis = new Crisis();
+		crisis.setId(48);
+		crisis.setKeyword("corona");
+		crisis.setContentId(new BigInteger("1238577362792591361"));
+		crisis.setType("comment");
+		listCrisis.add(crisis);
+		sendEmailNotification(listCrisis, "corona", postService, commentService, notificationService,
+				notificationContentService, userInfoService, crisisService, userService, keywordService);
+	}
+
+	@GetMapping("emailContent")
+	public EmailContentModel getEmailContent(@RequestParam(name = "keyword") String keyword,
+			@RequestParam(name = "id") String crisisId) {
+		EmailContentModel emailContent = new EmailContentModel();
+		emailContent.setKeyword(keyword);
+		StringTokenizer stk = new StringTokenizer(crisisId, ",");
+		String id;
+		listPost = new ArrayList<Post>();
+		listComment = new ArrayList<Comment>();
+		listLinkDetail = new ArrayList<>();
+		while (stk.hasMoreTokens()) {
+			id = stk.nextToken();
+			Crisis crisis = crisisService.getCrisisById(Integer.parseInt(id));
+			classifyCrisisType(crisis, postService, commentService);
+		}
+		if (listPost.size() > 0) {
+			for (int i = 0; i < listPost.size(); i++) {
+				Post post = listPost.get(i);
+				String linkDetail = post.getLinkDetail();
+				linkDetail = linkDetail.replace("', '", "");
+				linkDetail = linkDetail.replace("', ", "");
+				linkDetail = linkDetail.replace("'", "");
+				linkDetail = linkDetail.replace("(", "");
+				linkDetail = linkDetail.replace(")", "");
+				listLinkDetail.add(linkDetail);
+			}
+		}
+		if (listComment.size() > 0) {
+			for (int i = 0; i < listComment.size(); i++) {
+				Comment comment = listComment.get(i);
+				String linkDetail = comment.getLinkDetail();
+				linkDetail = linkDetail.replace("', '", "");
+				linkDetail = linkDetail.replace("', ", "");
+				linkDetail = linkDetail.replace("'", "");
+				linkDetail = linkDetail.replace("(", "");
+				linkDetail = linkDetail.replace(")", "");
+				listLinkDetail.add(linkDetail);
+			}
+		}
+		emailContent.setListKeyWord(listLinkDetail);
+		return emailContent;
 	}
 
 	public void sendEmailNotification(List<Crisis> listcrisis, String keyword, PostService postService,
@@ -113,21 +167,19 @@ public class NotificationController {
 			// get list user id
 			listUser.add(userService.getUserByUsername(keyword1.getUser().getUserName()));
 		}
-		for (int i = 0; i < listcrisis.size(); i++) {
-			Crisis crisis = listcrisis.get(i);
-			// phân loại crisis:Post, Comment, Second Post, Second Comment
-			classifyCrisisType(crisis, postService, commentService);
-		}
 		for (int i = 0; i < listUser.size(); i++) {
 			List<Notification> listNoti = notificationService.getListNotification(listUser.get(i));
 			for (int x = 0; x < listNoti.size(); x++) {
-				List<Notification_Content> listNotiContent = notificationContentService
-						.getNotificationContent(listNoti.get(x).getId());
-				for (int y = 0; y < listNotiContent.size(); y++) {
-					Notification_Content notiContent = listNotiContent.get(y);
-					int result = checkCrisisIsSend(listcrisis, notiContent);
-					if (result != -1) {
-						listcrisis.remove(result);
+				Notification notificationDTO = listNoti.get(x);
+				if (!notificationDTO.isEmail() && !notificationDTO.isWebhook()) {
+					List<Notification_Content> listNotiContent = notificationContentService
+							.getNotificationContent(notificationDTO.getId());
+					for (int y = 0; y < listNotiContent.size(); y++) {
+						Notification_Content notiContent = listNotiContent.get(y);
+						int result = checkCrisisIsSend(listcrisis, notiContent);
+						if (result != -1) {
+							listcrisis.remove(result);
+						}
 					}
 				}
 			}
@@ -146,8 +198,16 @@ public class NotificationController {
 							notificationContentService);
 				}
 				// send mail
-				sendMail(user.getUserName(), userInfoService);
-				sendWebhook(user, keyword);
+				String sendEmailResult = sendMail(user.getUserName(), userInfoService, keyword, listcrisis);
+				if (sendEmailResult.equals("OK")) {
+					notificationDTO.setEmail(true);
+					notificationService.save(notificationDTO);
+				}
+				String result = sendWebhook(user, keyword);
+				if (result.equals("OK!!!")) {
+					notificationDTO.setWebhook(true);
+					notificationService.save(notificationDTO);
+				}
 			}
 		}
 	}
@@ -179,7 +239,7 @@ public class NotificationController {
 	private Notification createEmailNotification(User user, NotificationService notificationService) {
 		long millis = System.currentTimeMillis();
 		Date date = new Date(millis);
-		Notification notificationDTO = new Notification(true, false, user, date);
+		Notification notificationDTO = new Notification(false, false, user, date);
 		Notification noti = notificationService.save(notificationDTO);
 		return noti;
 	}
@@ -201,25 +261,28 @@ public class NotificationController {
 		}
 	}
 
-	private String createEmailContentWithLinkDetail() {
+	private String createEmailLink(String keyword, List<Crisis> listCrisis) {
 		emailContent = "Here are crisis's link detail.<br/>";
 		emailContent += "Click to see more.<br/>";
 		emailContent += "<h3>";
-		for (String linkDetail : listLinkDetail) {
-			linkDetail = linkDetail.replace("', '", "");
-			linkDetail = linkDetail.replace("', ", "");
-			linkDetail = linkDetail.replace("'", "");
-			emailContent += linkDetail;
-			emailContent += "<br/>";
+		emailContent += "http://localhost:8181/notification/emailContent";
+		emailContent += "?keyword=";
+		emailContent += keyword;
+		emailContent += "&id=";
+		for (int i = 0; i < listCrisis.size(); i++) {
+			emailContent += listCrisis.get(i).getId();
+			if (i < listCrisis.size() - 1) {
+				emailContent += ",";
+			}
 		}
 		emailContent += "</h3>";
 		return emailContent;
 	}
 
-	private void sendMail(String userName, UserInfoService userInfoService) {
+	private String sendMail(String userName, UserInfoService userInfoService, String keyword, List<Crisis> listCrisis) {
 		// String message;
 		final String toAddress = userInfoService.getEmail(userName);
-
+		String result = "false";
 		Properties properties = new Properties();
 		properties.put("mail.smtp.host", host);
 		properties.put("mail.smtp.port", port);
@@ -252,15 +315,20 @@ public class NotificationController {
 			msg.setSentDate(new java.util.Date());
 
 			// set content
-			String content = createEmailContentWithLinkDetail();
+			String content = createEmailLink(keyword, listCrisis);
 			msg.setContent(content, "text/html");
 
 			// send email
 			Transport.send(msg);
+			result = "OK";
 		} catch (AddressException e) {
 			e.printStackTrace();
+			result = "Wrong address";
 		} catch (MessagingException ex) {
 			ex.printStackTrace();
+			result = "Wrong message";
+		} finally {
+			return result;
 		}
 
 	}
@@ -281,10 +349,10 @@ public class NotificationController {
 			json += "\"";
 			if (i < listLinkDetail.size() - 1) {
 				json += ",";
-				json+="\n";
+				json += "\n";
 			}
 		}
-		json+="\n";
+		json += "\n";
 		json += "    ]\n";
 		json += "}\n";
 		return json;
@@ -292,9 +360,12 @@ public class NotificationController {
 
 	public String sendWebhook(User user, String keyword) {
 		String url = user.getUser().getLink_webhook();
-		String jsonstring = createJsonStringWithLinkDetail(keyword);
-		Webhook wh = new Webhook(url, jsonstring);
-		return wh.connect();
+		if (!url.isEmpty()) {
+			String jsonstring = createJsonStringWithLinkDetail(keyword);
+			Webhook wh = new Webhook(url, jsonstring);
+			return wh.connect();
+		}
+		return "";
 	}
 
 }

@@ -15,5 +15,6 @@ public interface CrisisRepository extends JpaRepository<Crisis, Integer> {
 	Crisis findByContentIdAndTypeAndKeyword(BigInteger ContentId, String Type, String keyword);
 
 	List<Crisis> findByKeyword(String keyword);
-
+	
+	Crisis findById(int id);
 }

@@ -30,4 +30,8 @@ public class CrisisService {
 	public List<Crisis> getCrisisByKeyword(String keyword) {
 		return crisisRepository.findByKeyword(keyword);
 	}
+	@Transactional
+	public Crisis getCrisisById(int id) {
+		return crisisRepository.findById(id);
+	}
 }

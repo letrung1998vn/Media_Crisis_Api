@@ -4,7 +4,7 @@ import java.util.List;
 
 import fpt.capstone.betatest.entities.Keyword;
 
-public class TestModel {
+public class EmailContentModel {
 	String keyword;
 	List<String> listLinkDetail;
 	public List<String> getListKeyWord() {
