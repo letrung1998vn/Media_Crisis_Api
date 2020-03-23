@@ -116,8 +116,8 @@ public class NotificationController {
 		emailContent.setKeyword(keyword);
 		StringTokenizer stk = new StringTokenizer(crisisId, ",");
 		String id;
-		listPost = new ArrayList<Post>();
-		listComment = new ArrayList<Comment>();
+		listPost = new ArrayList<>();
+		listComment = new ArrayList<>();
 		listLinkDetail = new ArrayList<>();
 		while (stk.hasMoreTokens()) {
 			id = stk.nextToken();
@@ -170,21 +170,23 @@ public class NotificationController {
 		for (int i = 0; i < listUser.size(); i++) {
 			List<Notification> listNoti = notificationService.getListNotification(listUser.get(i));
 			for (int x = 0; x < listNoti.size(); x++) {
-				Notification notificationDTO = listNoti.get(x);
-				if (!notificationDTO.isEmail() && !notificationDTO.isWebhook()) {
-					List<Notification_Content> listNotiContent = notificationContentService
-							.getNotificationContent(notificationDTO.getId());
-					for (int y = 0; y < listNotiContent.size(); y++) {
-						Notification_Content notiContent = listNotiContent.get(y);
-						int result = checkCrisisIsSend(listcrisis, notiContent);
-						if (result != -1) {
-							listcrisis.remove(result);
-						}
+				List<Notification_Content> listNotiContent = notificationContentService
+						.getNotificationContent(listNoti.get(x).getId());
+				for (int y = 0; y < listNotiContent.size(); y++) {
+					Notification_Content notiContent = listNotiContent.get(y);
+					int result = checkCrisisIsSend(listcrisis, notiContent);
+					if (result != -1) {
+						listcrisis.remove(result);
 					}
 				}
 			}
 		}
 		if (listcrisis.size() > 0) {
+			// lay link tu list crisis
+			for (int i = 0; i < listcrisis.size(); i++) {
+				Crisis crisis = listcrisis.get(i);
+				classifyCrisisType(crisis, postService, commentService);
+			}
 			// lấy link detail trong crisis
 			getLinkDetail();
 			for (int i = 0; i < listUser.size(); i++) {
@@ -204,7 +206,9 @@ public class NotificationController {
 					notificationService.save(notificationDTO);
 				}
 				String result = sendWebhook(user, keyword);
-				if (result.equals("OK!!!")) {
+				if (result.equals("not concern")) {
+
+				} else if (result.equals("OK!!!")) {
 					notificationDTO.setWebhook(true);
 					notificationService.save(notificationDTO);
 				}
@@ -259,6 +263,21 @@ public class NotificationController {
 		for (int i = 0; i < listPost.size(); i++) {
 			listLinkDetail.add(listPost.get(i).getLinkDetail());
 		}
+	}
+
+	private String createEmailContentWithLinkDetail() {
+		emailContent = "Here are crisis's link detail.<br/>";
+		emailContent += "Click to see more.<br/>";
+		emailContent += "<h3>";
+		for (String linkDetail : listLinkDetail) {
+			linkDetail = linkDetail.replace("', '", "");
+			linkDetail = linkDetail.replace("', ", "");
+			linkDetail = linkDetail.replace("'", "");
+			emailContent += linkDetail;
+			emailContent += "<br/>";
+		}
+		emailContent += "</h3>";
+		return emailContent;
 	}
 
 	private String createEmailLink(String keyword, List<Crisis> listCrisis) {
@@ -365,7 +384,7 @@ public class NotificationController {
 			Webhook wh = new Webhook(url, jsonstring);
 			return wh.connect();
 		}
-		return "";
+		return "not concern";
 	}
 
 }

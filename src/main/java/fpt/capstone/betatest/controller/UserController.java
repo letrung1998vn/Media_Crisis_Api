@@ -109,6 +109,7 @@ public class UserController {
 
 	@GetMapping("getUserKeyword")
 	public MessageOutputModel findKeyword(@RequestParam(value = "username") String username) {
+		System.out.println(username);
 		User result = userService.getUserByUsername(username);
 		System.out.println(result.toString());
 		MessageOutputModel mod = new MessageOutputModel();
