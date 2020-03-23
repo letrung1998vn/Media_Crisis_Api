@@ -92,6 +92,7 @@ class CheckThread extends Thread {
 		this.userInfoService = userInfoService;
 		this.userService = userService;
 	}
+
 	@Override
 	public synchronized void start() {
 		// Get all Keyword from keyword crawler
@@ -105,7 +106,7 @@ class CheckThread extends Thread {
 				System.out.println("Size: " + listCrisis.size());
 				for (int x = 0; x < listCrisis.size(); x++) {
 					System.out.print("Keyword: " + listKeyword.get(i).getKeyword());
-					System.out.println("Crisis" + x +": "+ listCrisis.get(x).getId());
+					System.out.println("Crisis" + x + ": " + listCrisis.get(x).getId());
 				}
 				if (listCrisis.size() > 0) {
 					NotificationController notiController = new NotificationController();
@@ -120,8 +121,7 @@ class CheckThread extends Thread {
 		this.interrupt();
 	}
 
-	private void DetectCrisisInCurrent(String keyword, TextAPIClient client, List<Crisis> listCrisis)
-			throws Exception {
+	private void DetectCrisisInCurrent(String keyword, TextAPIClient client, List<Crisis> listCrisis) throws Exception {
 		List<Post> listPost = getRecentPost(keyword);
 		CheckMeaningCurrentPostThread CheckMeaningCurrentPostThread = new CheckMeaningCurrentPostThread(client, keyword,
 				listPost, crisisService, commentService, postService, keywordService, notificationService,
@@ -235,44 +235,19 @@ class CheckMeaningCurrentPostThread extends Thread {
 										|| post.getNumberOfReweet() > share_upper_limit
 										|| post.getNumberOfReact() > react_upper_limit) {
 									// Save crisis and check if already add or not
-									Crisis result = crisisService.findCrisis(post.getPostId(), "post", keyword);
-									if (result == null) {
-										Crisis crisis = new Crisis();
-										crisis.setContentId(post.getPostId());
-										crisis.setType("post");
-										crisis.setKeyword(keyword);
-										if (!containCrisis(listCrisis, crisis)) {
-											listCrisis.add(crisis);
-										}
-										crisisService.saveCrisis(crisis);
-										// send crisis to notification
-									} else {
-										if (!containCrisis(listCrisis, result)) {
-											listCrisis.add(result);
-										}
-									}
+									insertPostCrisis(post, crisisService);
 								}
 							} else {
-								if (post.getNumberOfReply() > commentMean || post.getNumberOfReweet() > shareMean
-										|| post.getNumberOfReact() > reactMean) {
-									// Save crisis and check if already add or not
-									Crisis result = crisisService.findCrisis(post.getPostId(), "post", keyword);
-									if (result == null) {
-										Crisis crisis = new Crisis();
-										crisis.setContentId(post.getPostId());
-										crisis.setType("post");
-										crisis.setKeyword(keyword);
-										if (!containCrisis(listCrisis, crisis)) {
-											listCrisis.add(crisis);
-										}
-										crisisService.saveCrisis(crisis);
-										// send crisis to notification
-									} else {
-										if (!containCrisis(listCrisis, result)) {
-											listCrisis.add(result);
-										}
+								if (reactStandart < 10000 || shareStandart < 10000 || commentStandart < 10000) {
+									if (post.getNumberOfReply() > commentMean || post.getNumberOfReweet() > shareMean
+											|| post.getNumberOfReact() > reactMean) {
+										// Save crisis and check if already add or not
+										insertPostCrisis(post, crisisService);
 									}
+								} else {
+									insertPostCrisis(post, crisisService);
 								}
+
 							}
 						}
 					}
@@ -291,6 +266,25 @@ class CheckMeaningCurrentPostThread extends Thread {
 			this.interrupt();
 		} catch (Exception e) {
 			e.printStackTrace();
+		}
+	}
+
+	private void insertPostCrisis(Post post, CrisisService crisisService) {
+		Crisis result = crisisService.findCrisis(post.getPostId(), "post", keyword);
+		if (result == null) {
+			Crisis crisis = new Crisis();
+			crisis.setContentId(post.getPostId());
+			crisis.setType("post");
+			crisis.setKeyword(keyword);
+			if (!containCrisis(listCrisis, crisis)) {
+				listCrisis.add(crisis);
+			}
+			crisisService.saveCrisis(crisis);
+			// send crisis to notification
+		} else {
+			if (!containCrisis(listCrisis, result)) {
+				listCrisis.add(result);
+			}
 		}
 	}
 
@@ -418,46 +412,15 @@ class CheckMeaningCurrentCommentThread extends Thread {
 						if (mean.equals("negative") && confidence > 0.3
 								&& word.toLowerCase().equals(keyword.toLowerCase())) {
 							if (reactMean < 50000 && commentMean < 50000) {
-								if (comment.getNumberOfReply() > comment_upper_limit
-										|| comment.getNumberOfReact() > react_upper_limit) {
-									// Add Crisis To Db
-									Crisis result = crisisService.findCrisis(comment.getCommentId(), "comment",
-											keyword);
-									if (result == null) {
-										Crisis crisis = new Crisis();
-										crisis.setContentId(comment.getCommentId());
-										crisis.setType("comment");
-										crisis.setKeyword(keyword);
-										if (!containCrisis(listCrisis, crisis)) {
-											listCrisis.add(crisis);
-										}
-										crisisService.saveCrisis(crisis);
-										// send crisis to notification
-									} else {
-										if (!containCrisis(listCrisis, result)) {
-											listCrisis.add(result);
-										}
-									}
-								}
+								insertCommentCrisis(comment, crisisService);
 							} else {
-								if (comment.getNumberOfReply() > commentMean
-										|| comment.getNumberOfReact() > reactMean) {
-									Crisis result = crisisService.findCrisis(comment.getCommentId(), "comment",
-											keyword);
-									if (result == null) {
-										Crisis crisis = new Crisis();
-										crisis.setContentId(comment.getCommentId());
-										crisis.setType("comment");
-										crisis.setKeyword(keyword);
-										if (!containCrisis(listCrisis, crisis)) {
-											listCrisis.add(crisis);
-										}
-										crisisService.saveCrisis(crisis);
-									} else {
-										if (!containCrisis(listCrisis, result)) {
-											listCrisis.add(result);
-										}
+								if (reactStandart < 10000 || commentStandart < 10000) {
+									if (comment.getNumberOfReply() > commentMean
+											|| comment.getNumberOfReact() > reactMean) {
+										insertCommentCrisis(comment, crisisService);
 									}
+								} else {
+									insertCommentCrisis(comment, crisisService);
 								}
 							}
 						}
@@ -476,39 +439,16 @@ class CheckMeaningCurrentCommentThread extends Thread {
 						if (reactMean < 50000 && commentMean < 50000) {
 							if (comment.getNumberOfReply() > comment_upper_limit
 									|| comment.getNumberOfReact() > react_upper_limit) {
-								Crisis result = crisisService.findCrisis(comment.getCommentId(), "comment", keyword);
-								if (result == null) {
-									Crisis crisis = new Crisis();
-									crisis.setContentId(comment.getCommentId());
-									crisis.setType("comment");
-									crisis.setKeyword(keyword);
-									if (!containCrisis(listCrisis, crisis)) {
-										listCrisis.add(crisis);
-									}
-									crisisService.saveCrisis(crisis);
-								} else {
-									if (!containCrisis(listCrisis, result)) {
-										listCrisis.add(result);
-									}
-								}
+								insertCommentCrisis(comment, crisisService);
 							}
 						} else {
-							if (comment.getNumberOfReply() > commentMean || comment.getNumberOfReact() > reactMean) {
-								Crisis result = crisisService.findCrisis(comment.getCommentId(), "comment", keyword);
-								if (result == null) {
-									Crisis crisis = new Crisis();
-									crisis.setContentId(comment.getCommentId());
-									crisis.setType("comment");
-									crisis.setKeyword(keyword);
-									if (!containCrisis(listCrisis, crisis)) {
-										listCrisis.add(crisis);
-									}
-									crisisService.saveCrisis(crisis);
-								} else {
-									if (!containCrisis(listCrisis, result)) {
-										listCrisis.add(result);
-									}
+							if (reactStandart < 10000 || commentStandart < 10000) {
+								if (comment.getNumberOfReply() > commentMean
+										|| comment.getNumberOfReact() > reactMean) {
+									insertCommentCrisis(comment, crisisService);
 								}
+							} else {
+								insertCommentCrisis(comment, crisisService);
 							}
 						}
 					}
@@ -523,6 +463,24 @@ class CheckMeaningCurrentCommentThread extends Thread {
 			this.interrupt();
 		} catch (Exception e) {
 			e.printStackTrace();
+		}
+	}
+
+	private void insertCommentCrisis(Comment comment, CrisisService crisisService) {
+		Crisis result = crisisService.findCrisis(comment.getCommentId(), "comment", keyword);
+		if (result == null) {
+			Crisis crisis = new Crisis();
+			crisis.setContentId(comment.getCommentId());
+			crisis.setType("comment");
+			crisis.setKeyword(keyword);
+			if (!containCrisis(listCrisis, crisis)) {
+				listCrisis.add(crisis);
+			}
+			crisisService.saveCrisis(crisis);
+		} else {
+			if (!containCrisis(listCrisis, result)) {
+				listCrisis.add(result);
+			}
 		}
 	}
 
@@ -654,10 +612,10 @@ class CheckMeaningIncreasePostThread extends Thread {
 	List<Crisis> listCrisis;
 
 	public CheckMeaningIncreasePostThread(TextAPIClient client, String keyword, List<Post> listPost,
-			CrisisService crisisService, CommentService commentService,
-			KeywordService keywordService, NotificationService notificationService,
-			NotificationContentService notificationContentService, UserInfoService userInfoService,
-			UserService userService, PostService postService, List<Crisis> listCrisis) {
+			CrisisService crisisService, CommentService commentService, KeywordService keywordService,
+			NotificationService notificationService, NotificationContentService notificationContentService,
+			UserInfoService userInfoService, UserService userService, PostService postService,
+			List<Crisis> listCrisis) {
 		this.client = client;
 		this.keyword = keyword;
 		this.listPost = listPost;
@@ -709,6 +667,25 @@ class CheckMeaningIncreasePostThread extends Thread {
 			}
 		}
 		return result;
+	}
+
+	private void insertPostCrisis(Post post, CrisisService crisisService) {
+		Crisis result = crisisService.findCrisis(post.getPostId(), "post", keyword);
+		if (result == null) {
+			Crisis crisis = new Crisis();
+			crisis.setContentId(post.getPostId());
+			crisis.setType("post");
+			crisis.setKeyword(keyword);
+			if (!containCrisis(listCrisis, crisis)) {
+				listCrisis.add(crisis);
+			}
+			crisisService.saveCrisis(crisis);
+			// send crisis to notification
+		} else {
+			if (!containCrisis(listCrisis, result)) {
+				listCrisis.add(result);
+			}
+		}
 	}
 
 	@Override
@@ -776,40 +753,18 @@ class CheckMeaningIncreasePostThread extends Thread {
 										|| (post.getNumberOfReact()
 												- nextPost.getNumberOfReact()) > react_upper_limit) {
 									// Add Crisis To Db
-									Crisis result = crisisService.findCrisis(nextPost.getPostId(), "post", keyword);
-									if (result == null) {
-										Crisis crisis = new Crisis();
-										crisis.setContentId(nextPost.getPostId());
-										crisis.setType("post");
-										crisis.setKeyword(keyword);
-										if (!containCrisis(listCrisis, crisis)) {
-											listCrisis.add(crisis);
-										}
-										crisisService.saveCrisis(crisis);
-									} else {
-										if (!containCrisis(listCrisis, result)) {
-											listCrisis.add(result);
-										}
-									}
+									insertPostCrisis(nextPost, crisisService);
 								} else {
 									// Save crisis and check if already add or not
-									if (post.getNumberOfReply() > commentMean || post.getNumberOfReweet() > shareMean
-											|| post.getNumberOfReact() > reactMean) {
-										Crisis result = crisisService.findCrisis(nextPost.getPostId(), "post", keyword);
-										if (result == null) {
-											Crisis crisis = new Crisis();
-											crisis.setContentId(nextPost.getPostId());
-											crisis.setType("post");
-											crisis.setKeyword(keyword);
-											if (!containCrisis(listCrisis, crisis)) {
-												listCrisis.add(crisis);
-											}
-											crisisService.saveCrisis(crisis);
-										} else {
-											if (!containCrisis(listCrisis, result)) {
-												listCrisis.add(result);
-											}
+									if (reactStandart < 10000 || shareStandart < 10000 || commentStandart < 10000) {
+										if ((post.getNumberOfReply() - nextPost.getNumberOfReply()) > commentMean
+												|| (post.getNumberOfReweet() - nextPost.getNumberOfReweet()) > shareMean
+												|| (post.getNumberOfReact()
+														- nextPost.getNumberOfReact()) > reactMean) {
+											insertPostCrisis(nextPost, crisisService);
 										}
+									} else {
+										insertPostCrisis(nextPost, crisisService);
 									}
 								}
 							}
@@ -880,10 +835,9 @@ class CheckMeaningIncreaseCommentThread extends Thread {
 	List<Crisis> listCrisis;
 
 	public CheckMeaningIncreaseCommentThread(TextAPIClient client, String keyword, List<Comment> listComment,
-			CrisisService crisisService,  KeywordService keywordService,
-			NotificationService notificationService, NotificationContentService notificationContentService,
-			UserInfoService userInfoService, UserService userService, CommentService commentService,
-			PostService postService, List<Crisis> listCrisis) {
+			CrisisService crisisService, KeywordService keywordService, NotificationService notificationService,
+			NotificationContentService notificationContentService, UserInfoService userInfoService,
+			UserService userService, CommentService commentService, PostService postService, List<Crisis> listCrisis) {
 		this.client = client;
 		this.keyword = keyword;
 		this.listComment = listComment;
@@ -937,6 +891,24 @@ class CheckMeaningIncreaseCommentThread extends Thread {
 		return result;
 	}
 
+	private void insertCommentCrisis(Comment comment, CrisisService crisisService) {
+		Crisis result = crisisService.findCrisis(comment.getCommentId(), "comment", keyword);
+		if (result == null) {
+			Crisis crisis = new Crisis();
+			crisis.setContentId(comment.getCommentId());
+			crisis.setType("comment");
+			crisis.setKeyword(keyword);
+			if (!containCrisis(listCrisis, crisis)) {
+				listCrisis.add(crisis);
+			}
+			crisisService.saveCrisis(crisis);
+		} else {
+			if (!containCrisis(listCrisis, result)) {
+				listCrisis.add(result);
+			}
+		}
+	}
+
 	@Override
 	public synchronized void start() {
 		EntityLevelSentimentParams.Builder builder = EntityLevelSentimentParams.newBuilder();
@@ -986,42 +958,17 @@ class CheckMeaningIncreaseCommentThread extends Thread {
 										|| (lastComment.getNumberOfReact()
 												- newComment.getNumberOfReact()) > react_upper_limit) {
 									// Add Crisis to Db
-									Crisis result = crisisService.findCrisis(newComment.getCommentId(), "comment",
-											keyword);
-									if (result == null) {
-										Crisis crisis = new Crisis();
-										crisis.setContentId(newComment.getCommentId());
-										crisis.setType("comment");
-										crisis.setKeyword(keyword);
-										if (!containCrisis(listCrisis, crisis)) {
-											listCrisis.add(crisis);
-										}
-										crisisService.saveCrisis(crisis);
-									} else {
-										if (!containCrisis(listCrisis, result)) {
-											listCrisis.add(result);
-										}
-									}
+									insertCommentCrisis(newComment, crisisService);
 								}
 							} else {
-								if (lastComment.getNumberOfReply() > commentMean
-										|| lastComment.getNumberOfReact() > reactMean) {
-									Crisis result = crisisService.findCrisis(newComment.getCommentId(), "comment",
-											keyword);
-									if (result == null) {
-										Crisis crisis = new Crisis();
-										crisis.setContentId(newComment.getCommentId());
-										crisis.setType("comment");
-										crisis.setKeyword(keyword);
-										if (!containCrisis(listCrisis, crisis)) {
-											listCrisis.add(crisis);
-										}
-										crisisService.saveCrisis(crisis);
-									} else {
-										if (!containCrisis(listCrisis, result)) {
-											listCrisis.add(result);
-										}
+								if (reactStandart < 10000 || commentStandart < 10000) {
+									if ((lastComment.getNumberOfReply() - newComment.getNumberOfReply()) > commentMean
+											|| (lastComment.getNumberOfReact()
+													- newComment.getNumberOfReact()) > reactMean) {
+										insertCommentCrisis(newComment, crisisService);
 									}
+								} else {
+									insertCommentCrisis(newComment, crisisService);
 								}
 							}
 						}
@@ -1038,39 +985,17 @@ class CheckMeaningIncreaseCommentThread extends Thread {
 									|| (lastComment.getNumberOfReact()
 											- newComment.getNumberOfReact()) > react_upper_limit) {
 								Crisis result = crisisService.findCrisis(newComment.getCommentId(), "comment", keyword);
-								if (result == null) {
-									Crisis crisis = new Crisis();
-									crisis.setContentId(newComment.getCommentId());
-									crisis.setType("comment");
-									crisis.setKeyword(keyword);
-									if (!containCrisis(listCrisis, crisis)) {
-										listCrisis.add(crisis);
-									}
-									crisisService.saveCrisis(crisis);
-								} else {
-									if (!containCrisis(listCrisis, result)) {
-										listCrisis.add(result);
-									}
-								}
+								insertCommentCrisis(newComment, crisisService);
 							}
 						} else {
-							if (lastComment.getNumberOfReply() > commentMean
-									|| lastComment.getNumberOfReact() > reactMean) {
-								Crisis result = crisisService.findCrisis(newComment.getCommentId(), "comment", keyword);
-								if (result == null) {
-									Crisis crisis = new Crisis();
-									crisis.setContentId(newComment.getCommentId());
-									crisis.setType("comment");
-									crisis.setKeyword(keyword);
-									if (!containCrisis(listCrisis, crisis)) {
-										listCrisis.add(crisis);
-									}
-									crisisService.saveCrisis(crisis);
-								} else {
-									if (!containCrisis(listCrisis, result)) {
-										listCrisis.add(result);
-									}
+							if (reactStandart < 10000 || commentStandart < 10000) {
+								if ((lastComment.getNumberOfReply() - newComment.getNumberOfReply()) > commentMean
+										|| (lastComment.getNumberOfReact()
+												- newComment.getNumberOfReact()) > reactMean) {
+									insertCommentCrisis(newComment, crisisService);
 								}
+							} else {
+								insertCommentCrisis(newComment, crisisService);
 							}
 						}
 					}

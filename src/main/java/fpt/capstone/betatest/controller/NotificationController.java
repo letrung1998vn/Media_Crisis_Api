@@ -168,34 +168,34 @@ public class NotificationController {
 			listUser.add(userService.getUserByUsername(keyword1.getUser().getUserName()));
 		}
 		for (int i = 0; i < listUser.size(); i++) {
-			List<Notification> listNoti = notificationService.getListNotification(listUser.get(i));
+			List<Crisis> sendCrisis = new ArrayList<>();
+			sendCrisis.addAll(listcrisis);
+			User user = listUser.get(i);
+			List<Notification> listNoti = notificationService.getListNotification(user);
 			for (int x = 0; x < listNoti.size(); x++) {
 				List<Notification_Content> listNotiContent = notificationContentService
 						.getNotificationContent(listNoti.get(x).getId());
 				for (int y = 0; y < listNotiContent.size(); y++) {
 					Notification_Content notiContent = listNotiContent.get(y);
-					int result = checkCrisisIsSend(listcrisis, notiContent);
+					int result = checkCrisisIsSend(sendCrisis, notiContent);
 					if (result != -1) {
-						listcrisis.remove(result);
+						sendCrisis.remove(result);
 					}
 				}
 			}
-		}
-		if (listcrisis.size() > 0) {
-			// lay link tu list crisis
-			for (int i = 0; i < listcrisis.size(); i++) {
-				Crisis crisis = listcrisis.get(i);
-				classifyCrisisType(crisis, postService, commentService);
-			}
-			// lấy link detail trong crisis
-			getLinkDetail();
-			for (int i = 0; i < listUser.size(); i++) {
-				User user = listUser.get(i);
+			if (sendCrisis.size() > 0) {
+				// lay link tu list crisis
+				for (int x = 0; x < sendCrisis.size(); x++) {
+					Crisis crisis = sendCrisis.get(x);
+					classifyCrisisType(crisis, postService, commentService);
+				}
+				// lấy link detail trong crisis
+				getLinkDetail();
 				String userID = user.getUserName();
 				Notification notificationDTO = createEmailNotification(user, notificationService);
 				int notiId = notificationDTO.getId();
-				for (int x = 0; x < listcrisis.size(); x++) {
-					Crisis crisis = listcrisis.get(x);
+				for (int z = 0; z < sendCrisis.size(); z++) {
+					Crisis crisis = sendCrisis.get(z);
 					Notification_Content notiContent = createEmailNotificationContent(notiId, crisis.getId(),
 							notificationContentService);
 				}
