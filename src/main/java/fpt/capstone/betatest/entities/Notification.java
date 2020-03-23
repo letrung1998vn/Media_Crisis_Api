@@ -84,11 +84,6 @@ public class Notification implements Serializable {
 		this.date = date;
 	}
 
-	@Override
-	public String toString() {
-		return "Notification [id=" + id + ", email=" + email + ", webhook=" + webhook + ", user=" + user + ", date="
-				+ date + "]";
-	}
 
 	
 

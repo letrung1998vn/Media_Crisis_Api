@@ -81,11 +81,6 @@ public class UserInfo implements Serializable {
 		this.link_webhook = link_webhook;
 	}
 
-	@Override
-	public String toString() {
-		return "UserInfo [userId=" + userId + ", name=" + name + ", email=" + email + ", link_webhook=" + link_webhook
-				+ ", version=" + version + "]";
-	}
 
 	
 	
