@@ -20,7 +20,21 @@ public class Webhook {
         this.url = url;
         this.jsonString = jsonString;
     }
-    
+    public Webhook(String url) {
+        this.url = url;
+    }
+    public String connectWebServer() {
+    	 String output = "Call Noti";
+    	 try {
+             URL urlForGetRequest = new URL(url);
+             String readLine = null;
+             HttpURLConnection connection = (HttpURLConnection) urlForGetRequest.openConnection();
+         } catch (Exception e) {
+             System.out.println("Error at call webhook");
+             e.printStackTrace();
+         }
+    	 return output;
+    }
     public String connect() {
         String output = "";
         try {

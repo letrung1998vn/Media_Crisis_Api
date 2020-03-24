@@ -1,21 +1,21 @@
 package fpt.capstone.betatest.controller;
 
-import java.util.Date;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
+import javax.mail.Authenticator;
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
-import javax.mail.Authenticator;
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.PasswordAuthentication;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -85,7 +85,7 @@ public class NotificationController {
 		listLinkDetail.add("def");
 		listLinkDetail.add("123");
 		EmailContentModel test = new EmailContentModel();
-		test.setListKeyWord(listLinkDetail);
+		test.setListLinkDetail(listLinkDetail);
 		test.setKeyword("corona");
 		return test;
 	}
@@ -94,13 +94,13 @@ public class NotificationController {
 	public void testCall() {
 		listCrisis = new ArrayList<>();
 		Crisis crisis = new Crisis();
-		crisis.setId(47);
+		crisis.setId(45);
 		crisis.setKeyword("corona");
 		crisis.setContentId(new BigInteger("1238657550024871941"));
 		crisis.setType("post");
 		listCrisis.add(crisis);
 		crisis = new Crisis();
-		crisis.setId(48);
+		crisis.setId(46);
 		crisis.setKeyword("corona");
 		crisis.setContentId(new BigInteger("1238577362792591361"));
 		crisis.setType("comment");
@@ -109,7 +109,7 @@ public class NotificationController {
 				notificationContentService, userInfoService, crisisService, userService, keywordService);
 	}
 
-	@GetMapping("emailContent")
+	@PostMapping("emailContent")
 	public EmailContentModel getEmailContent(@RequestParam(name = "keyword") String keyword,
 			@RequestParam(name = "id") String crisisId) {
 		EmailContentModel emailContent = new EmailContentModel();
@@ -148,7 +148,7 @@ public class NotificationController {
 				listLinkDetail.add(linkDetail);
 			}
 		}
-		emailContent.setListKeyWord(listLinkDetail);
+		emailContent.setListLinkDetail(listLinkDetail);
 		return emailContent;
 	}
 
@@ -286,7 +286,7 @@ public class NotificationController {
 		emailContent = "Here are crisis's link detail.<br/>";
 		emailContent += "Click to see more.<br/>";
 		emailContent += "<h3>";
-		emailContent += "http://localhost:8181/notification/emailContent";
+		emailContent += "http://localhost:8084/MediaCrisis_Demo/WebLinkContent";
 		emailContent += "?keyword=";
 		emailContent += keyword;
 		emailContent += "&id=";
