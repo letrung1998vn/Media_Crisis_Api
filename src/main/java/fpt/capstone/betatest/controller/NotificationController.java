@@ -171,46 +171,48 @@ public class NotificationController {
 			List<Crisis> sendCrisis = new ArrayList<>();
 			sendCrisis.addAll(listcrisis);
 			User user = listUser.get(i);
-			List<Notification> listNoti = notificationService.getListNotification(user);
-			for (int x = 0; x < listNoti.size(); x++) {
-				List<Notification_Content> listNotiContent = notificationContentService
-						.getNotificationContent(listNoti.get(x).getId());
-				for (int y = 0; y < listNotiContent.size(); y++) {
-					Notification_Content notiContent = listNotiContent.get(y);
-					int result = checkCrisisIsSend(sendCrisis, notiContent);
-					if (result != -1) {
-						sendCrisis.remove(result);
+			if (user.getRole().equals("user")) {
+				List<Notification> listNoti = notificationService.getListNotification(user);
+				for (int x = 0; x < listNoti.size(); x++) {
+					List<Notification_Content> listNotiContent = notificationContentService
+							.getNotificationContent(listNoti.get(x).getId());
+					for (int y = 0; y < listNotiContent.size(); y++) {
+						Notification_Content notiContent = listNotiContent.get(y);
+						int result = checkCrisisIsSend(sendCrisis, notiContent);
+						if (result != -1) {
+							sendCrisis.remove(result);
+						}
 					}
 				}
-			}
-			if (sendCrisis.size() > 0) {
-				// lay link tu list crisis
-				for (int x = 0; x < sendCrisis.size(); x++) {
-					Crisis crisis = sendCrisis.get(x);
-					classifyCrisisType(crisis, postService, commentService);
-				}
-				// lấy link detail trong crisis
-				getLinkDetail();
-				String userID = user.getUserName();
-				Notification notificationDTO = createEmailNotification(user, notificationService);
-				int notiId = notificationDTO.getId();
-				for (int z = 0; z < sendCrisis.size(); z++) {
-					Crisis crisis = sendCrisis.get(z);
-					Notification_Content notiContent = createEmailNotificationContent(notiId, crisis.getId(),
-							notificationContentService);
-				}
-				// send mail
-				String sendEmailResult = sendMail(user.getUserName(), userInfoService, keyword, listcrisis);
-				if (sendEmailResult.equals("OK")) {
-					notificationDTO.setEmail(true);
-					notificationService.save(notificationDTO);
-				}
-				String result = sendWebhook(user, keyword);
-				if (result.equals("not concern")) {
+				if (sendCrisis.size() > 0) {
+					// lay link tu list crisis
+					for (int x = 0; x < sendCrisis.size(); x++) {
+						Crisis crisis = sendCrisis.get(x);
+						classifyCrisisType(crisis, postService, commentService);
+					}
+					// lấy link detail trong crisis
+					getLinkDetail();
+					String userID = user.getUserName();
+					Notification notificationDTO = createEmailNotification(user, notificationService);
+					int notiId = notificationDTO.getId();
+					for (int z = 0; z < sendCrisis.size(); z++) {
+						Crisis crisis = sendCrisis.get(z);
+						Notification_Content notiContent = createEmailNotificationContent(notiId, crisis.getId(),
+								notificationContentService);
+					}
+					// send mail
+					String sendEmailResult = sendMail(user.getUserName(), userInfoService, keyword, listcrisis);
+					if (sendEmailResult.equals("OK")) {
+						notificationDTO.setEmail(true);
+						notificationService.save(notificationDTO);
+					}
+					String result = sendWebhook(user, keyword);
+					if (result.equals("not concern")) {
 
-				} else if (result.equals("OK!!!")) {
-					notificationDTO.setWebhook(true);
-					notificationService.save(notificationDTO);
+					} else if (result.equals("OK!!!")) {
+						notificationDTO.setWebhook(true);
+						notificationService.save(notificationDTO);
+					}
 				}
 			}
 		}
