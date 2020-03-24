@@ -92,10 +92,8 @@ public class UserController {
 			} else {
 				mod.setStatusCode(3);
 
-				mod.setStatusMessage("Your account has been banned permanently, please contact admin for more information!");
-
-				mod.setStatusMessage("Your account has been banned permanently, please contact admin for more infomation!");
-
+				mod.setStatusMessage(
+						"Your account has been banned permanently, please contact admin for more information!");
 			}
 		}
 		return mod;
@@ -107,6 +105,24 @@ public class UserController {
 		return result;
 	}
 
+	@PostMapping("updateLinkWebhook")
+	public MessageOutputModel updateWebhook(@RequestParam(value = "link") String link,
+			@RequestParam(value = "username") String username) {
+		MessageOutputModel mod = new MessageOutputModel();
+		User user = userService.getUserByUsername(username);
+		if (user.isAvailable()) {
+			user.getUser().setLink_webhook(link);
+			userService.saveUser(user);
+			mod.setStatusCode(2);
+			mod.setStatusMessage("Webhook link is saved!");
+			mod.setObj(user.getUser().getLink_webhook());
+		} else {
+			mod.setStatusCode(3);
+			mod.setStatusMessage("Your account has been banned permanently, please contact admin for more infomation!");
+		}
+		return mod;
+	}
+
 	@GetMapping("getUserKeyword")
 	public MessageOutputModel findKeyword(@RequestParam(value = "username") String username) {
 		System.out.println(username);
@@ -114,9 +130,14 @@ public class UserController {
 		System.out.println(result.toString());
 		MessageOutputModel mod = new MessageOutputModel();
 		if (result.isAvailable()) {
-			mod.setStatusCode(2);
-			mod.setStatusMessage("Get keyword success");
-			mod.setObj(result.getKeyword());
+			if (!result.getKeyword().isEmpty()) {
+				mod.setObj(result.getKeyword());
+				mod.setStatusCode(2);
+				mod.setStatusMessage("Get keyword success.");
+			} else {
+				mod.setStatusCode(4);
+				mod.setStatusMessage("Your keyword list is empty.");
+			}
 
 		} else {
 			mod.setStatusCode(3);
@@ -136,11 +157,12 @@ public class UserController {
 			mod.setObj(result.getNotifications());
 		} else {
 			mod.setStatusCode(3);
-			mod.setStatusMessage("Your account has been banned permanently, please contact admin for more information!");
+			mod.setStatusMessage(
+					"Your account has been banned permanently, please contact admin for more information!");
 		}
 		return mod;
 	}
-	
+
 //
 	@PostMapping("registration")
 	public MessageOutputModel registration(@RequestParam(value = "username") String username,
@@ -159,6 +181,7 @@ public class UserController {
 				userInfo.setUserId(username);
 				userInfo.setName(name);
 				userInfo.setEmail(email);
+				userInfo.setLink_webhook("");
 				userInfo = userInfoService.saveUser(userInfo);
 				mod.setStatusCode(2);
 				mod.setStatusMessage("Sign up successfully, please login!");
@@ -178,7 +201,7 @@ public class UserController {
 	public Page<User> findUsers(@RequestParam(value = "username") String userId,
 			@RequestParam(value = "page") int page) {
 		Page<User> result = userService.searchByUsernameAndPage(userId, page);
-		
+
 		return result;
 	}
 //
@@ -187,44 +210,42 @@ public class UserController {
 //		List<User> result = userService.getAll();
 //		return result;
 //	}
-	
+
 	@PostMapping("updateProfile")
-	public MessageOutputModel updateProfile(@RequestParam(value = "userId") String userId, @RequestParam(value = "name") String name, 
-			@RequestParam(value = "email") String email) {
+	public MessageOutputModel updateProfile(@RequestParam(value = "userId") String userId,
+			@RequestParam(value = "name") String name, @RequestParam(value = "email") String email) {
 		User user = userService.getUserByUsername(userId);
 		MessageOutputModel mod = new MessageOutputModel();
 		if (!user.isAvailable()) {
 			mod.setStatusCode(3);
 			mod.setStatusMessage("Your account has been disabled. Please contact admin for more information!");
-		}
-		else {
+		} else {
 			user.getUser().setEmail(email);
 			user.getUser().setName(name);
 			user = userService.saveUser(user);
 			mod.setStatusCode(2);
 			mod.setStatusMessage("Changed userprofile successfully.");
 		}
-		
+
 		return mod;
 	}
-	
+
 	@PostMapping("updatePassword")
-	public MessageOutputModel updatePassword(@RequestParam(value = "userName") String username, @RequestParam(value = "password") String password) {
+	public MessageOutputModel updatePassword(@RequestParam(value = "userName") String username,
+			@RequestParam(value = "password") String password) {
 		User user = userService.getUserByUsername(username);
 		MessageOutputModel mod = new MessageOutputModel();
 		if (!user.isAvailable()) {
 			mod.setStatusCode(3);
 			mod.setStatusMessage("Your account has been disabled. Please contact admin for more information!");
-		}
-		else {
+		} else {
 			user.setPassword(password);
 			user = userService.saveUser(user);
 			mod.setStatusCode(2);
 			mod.setStatusMessage("Changed password successfully.");
 		}
-		
+
 		return mod;
 	}
-	
-	
+
 }
