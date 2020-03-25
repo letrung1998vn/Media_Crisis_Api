@@ -26,6 +26,9 @@ public class UserInfo implements Serializable {
 	
 	@Column(name="link_webhook")
 	private String link_webhook;
+
+	@Column(name="noti_token")
+	private String noti_token;
 	
 	@Column(name="version")
 	private int version;	
@@ -38,6 +41,16 @@ public class UserInfo implements Serializable {
 		this.userId = userId;
 		this.email = email;
 		this.name = name;
+		this.version = version;
+	}
+
+	public UserInfo(String userId, String name, String email, String link_webhook, String noti_token, int version) {
+		super();
+		this.userId = userId;
+		this.name = name;
+		this.email = email;
+		this.link_webhook = link_webhook;
+		this.noti_token = noti_token;
 		this.version = version;
 	}
 
@@ -79,6 +92,14 @@ public class UserInfo implements Serializable {
 
 	public void setLink_webhook(String link_webhook) {
 		this.link_webhook = link_webhook;
+	}
+
+	public String getNoti_token() {
+		return noti_token;
+	}
+
+	public void setNoti_token(String noti_token) {
+		this.noti_token = noti_token;
 	}
 
 
