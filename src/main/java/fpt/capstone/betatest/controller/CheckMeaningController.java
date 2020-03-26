@@ -29,6 +29,7 @@ import fpt.capstone.betatest.services.KeywordCrawlerService;
 import fpt.capstone.betatest.services.KeywordService;
 import fpt.capstone.betatest.services.NotificationContentService;
 import fpt.capstone.betatest.services.NotificationService;
+import fpt.capstone.betatest.services.NotificationTokenService;
 import fpt.capstone.betatest.services.PostService;
 import fpt.capstone.betatest.services.UserInfoService;
 import fpt.capstone.betatest.services.UserService;
@@ -54,12 +55,13 @@ public class CheckMeaningController {
 	UserInfoService userInfoService;
 	@Autowired
 	UserService userService;
-
+	@Autowired
+	NotificationTokenService notificationTokenService;
 	@GetMapping("check")
 	public void checkMeaning() throws Exception {
 		TextAPIClient client = new TextAPIClient("43faa103", "f2aaee05b21dabe934b89bd3198801e8");
 		CheckThread check = new CheckThread(client, crisisService, commentService, postService, keywordCrawlerService,
-				keywordService, notificationService, notificationContentService, userInfoService, userService);
+				keywordService, notificationService, notificationContentService, userInfoService, userService, notificationTokenService);
 		check.start();
 	}
 
@@ -76,11 +78,11 @@ class CheckThread extends Thread {
 	NotificationContentService notificationContentService;
 	UserInfoService userInfoService;
 	UserService userService;
-
+	NotificationTokenService notificationTokenService;
 	public CheckThread(TextAPIClient client, CrisisService crisisService, CommentService commentService,
 			PostService postService, KeywordCrawlerService keywordCrawlerService, KeywordService keywordService,
 			NotificationService notificationService, NotificationContentService notificationContentService,
-			UserInfoService userInfoService, UserService userService) {
+			UserInfoService userInfoService, UserService userService, NotificationTokenService notificationTokenService) {
 		this.client = client;
 		this.crisisService = crisisService;
 		this.commentService = commentService;
@@ -91,6 +93,7 @@ class CheckThread extends Thread {
 		this.notificationContentService = notificationContentService;
 		this.userInfoService = userInfoService;
 		this.userService = userService;
+		this.notificationTokenService=notificationTokenService;
 	}
 
 	@Override
@@ -112,7 +115,7 @@ class CheckThread extends Thread {
 					NotificationController notiController = new NotificationController();
 					notiController.sendNotification(listCrisis, listKeyword.get(i).getKeyword(), postService,
 							commentService, notificationService, notificationContentService, userInfoService,
-							crisisService, userService, keywordService);
+							crisisService, userService, keywordService, notificationTokenService);
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -125,7 +128,7 @@ class CheckThread extends Thread {
 		List<Post> listPost = getRecentPost(keyword);
 		CheckMeaningCurrentPostThread CheckMeaningCurrentPostThread = new CheckMeaningCurrentPostThread(client, keyword,
 				listPost, crisisService, commentService, postService, keywordService, notificationService,
-				notificationContentService, userInfoService, userService, listCrisis);
+				notificationContentService, userInfoService, userService, listCrisis,notificationTokenService);
 		CheckMeaningCurrentPostThread.start();
 	}
 
@@ -153,12 +156,12 @@ class CheckMeaningCurrentPostThread extends Thread {
 	UserInfoService userInfoService;
 	UserService userService;
 	List<Crisis> listCrisis;
-
+	NotificationTokenService notificationTokenService;
 	public CheckMeaningCurrentPostThread(TextAPIClient client, String keyword, List<Post> listPost,
 			CrisisService crisisService, CommentService commentService, PostService postService,
 			KeywordService keywordService, NotificationService notificationService,
 			NotificationContentService notificationContentService, UserInfoService userInfoService,
-			UserService userService, List<Crisis> listCrisis) {
+			UserService userService, List<Crisis> listCrisis, NotificationTokenService notificationTokenService) {
 		this.client = client;
 		this.keyword = keyword;
 		this.listPost = listPost;
@@ -171,6 +174,7 @@ class CheckMeaningCurrentPostThread extends Thread {
 		this.userInfoService = userInfoService;
 		this.userService = userService;
 		this.listCrisis = listCrisis;
+		this.notificationTokenService=notificationTokenService;
 	}
 
 	@Override
@@ -208,7 +212,7 @@ class CheckMeaningCurrentPostThread extends Thread {
 					NotificationController notiController = new NotificationController();
 					notiController.sendNotification(listCrisis, keyword, postService, commentService,
 							notificationService, notificationContentService, userInfoService, crisisService,
-							userService, keywordService);
+							userService, keywordService,notificationTokenService);
 				}
 				this.interrupt();
 			}
@@ -261,7 +265,7 @@ class CheckMeaningCurrentPostThread extends Thread {
 			}
 			CheckMeaningCurrentCommentThread CheckMeaningCurrentCommentThread = new CheckMeaningCurrentCommentThread(
 					client, keyword, listComment, crisisService, postService, commentService, keywordService,
-					notificationService, notificationContentService, userInfoService, userService, listCrisis);
+					notificationService, notificationContentService, userInfoService, userService, listCrisis,notificationTokenService);
 			CheckMeaningCurrentCommentThread.start();
 			this.interrupt();
 		} catch (Exception e) {
@@ -351,12 +355,12 @@ class CheckMeaningCurrentCommentThread extends Thread {
 	UserInfoService userInfoService;
 	UserService userService;
 	List<Crisis> listCrisis;
-
+	NotificationTokenService notificationTokenService;
 	public CheckMeaningCurrentCommentThread(TextAPIClient client, String keyword, List<Comment> listComment,
 			CrisisService crisisService, PostService postService, CommentService commentService,
 			KeywordService keywordService, NotificationService notificationService,
 			NotificationContentService notificationContentService, UserInfoService userInfoService,
-			UserService userService, List<Crisis> listCrisis) {
+			UserService userService, List<Crisis> listCrisis, NotificationTokenService notificationTokenService) {
 		this.client = client;
 		this.keyword = keyword;
 		this.listComment = listComment;
@@ -369,6 +373,7 @@ class CheckMeaningCurrentCommentThread extends Thread {
 		this.userInfoService = userInfoService;
 		this.userService = userService;
 		this.listCrisis = listCrisis;
+		this.notificationTokenService=notificationTokenService;
 	}
 
 	@Override
@@ -458,7 +463,7 @@ class CheckMeaningCurrentCommentThread extends Thread {
 			List<Post> listPost = getIncreasePost(keyword);
 			CheckMeaningIncreasePostThread CheckMeaningIncreasePostThread = new CheckMeaningIncreasePostThread(client,
 					keyword, listPost, crisisService, commentService, keywordService, notificationService,
-					notificationContentService, userInfoService, userService, postService, listCrisis);
+					notificationContentService, userInfoService, userService, postService, listCrisis, notificationTokenService);
 			CheckMeaningIncreasePostThread.start();
 			this.interrupt();
 		} catch (Exception e) {
@@ -610,12 +615,12 @@ class CheckMeaningIncreasePostThread extends Thread {
 	UserInfoService userInfoService;
 	UserService userService;
 	List<Crisis> listCrisis;
-
+	NotificationTokenService notificationTokenService;
 	public CheckMeaningIncreasePostThread(TextAPIClient client, String keyword, List<Post> listPost,
 			CrisisService crisisService, CommentService commentService, KeywordService keywordService,
 			NotificationService notificationService, NotificationContentService notificationContentService,
 			UserInfoService userInfoService, UserService userService, PostService postService,
-			List<Crisis> listCrisis) {
+			List<Crisis> listCrisis, NotificationTokenService notificationTokenService) {
 		this.client = client;
 		this.keyword = keyword;
 		this.listPost = listPost;
@@ -628,6 +633,7 @@ class CheckMeaningIncreasePostThread extends Thread {
 		this.userService = userService;
 		this.postService = postService;
 		this.listCrisis = listCrisis;
+		this.notificationTokenService=notificationTokenService;
 	}
 
 	private static double calculateSD(double numArray[]) {
@@ -724,7 +730,7 @@ class CheckMeaningIncreasePostThread extends Thread {
 					NotificationController notiController = new NotificationController();
 					notiController.sendNotification(listCrisis, keyword, postService, commentService,
 							notificationService, notificationContentService, userInfoService, crisisService,
-							userService, keywordService);
+							userService, keywordService, notificationTokenService);
 				}
 				this.interrupt();
 			}

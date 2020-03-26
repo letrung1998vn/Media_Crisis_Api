@@ -4,34 +4,30 @@ import java.io.Serializable;
 import javax.persistence.*;
 import java.util.List;
 
-
 /**
  * The persistent class for the UserInfo database table.
  * 
  */
 @Entity
-@Table(name="[UserInfo]")
+@Table(name = "[UserInfo]")
 public class UserInfo implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	@Id
-	@Column(name="user_id")
+	@Column(name = "user_id")
 	private String userId;
 
-	@Column(name="name")
+	@Column(name = "name")
 	private String name;
 
-	@Column(name="email")
+	@Column(name = "email")
 	private String email;
-	
-	@Column(name="link_webhook")
+
+	@Column(name = "link_webhook")
 	private String link_webhook;
 
-	@Column(name="noti_token")
-	private String noti_token;
-	
-	@Column(name="version")
-	private int version;	
+	@Column(name = "version")
+	private int version;
 
 	public UserInfo() {
 	}
@@ -44,13 +40,12 @@ public class UserInfo implements Serializable {
 		this.version = version;
 	}
 
-	public UserInfo(String userId, String name, String email, String link_webhook, String noti_token, int version) {
+	public UserInfo(String userId, String name, String email, String link_webhook, int version) {
 		super();
 		this.userId = userId;
 		this.name = name;
 		this.email = email;
 		this.link_webhook = link_webhook;
-		this.noti_token = noti_token;
 		this.version = version;
 	}
 
@@ -94,15 +89,4 @@ public class UserInfo implements Serializable {
 		this.link_webhook = link_webhook;
 	}
 
-	public String getNoti_token() {
-		return noti_token;
-	}
-
-	public void setNoti_token(String noti_token) {
-		this.noti_token = noti_token;
-	}
-
-
-	
-	
 }

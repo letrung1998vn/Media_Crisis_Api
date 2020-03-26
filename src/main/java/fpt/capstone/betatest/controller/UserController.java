@@ -16,12 +16,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import fpt.capstone.betatest.entities.Keyword;
+import fpt.capstone.betatest.entities.NotificationToken;
 import fpt.capstone.betatest.entities.User;
 import fpt.capstone.betatest.entities.UserInfo;
 import fpt.capstone.betatest.model.MessageOutputModel;
 import fpt.capstone.betatest.model.UserLoginOutput;
 import fpt.capstone.betatest.model.Webhook;
 import fpt.capstone.betatest.services.KeywordService;
+import fpt.capstone.betatest.services.NotificationTokenService;
 import fpt.capstone.betatest.services.UserInfoService;
 import fpt.capstone.betatest.services.UserService;
 
@@ -34,7 +36,8 @@ public class UserController {
 	UserInfoService userInfoService;
 	@Autowired
 	KeywordService keywordService;
-
+	@Autowired
+	NotificationTokenService notificationTokenService;
 	@PostMapping("changeStatus")
 	public MessageOutputModel changeUserStatus(@RequestParam(value = "username") String username) {
 		User user = userService.getUserByUsername(username);
@@ -129,18 +132,19 @@ public class UserController {
 		MessageOutputModel mod = new MessageOutputModel();
 		User user = userService.getUserByUsername(username);
 		if (user.isAvailable()) {
-			user.getUser().setNoti_token(token);
-			userService.saveUser(user);
+			NotificationToken notiToken=new NotificationToken();
+			notiToken.setNotiToken(token);
+			notiToken.setUserName(username);
+			notificationTokenService.saveToken(notiToken);
 			mod.setStatusCode(2);
 			mod.setStatusMessage("Regist notification for browser success!");
-			mod.setObj(user.getUser().getLink_webhook());
 		} else {
 			mod.setStatusCode(3);
 			mod.setStatusMessage("Your account has been banned permanently, please contact admin for more infomation!");
 		}
 		return mod;
 	}
-	
+
 	@GetMapping("getUserKeyword")
 	public MessageOutputModel findKeyword(@RequestParam(value = "username") String username) {
 		System.out.println(username);
@@ -181,7 +185,7 @@ public class UserController {
 		return mod;
 	}
 
-//
+	//
 	@PostMapping("registration")
 	public MessageOutputModel registration(@RequestParam(value = "username") String username,
 			@RequestParam(value = "name") String name, @RequestParam(value = "password") String password,
@@ -214,7 +218,7 @@ public class UserController {
 		return mod;
 	}
 
-//
+	//
 	@PostMapping("findAllUser")
 	public Page<User> findUsers(@RequestParam(value = "username") String userId,
 			@RequestParam(value = "page") int page) {
@@ -222,12 +226,12 @@ public class UserController {
 
 		return result;
 	}
-//
-//	@GetMapping("findAllUser")
-//	public List<User> findAllUser() {
-//		List<User> result = userService.getAll();
-//		return result;
-//	}
+	//
+	// @GetMapping("findAllUser")
+	// public List<User> findAllUser() {
+	// List<User> result = userService.getAll();
+	// return result;
+	// }
 
 	@PostMapping("updateProfile")
 	public MessageOutputModel updateProfile(@RequestParam(value = "userId") String userId,

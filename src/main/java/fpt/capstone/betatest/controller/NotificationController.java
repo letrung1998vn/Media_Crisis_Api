@@ -28,6 +28,7 @@ import fpt.capstone.betatest.entities.Comment;
 import fpt.capstone.betatest.entities.Crisis;
 import fpt.capstone.betatest.entities.Keyword;
 import fpt.capstone.betatest.entities.Notification;
+import fpt.capstone.betatest.entities.NotificationToken;
 import fpt.capstone.betatest.entities.Notification_Content;
 import fpt.capstone.betatest.entities.Post;
 import fpt.capstone.betatest.entities.User;
@@ -40,6 +41,7 @@ import fpt.capstone.betatest.services.CrisisService;
 import fpt.capstone.betatest.services.KeywordService;
 import fpt.capstone.betatest.services.NotificationContentService;
 import fpt.capstone.betatest.services.NotificationService;
+import fpt.capstone.betatest.services.NotificationTokenService;
 import fpt.capstone.betatest.services.PostService;
 import fpt.capstone.betatest.services.UserInfoService;
 import fpt.capstone.betatest.services.UserService;
@@ -63,7 +65,8 @@ public class NotificationController {
 	UserService userService;
 	@Autowired
 	KeywordService keywordService;
-
+	@Autowired
+	NotificationTokenService notificationTokenService;
 	private User user;
 	List<Integer> listCrisisIdInCrisis = new ArrayList<Integer>();
 	List<Integer> listCrisisIdInNotiContent = new ArrayList<Integer>();
@@ -108,7 +111,8 @@ public class NotificationController {
 		crisis.setType("post");
 		listCrisis.add(crisis);
 		sendNotification(listCrisis, "corona", postService, commentService, notificationService,
-				notificationContentService, userInfoService, crisisService, userService, keywordService);
+				notificationContentService, userInfoService, crisisService, userService, keywordService,
+				notificationTokenService);
 	}
 
 	@PostMapping("emailContent")
@@ -157,7 +161,8 @@ public class NotificationController {
 	public void sendNotification(List<Crisis> listcrisis, String keyword, PostService postService,
 			CommentService commentService, NotificationService notificationService,
 			NotificationContentService notificationContentService, UserInfoService userInfoService,
-			CrisisService crisisService, UserService userService, KeywordService keywordService) {
+			CrisisService crisisService, UserService userService, KeywordService keywordService,
+			NotificationTokenService notificationTokenService) {
 		listPost = new ArrayList<Post>();
 		listComment = new ArrayList<Comment>();
 		listLinkDetail = new ArrayList<>();
@@ -194,7 +199,6 @@ public class NotificationController {
 					}
 					// lấy link detail trong crisis
 					getLinkDetail();
-					String userID = user.getUserName();
 					Notification notificationDTO = createEmailNotification(user, notificationService);
 					int notiId = notificationDTO.getId();
 					for (int z = 0; z < sendCrisis.size(); z++) {
@@ -215,7 +219,7 @@ public class NotificationController {
 						notificationDTO.setWebhook(true);
 						notificationService.save(notificationDTO);
 					}
-					String sendNoti = sendNotification(user, keyword);
+					sendNotification(user, keyword, notificationTokenService);
 				}
 			}
 		}
@@ -407,9 +411,12 @@ public class NotificationController {
 		return "not concern";
 	}
 
-	public String sendNotification(User user, String keyword) {
-		String json = createJsonNotificationWithLinkDetail(user.getUser().getNoti_token(), keyword);
-		NotificationWebModel noti = new NotificationWebModel("https://fcm.googleapis.com/fcm/send", json);
-		return noti.connect();
+	public void sendNotification(User user, String keyword, NotificationTokenService notificationTokenService) {
+		List<NotificationToken> listNoti = notificationTokenService.getNotiTokenByUserId(user.getUserName());
+		for (int i = 0; i < listNoti.size(); i++) {
+			String json = createJsonNotificationWithLinkDetail(listNoti.get(i).getNotiToken(), keyword);
+			NotificationWebModel noti = new NotificationWebModel("https://fcm.googleapis.com/fcm/send", json);
+			System.out.println("Status: " + noti.connect());
+		}
 	}
 }
