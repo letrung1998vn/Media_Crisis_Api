@@ -110,7 +110,7 @@ class CheckThread extends Thread {
 				}
 				if (listCrisis.size() > 0) {
 					NotificationController notiController = new NotificationController();
-					notiController.sendEmailNotification(listCrisis, listKeyword.get(i).getKeyword(), postService,
+					notiController.sendNotification(listCrisis, listKeyword.get(i).getKeyword(), postService,
 							commentService, notificationService, notificationContentService, userInfoService,
 							crisisService, userService, keywordService);
 				}
@@ -206,7 +206,7 @@ class CheckMeaningCurrentPostThread extends Thread {
 			if (listPost.size() == 0) {
 				if (listCrisis.size() > 0) {
 					NotificationController notiController = new NotificationController();
-					notiController.sendEmailNotification(listCrisis, keyword, postService, commentService,
+					notiController.sendNotification(listCrisis, keyword, postService, commentService,
 							notificationService, notificationContentService, userInfoService, crisisService,
 							userService, keywordService);
 				}
@@ -327,7 +327,7 @@ class CheckMeaningCurrentPostThread extends Thread {
 		return sum / m.length;
 	}
 
-	private List<Comment> getRecentComment(BigInteger PostId) {
+	private List<Comment> getRecentComment(String PostId) {
 		// Get The list of comment with latest date in DB
 		List<Comment> listComment = commentService.getCommentByPostId(PostId);
 		return listComment;
@@ -722,7 +722,7 @@ class CheckMeaningIncreasePostThread extends Thread {
 			if (listPost.size() < 2) {
 				if (listCrisis.size() > 0) {
 					NotificationController notiController = new NotificationController();
-					notiController.sendEmailNotification(listCrisis, keyword, postService, commentService,
+					notiController.sendNotification(listCrisis, keyword, postService, commentService,
 							notificationService, notificationContentService, userInfoService, crisisService,
 							userService, keywordService);
 				}
@@ -809,7 +809,7 @@ class CheckMeaningIncreasePostThread extends Thread {
 		return -1;
 	}
 
-	private List<Comment> getIncreaseComment(BigInteger PostId) {
+	private List<Comment> getIncreaseComment(String PostId) {
 		// Get the list of comment with two latest date in DB
 		List<Comment> listComment = commentService.getCommentByPostId(PostId);
 		return listComment;

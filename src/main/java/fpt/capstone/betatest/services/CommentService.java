@@ -17,7 +17,7 @@ public class CommentService {
 	@Autowired
 	private CommentRepository commentRepository;
 	@Transactional
-	public List<Comment> getCommentByPostId(BigInteger postId) {
+	public List<Comment> getCommentByPostId(String postId) {
 		return commentRepository.findByPostId(postId);
 	}
 	

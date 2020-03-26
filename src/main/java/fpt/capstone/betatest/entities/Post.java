@@ -14,7 +14,7 @@ import javax.persistence.Table;
 public class Post implements Serializable {
 	@Id
 	@Column(name = "uuid_post")
-	private BigInteger id;
+	private String id;
 	
 	@Column(name = "post_id")
 	private BigInteger postId;
@@ -43,11 +43,11 @@ public class Post implements Serializable {
 	@Column(name = "keyword")
 	private String keyword;
 
-	public BigInteger getId() {
+	public String getId() {
 		return id;
 	}
 
-	public void setId(BigInteger id) {
+	public void setId(String id) {
 		this.id = id;
 	}
 

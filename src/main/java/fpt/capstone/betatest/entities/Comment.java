@@ -15,7 +15,7 @@ import javax.persistence.Table;
 public class Comment implements Serializable {
 	@Id
 	@Column(name = "uuid_comment")
-	private BigInteger id;
+	private String id;
 	
 	@Column(name = "comment_id")
 	private BigInteger commentId;
@@ -41,11 +41,11 @@ public class Comment implements Serializable {
 	@Column(name = "crawl_date")
 	private Date crawlDate;
 
-	public BigInteger getId() {
+	public String getId() {
 		return id;
 	}
 
-	public void setId(BigInteger id) {
+	public void setId(String id) {
 		this.id = id;
 	}
 

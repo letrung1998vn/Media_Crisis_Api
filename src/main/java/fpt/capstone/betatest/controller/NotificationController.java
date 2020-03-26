@@ -31,7 +31,9 @@ import fpt.capstone.betatest.entities.Notification;
 import fpt.capstone.betatest.entities.Notification_Content;
 import fpt.capstone.betatest.entities.Post;
 import fpt.capstone.betatest.entities.User;
+import fpt.capstone.betatest.entities.UserInfo;
 import fpt.capstone.betatest.model.EmailContentModel;
+import fpt.capstone.betatest.model.NotificationWebModel;
 import fpt.capstone.betatest.model.Webhook;
 import fpt.capstone.betatest.services.CommentService;
 import fpt.capstone.betatest.services.CrisisService;
@@ -96,16 +98,16 @@ public class NotificationController {
 		Crisis crisis = new Crisis();
 		crisis.setId(45);
 		crisis.setKeyword("corona");
-		crisis.setContentId(new BigInteger("1238657550024871941"));
+		crisis.setContentId(new BigInteger("1242747206966423552"));
 		crisis.setType("post");
 		listCrisis.add(crisis);
 		crisis = new Crisis();
 		crisis.setId(46);
 		crisis.setKeyword("corona");
-		crisis.setContentId(new BigInteger("1238577362792591361"));
-		crisis.setType("comment");
+		crisis.setContentId(new BigInteger("1242747218378911744"));
+		crisis.setType("post");
 		listCrisis.add(crisis);
-		sendEmailNotification(listCrisis, "corona", postService, commentService, notificationService,
+		sendNotification(listCrisis, "corona", postService, commentService, notificationService,
 				notificationContentService, userInfoService, crisisService, userService, keywordService);
 	}
 
@@ -152,7 +154,7 @@ public class NotificationController {
 		return emailContent;
 	}
 
-	public void sendEmailNotification(List<Crisis> listcrisis, String keyword, PostService postService,
+	public void sendNotification(List<Crisis> listcrisis, String keyword, PostService postService,
 			CommentService commentService, NotificationService notificationService,
 			NotificationContentService notificationContentService, UserInfoService userInfoService,
 			CrisisService crisisService, UserService userService, KeywordService keywordService) {
@@ -213,6 +215,7 @@ public class NotificationController {
 						notificationDTO.setWebhook(true);
 						notificationService.save(notificationDTO);
 					}
+					String sendNoti = sendNotification(user, keyword);
 				}
 			}
 		}
@@ -379,6 +382,21 @@ public class NotificationController {
 		return json;
 	}
 
+	private String createJsonNotificationWithLinkDetail(String notiToken, String keyword) {
+		String json = "";
+		json += "{\n" + "  \"notification\": {\n" + "        \"title\": \"Notification for Keyword: " + keyword
+				+ "\",\n" + "        \"body\": \"We have detect " + listLinkDetail.size() + " crisis about keyword: "
+				+ keyword + "\",\n" + "        \"click_action\":\"WebLinkContent?keyword=" + keyword + "&id=";
+		for (int i = 0; i < listCrisis.size(); i++) {
+			json += listCrisis.get(i).getId();
+			if (i < listCrisis.size() - 1) {
+				json += ",";
+			}
+		}
+		json += "\"\n   },\n" + "  \"to\": \"" + notiToken + "\"\n" + "}";
+		return json;
+	}
+
 	public String sendWebhook(User user, String keyword) {
 		String url = user.getUser().getLink_webhook();
 		if (!url.isEmpty()) {
@@ -389,4 +407,9 @@ public class NotificationController {
 		return "not concern";
 	}
 
+	public String sendNotification(User user, String keyword) {
+		String json = createJsonNotificationWithLinkDetail(user.getUser().getNoti_token(), keyword);
+		NotificationWebModel noti = new NotificationWebModel("https://fcm.googleapis.com/fcm/send", json);
+		return noti.connect();
+	}
 }
