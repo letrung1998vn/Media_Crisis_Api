@@ -26,4 +26,12 @@ public class NotificationTokenService {
 	public void saveToken(NotificationToken notiToken) {
 		notificationTokenRepository.save(notiToken);
 	}
-}
+	@Transactional
+	public NotificationToken getNotiTokenByUserIdAndNotiToken(String userId, String notiToken) {
+		return notificationTokenRepository.findByUserNameAndNotiToken(userId, notiToken);
+	}
+	@Transactional
+	public void deleteToken(NotificationToken notiToken) {
+		notificationTokenRepository.delete(notiToken);
+	}
+}	

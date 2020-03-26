@@ -126,25 +126,6 @@ public class UserController {
 		return mod;
 	}
 
-	@PostMapping("updateNotiToken")
-	public MessageOutputModel updateNotiToken(@RequestParam(value = "token") String token,
-			@RequestParam(value = "username") String username) {
-		MessageOutputModel mod = new MessageOutputModel();
-		User user = userService.getUserByUsername(username);
-		if (user.isAvailable()) {
-			NotificationToken notiToken=new NotificationToken();
-			notiToken.setNotiToken(token);
-			notiToken.setUserName(username);
-			notificationTokenService.saveToken(notiToken);
-			mod.setStatusCode(2);
-			mod.setStatusMessage("Regist notification for browser success!");
-		} else {
-			mod.setStatusCode(3);
-			mod.setStatusMessage("Your account has been banned permanently, please contact admin for more infomation!");
-		}
-		return mod;
-	}
-
 	@GetMapping("getUserKeyword")
 	public MessageOutputModel findKeyword(@RequestParam(value = "username") String username) {
 		System.out.println(username);
