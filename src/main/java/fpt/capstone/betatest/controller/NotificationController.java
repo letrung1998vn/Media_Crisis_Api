@@ -67,7 +67,6 @@ public class NotificationController {
 	KeywordService keywordService;
 	@Autowired
 	NotificationTokenService notificationTokenService;
-	private User user;
 	List<Integer> listCrisisIdInCrisis = new ArrayList<Integer>();
 	List<Integer> listCrisisIdInNotiContent = new ArrayList<Integer>();
 	List<Notification_Content> listNotiContent;
@@ -163,9 +162,6 @@ public class NotificationController {
 			NotificationContentService notificationContentService, UserInfoService userInfoService,
 			CrisisService crisisService, UserService userService, KeywordService keywordService,
 			NotificationTokenService notificationTokenService) {
-		listPost = new ArrayList<Post>();
-		listComment = new ArrayList<Comment>();
-		listLinkDetail = new ArrayList<>();
 		// get list user by keyword
 		List<User> listUser = new ArrayList<User>();
 		List<Keyword> listKeyWord = keywordService.getUserByKeyword(keyword);
@@ -175,6 +171,9 @@ public class NotificationController {
 			listUser.add(userService.getUserByUsername(keyword1.getUser().getUserName()));
 		}
 		for (int i = 0; i < listUser.size(); i++) {
+			listPost = new ArrayList<Post>();
+			listComment = new ArrayList<Comment>();
+			listLinkDetail = new ArrayList<>();
 			List<Crisis> sendCrisis = new ArrayList<>();
 			sendCrisis.addAll(listcrisis);
 			User user = listUser.get(i);
@@ -203,11 +202,11 @@ public class NotificationController {
 					int notiId = notificationDTO.getId();
 					for (int z = 0; z < sendCrisis.size(); z++) {
 						Crisis crisis = sendCrisis.get(z);
-						Notification_Content notiContent = createEmailNotificationContent(notiId, crisis.getId(),
+						 createEmailNotificationContent(notiId, crisis.getId(),
 								notificationContentService);
 					}
-					// send mail
-					String sendEmailResult = sendMail(user.getUserName(), userInfoService, keyword, listcrisis);
+//					 send mail
+					String sendEmailResult = sendMail(user.getUserName(), userInfoService, keyword, sendCrisis);
 					if (sendEmailResult.equals("OK")) {
 						notificationDTO.setEmail(true);
 						notificationService.save(notificationDTO);
@@ -219,7 +218,7 @@ public class NotificationController {
 						notificationDTO.setWebhook(true);
 						notificationService.save(notificationDTO);
 					}
-					sendNotification(user, keyword, notificationTokenService);
+					sendNotification(user, keyword, notificationTokenService, sendCrisis);
 				}
 			}
 		}
@@ -272,21 +271,6 @@ public class NotificationController {
 		for (int i = 0; i < listPost.size(); i++) {
 			listLinkDetail.add(listPost.get(i).getLinkDetail());
 		}
-	}
-
-	private String createEmailContentWithLinkDetail() {
-		emailContent = "Here are crisis's link detail.<br/>";
-		emailContent += "Click to see more.<br/>";
-		emailContent += "<h3>";
-		for (String linkDetail : listLinkDetail) {
-			linkDetail = linkDetail.replace("', '", "");
-			linkDetail = linkDetail.replace("', ", "");
-			linkDetail = linkDetail.replace("'", "");
-			emailContent += linkDetail;
-			emailContent += "<br/>";
-		}
-		emailContent += "</h3>";
-		return emailContent;
 	}
 
 	private String createEmailLink(String keyword, List<Crisis> listCrisis) {
@@ -386,10 +370,10 @@ public class NotificationController {
 		return json;
 	}
 
-	private String createJsonNotificationWithLinkDetail(String notiToken, String keyword) {
+	private String createJsonNotificationWithLinkDetail(String notiToken, String keyword, List<Crisis> listCrisis) {
 		String json = "";
 		json += "{\n" + "  \"notification\": {\n" + "        \"title\": \"Notification for Keyword: " + keyword
-				+ "\",\n" + "        \"body\": \"We have detect " + listLinkDetail.size() + " crisis about keyword: "
+				+ "\",\n" + "        \"body\": \"We have detect " + listCrisis.size() + " crisis about keyword: "
 				+ keyword + "\",\n" + "        \"click_action\":\"WebLinkContent?keyword=" + keyword + "&id=";
 		for (int i = 0; i < listCrisis.size(); i++) {
 			json += listCrisis.get(i).getId();
@@ -411,10 +395,10 @@ public class NotificationController {
 		return "not concern";
 	}
 
-	public void sendNotification(User user, String keyword, NotificationTokenService notificationTokenService) {
+	public void sendNotification(User user, String keyword, NotificationTokenService notificationTokenService, List<Crisis> listCrisis) {
 		List<NotificationToken> listNoti = notificationTokenService.getNotiTokenByUserId(user.getUserName());
 		for (int i = 0; i < listNoti.size(); i++) {
-			String json = createJsonNotificationWithLinkDetail(listNoti.get(i).getNotiToken(), keyword);
+			String json = createJsonNotificationWithLinkDetail(listNoti.get(i).getNotiToken(), keyword, listCrisis);
 			NotificationWebModel noti = new NotificationWebModel("https://fcm.googleapis.com/fcm/send", json);
 			System.out.println("Status: " + noti.connect());
 		}

@@ -23,8 +23,8 @@ public class Comment implements Serializable {
 	@Column(name = "comment_content")
 	private String commentContent;
 	
-	@Column(name = "post_id")
-	private BigInteger postId;
+	@Column(name = "uuid_post")
+	private String postId;
 	
 	@Column(name = "create_date")
 	private Date createDate;
@@ -65,11 +65,11 @@ public class Comment implements Serializable {
 		this.commentContent = commentContent;
 	}
 
-	public BigInteger getPostId() {
+	public String getPostId() {
 		return postId;
 	}
 
-	public void setPostId(BigInteger postId) {
+	public void setPostId(String postId) {
 		this.postId = postId;
 	}
 
