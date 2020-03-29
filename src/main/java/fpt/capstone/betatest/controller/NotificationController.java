@@ -98,16 +98,16 @@ public class NotificationController {
 	public void testCall() {
 		listCrisis = new ArrayList<>();
 		Crisis crisis = new Crisis();
-		crisis.setId(45);
+		crisis.setId(197);
 		crisis.setKeyword("corona");
-		crisis.setContentId(new BigInteger("1242747206966423552"));
+		crisis.setContentId(new BigInteger("1243733722916061185"));
 		crisis.setType("post");
 		listCrisis.add(crisis);
 		crisis = new Crisis();
-		crisis.setId(46);
+		crisis.setId(198);
 		crisis.setKeyword("corona");
-		crisis.setContentId(new BigInteger("1242747218378911744"));
-		crisis.setType("post");
+		crisis.setContentId(new BigInteger("1243733730021142529"));
+		crisis.setType("comment");
 		listCrisis.add(crisis);
 		sendNotification(listCrisis, "corona", postService, commentService, notificationService,
 				notificationContentService, userInfoService, crisisService, userService, keywordService,
@@ -202,23 +202,32 @@ public class NotificationController {
 					int notiId = notificationDTO.getId();
 					for (int z = 0; z < sendCrisis.size(); z++) {
 						Crisis crisis = sendCrisis.get(z);
-						 createEmailNotificationContent(notiId, crisis.getId(),
-								notificationContentService);
+						createEmailNotificationContent(notiId, crisis.getId(), notificationContentService);
 					}
-//					 send mail
-					String sendEmailResult = sendMail(user.getUserName(), userInfoService, keyword, sendCrisis);
-					if (sendEmailResult.equals("OK")) {
-						notificationDTO.setEmail(true);
-						notificationService.save(notificationDTO);
+					// send mail
+					try {
+						String sendEmailResult = sendMail(user.getUserName(), userInfoService, keyword, sendCrisis);
+						if (sendEmailResult.equals("OK")) {
+							notificationDTO.setEmail(true);
+							notificationService.save(notificationDTO);
+						}
+					} catch (Exception e) {
+						e.printStackTrace();
 					}
-					String result = sendWebhook(user, keyword);
-					if (result.equals("not concern")) {
-
-					} else if (result.equals("OK!!!")) {
-						notificationDTO.setWebhook(true);
-						notificationService.save(notificationDTO);
+					try {
+						String result = sendWebhook(user, keyword);
+						if (result.equals("OK!!!")) {
+							notificationDTO.setWebhook(true);
+							notificationService.save(notificationDTO);
+						}
+					} catch (Exception e) {
+						e.printStackTrace();
 					}
-					sendNotification(user, keyword, notificationTokenService, sendCrisis);
+					try {
+						sendNotification(user, keyword, notificationTokenService, sendCrisis);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 				}
 			}
 		}
@@ -395,7 +404,8 @@ public class NotificationController {
 		return "not concern";
 	}
 
-	public void sendNotification(User user, String keyword, NotificationTokenService notificationTokenService, List<Crisis> listCrisis) {
+	public void sendNotification(User user, String keyword, NotificationTokenService notificationTokenService,
+			List<Crisis> listCrisis) {
 		List<NotificationToken> listNoti = notificationTokenService.getNotiTokenByUserId(user.getUserName());
 		for (int i = 0; i < listNoti.size(); i++) {
 			String json = createJsonNotificationWithLinkDetail(listNoti.get(i).getNotiToken(), keyword, listCrisis);

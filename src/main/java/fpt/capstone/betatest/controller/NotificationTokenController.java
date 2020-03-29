@@ -46,7 +46,6 @@ public class NotificationTokenController {
 	@PostMapping("checkNotiTokenExist")
 	public MessageOutputModel checkExist(@RequestParam(value = "token") String token,
 			@RequestParam(value = "username") String username) {
-		boolean result = false;
 		MessageOutputModel mod = new MessageOutputModel();
 		mod.setStatusCode(0);
 		NotificationToken notiToken = notificationTokenService.getNotiTokenByUserIdAndNotiToken(username, token);
