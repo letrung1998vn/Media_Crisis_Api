@@ -408,9 +408,12 @@ public class NotificationController {
 			List<Crisis> listCrisis) {
 		List<NotificationToken> listNoti = notificationTokenService.getNotiTokenByUserId(user.getUserName());
 		for (int i = 0; i < listNoti.size(); i++) {
-			String json = createJsonNotificationWithLinkDetail(listNoti.get(i).getNotiToken(), keyword, listCrisis);
-			NotificationWebModel noti = new NotificationWebModel("https://fcm.googleapis.com/fcm/send", json);
-			System.out.println("Status: " + noti.connect());
+			NotificationToken notiToken=listNoti.get(i);
+			if (notiToken.isAvailable()) {
+				String json = createJsonNotificationWithLinkDetail(notiToken.getNotiToken(), keyword, listCrisis);
+				NotificationWebModel noti = new NotificationWebModel("https://fcm.googleapis.com/fcm/send", json);
+				System.out.println("Status: " + noti.connect());
+			}
 		}
 	}
 }
