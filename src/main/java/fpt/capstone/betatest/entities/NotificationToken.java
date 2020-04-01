@@ -20,7 +20,10 @@ public class NotificationToken {
 
 	@Column(name = "user_id")
 	private String userName;
-
+	
+	@Column(name = "available")
+	private boolean available;
+	
 	public int getId() {
 		return id;
 	}
@@ -43,6 +46,14 @@ public class NotificationToken {
 
 	public void setUserName(String userName) {
 		this.userName = userName;
+	}
+
+	public boolean isAvailable() {
+		return available;
+	}
+
+	public void setAvailable(boolean available) {
+		this.available = available;
 	}
 	
 }

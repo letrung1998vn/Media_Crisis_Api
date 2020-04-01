@@ -179,21 +179,21 @@ class CheckMeaningCurrentPostThread extends BaseThread {
 			shareArray[i] = post.getNumberOfReweet();
 			commentArray[i] = post.getNumberOfReply();
 		}
-		double reactStandart = calculateSD(reactArray);
+		double reactStandard = calculateSD(reactArray);
 		double reactMean = mean(reactArray);
-		double react_anomaly_cut_off = reactStandart * 2;
+		double react_anomaly_cut_off = reactStandard * 2;
 		double react_lower_limit = reactMean - react_anomaly_cut_off;
 		double react_upper_limit = reactMean + react_anomaly_cut_off;
 
-		double shareStandart = calculateSD(shareArray);
+		double shareStandard = calculateSD(shareArray);
 		double shareMean = mean(shareArray);
-		double share_anomaly_cut_off = shareStandart * 2;
+		double share_anomaly_cut_off = shareStandard * 2;
 		double share_lower_limit = shareMean - share_anomaly_cut_off;
 		double share_upper_limit = shareMean + share_anomaly_cut_off;
 
-		double commentStandart = calculateSD(commentArray);
+		double commentStandard = calculateSD(commentArray);
 		double commentMean = mean(commentArray);
-		double comment_anomaly_cut_off = commentStandart * 2;
+		double comment_anomaly_cut_off = commentStandard * 2;
 		double comment_lower_limit = commentMean - comment_anomaly_cut_off;
 		double comment_upper_limit = commentMean + comment_anomaly_cut_off;
 		try {
@@ -232,8 +232,8 @@ class CheckMeaningCurrentPostThread extends BaseThread {
 									insertPostCrisis(post, crisisService);
 								}
 							} else {
-								if (reactStandart < lowStandard || shareStandart < lowStandard
-										|| commentStandart < lowStandard) {
+								if (reactStandard > lowStandard || shareStandard > lowStandard
+										|| commentStandard > lowStandard) {
 									if (post.getNumberOfReply() > commentMean || post.getNumberOfReweet() > shareMean
 											|| post.getNumberOfReact() > reactMean) {
 										// Save crisis and check if already add or not
@@ -242,7 +242,6 @@ class CheckMeaningCurrentPostThread extends BaseThread {
 								} else {
 									insertPostCrisis(post, crisisService);
 								}
-
 							}
 						}
 					}
@@ -361,15 +360,15 @@ class CheckMeaningCurrentCommentThread extends BaseThread {
 			reactArray[i] = comment.getNumberOfReact();
 			commentArray[i] = comment.getNumberOfReply();
 		}
-		double reactStandart = calculateSD(reactArray);
+		double reactStandard = calculateSD(reactArray);
 		double reactMean = mean(reactArray);
-		double react_anomaly_cut_off = reactStandart * 2;
+		double react_anomaly_cut_off = reactStandard * 2;
 		double react_lower_limit = reactMean - react_anomaly_cut_off;
 		double react_upper_limit = reactMean + react_anomaly_cut_off;
 
-		double commentStandart = calculateSD(commentArray);
+		double commentStandard = calculateSD(commentArray);
 		double commentMean = mean(commentArray);
-		double comment_anomaly_cut_off = commentStandart * 2;
+		double comment_anomaly_cut_off = commentStandard * 2;
 		double comment_lower_limit = commentMean - comment_anomaly_cut_off;
 		double comment_upper_limit = commentMean + comment_anomaly_cut_off;
 		try {
@@ -394,7 +393,7 @@ class CheckMeaningCurrentCommentThread extends BaseThread {
 							if (reactMean < lowMean && commentMean < lowMean) {
 								insertCommentCrisis(comment, crisisService);
 							} else {
-								if (reactStandart < lowStandard || commentStandart < lowStandard) {
+								if (reactStandard > lowStandard || commentStandard > lowStandard) {
 									if (comment.getNumberOfReply() > commentMean
 											|| comment.getNumberOfReact() > reactMean) {
 										insertCommentCrisis(comment, crisisService);
@@ -423,7 +422,7 @@ class CheckMeaningCurrentCommentThread extends BaseThread {
 								insertCommentCrisis(comment, crisisService);
 							}
 						} else {
-							if (reactStandart < lowStandard || commentStandart < lowStandard) {
+							if (reactStandard > lowStandard || commentStandard > lowStandard) {
 								if (comment.getNumberOfReply() > commentMean
 										|| comment.getNumberOfReact() > reactMean) {
 									insertCommentCrisis(comment, crisisService);
@@ -668,21 +667,21 @@ class CheckMeaningIncreasePostThread extends BaseThread {
 			shareArray[i] = newPost.getNumberOfReweet() - lastPost.getNumberOfReweet();
 			commentArray[i] = newPost.getNumberOfReply() - lastPost.getNumberOfReply();
 		}
-		double reactStandart = calculateSD(reactArray);
+		double reactStandard = calculateSD(reactArray);
 		double reactMean = mean(reactArray);
-		double react_anomaly_cut_off = reactStandart * 2;
+		double react_anomaly_cut_off = reactStandard * 2;
 		double react_lower_limit = reactMean - react_anomaly_cut_off;
 		double react_upper_limit = reactMean + react_anomaly_cut_off;
 
-		double shareStandart = calculateSD(shareArray);
+		double shareStandard = calculateSD(shareArray);
 		double shareMean = mean(shareArray);
-		double share_anomaly_cut_off = shareStandart * 2;
+		double share_anomaly_cut_off = shareStandard * 2;
 		double share_lower_limit = shareMean - share_anomaly_cut_off;
 		double share_upper_limit = shareMean + share_anomaly_cut_off;
 
-		double commentStandart = calculateSD(commentArray);
+		double commentStandard = calculateSD(commentArray);
 		double commentMean = mean(commentArray);
-		double comment_anomaly_cut_off = commentStandart * 2;
+		double comment_anomaly_cut_off = commentStandard * 2;
 		double comment_lower_limit = commentMean - comment_anomaly_cut_off;
 		double comment_upper_limit = commentMean + comment_anomaly_cut_off;
 		try {
@@ -723,8 +722,8 @@ class CheckMeaningIncreasePostThread extends BaseThread {
 									insertPostCrisis(nextPost, crisisService);
 								} else {
 									// Save crisis and check if already add or not
-									if (reactStandart < lowStandard || shareStandart < lowStandard
-											|| commentStandart < lowStandard) {
+									if (reactStandard > lowStandard || shareStandard > lowStandard
+											|| commentStandard > lowStandard) {
 										if ((post.getNumberOfReply() - nextPost.getNumberOfReply()) > commentMean
 												|| (post.getNumberOfReweet() - nextPost.getNumberOfReweet()) > shareMean
 												|| (post.getNumberOfReact()
@@ -873,15 +872,15 @@ class CheckMeaningIncreaseCommentThread extends BaseThread {
 			reactArray[i] = newComment.getNumberOfReact() - lastComment.getNumberOfReact();
 			commentArray[i] = newComment.getNumberOfReply() - lastComment.getNumberOfReply();
 		}
-		double reactStandart = calculateSD(reactArray);
+		double reactStandard = calculateSD(reactArray);
 		double reactMean = mean(reactArray);
-		double react_anomaly_cut_off = reactStandart * 2;
+		double react_anomaly_cut_off = reactStandard * 2;
 		double react_lower_limit = reactMean - react_anomaly_cut_off;
 		double react_upper_limit = reactMean + react_anomaly_cut_off;
 
-		double commentStandart = calculateSD(commentArray);
+		double commentStandard = calculateSD(commentArray);
 		double commentMean = mean(commentArray);
-		double comment_anomaly_cut_off = commentStandart * 2;
+		double comment_anomaly_cut_off = commentStandard * 2;
 		double comment_lower_limit = commentMean - comment_anomaly_cut_off;
 		double comment_upper_limit = commentMean + comment_anomaly_cut_off;
 		try {
@@ -913,7 +912,7 @@ class CheckMeaningIncreaseCommentThread extends BaseThread {
 									insertCommentCrisis(newComment, crisisService);
 								}
 							} else {
-								if (reactStandart < lowStandard || commentStandart < lowStandard) {
+								if (reactStandard > lowStandard || commentStandard > lowStandard) {
 									if ((lastComment.getNumberOfReply() - newComment.getNumberOfReply()) > commentMean
 											|| (lastComment.getNumberOfReact()
 													- newComment.getNumberOfReact()) > reactMean) {
@@ -941,7 +940,7 @@ class CheckMeaningIncreaseCommentThread extends BaseThread {
 								insertCommentCrisis(newComment, crisisService);
 							}
 						} else {
-							if (reactStandart < lowStandard || commentStandart < lowStandard) {
+							if (reactStandard > lowStandard || commentStandard > lowStandard) {
 								if ((lastComment.getNumberOfReply() - newComment.getNumberOfReply()) > commentMean
 										|| (lastComment.getNumberOfReact()
 												- newComment.getNumberOfReact()) > reactMean) {

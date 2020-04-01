@@ -30,12 +30,22 @@ public class NotificationTokenController {
 		MessageOutputModel mod = new MessageOutputModel();
 		User user = userService.getUserByUsername(username);
 		if (user.isAvailable()) {
-			NotificationToken notiToken = new NotificationToken();
-			notiToken.setNotiToken(token);
-			notiToken.setUserName(username);
-			notificationTokenService.saveToken(notiToken);
-			mod.setStatusCode(2);
-			mod.setStatusMessage("Regist notification for browser success!");
+			NotificationToken notiToken = notificationTokenService.getNotiTokenByUserIdAndNotiToken(username, token);
+			if (notiToken == null) {
+				notiToken = new NotificationToken();
+				notiToken.setNotiToken(token);
+				notiToken.setUserName(username);
+				notiToken.setAvailable(true);
+				notificationTokenService.saveToken(notiToken);
+				mod.setStatusCode(2);
+				mod.setStatusMessage("Regist notification for browser success!");
+			} else {
+				notiToken.setAvailable(true);
+				notificationTokenService.saveToken(notiToken);
+				mod.setStatusCode(2);
+				mod.setStatusMessage("Regist notification for browser success!");
+			}
+
 		} else {
 			mod.setStatusCode(3);
 			mod.setStatusMessage("Your account has been banned permanently, please contact admin for more infomation!");
@@ -50,7 +60,11 @@ public class NotificationTokenController {
 		mod.setStatusCode(0);
 		NotificationToken notiToken = notificationTokenService.getNotiTokenByUserIdAndNotiToken(username, token);
 		if (notiToken != null) {
-			mod.setStatusCode(1);
+			if (notiToken.isAvailable()) {
+				mod.setStatusCode(1);
+			} else {
+				mod.setStatusCode(5);
+			}
 		}
 		return mod;
 	}
@@ -62,7 +76,8 @@ public class NotificationTokenController {
 		User user = userService.getUserByUsername(username);
 		if (user.isAvailable()) {
 			NotificationToken notiToken = notificationTokenService.getNotiTokenByUserIdAndNotiToken(username, token);
-			notificationTokenService.deleteToken(notiToken);
+			notiToken.setAvailable(false);
+			notificationTokenService.saveToken(notiToken);
 			mod.setStatusCode(2);
 			mod.setStatusMessage("Disable notification for browser success!");
 		} else {

@@ -18,10 +18,10 @@ import fpt.capstone.betatest.services.UserInfoService;
 import fpt.capstone.betatest.services.UserService;
 
 public abstract class BaseThread extends Thread {
-	public final double lowerConfidence = 0.3;
+	public final double lowerConfidence = 0.5;
 	public final String negative = "negative";
 	public final int lowMean = 10000;
-	public final int lowStandard = 10000;
+	public final int lowStandard = 5000;
 	public final String type="post";
 	public int totalCount = 60;
 	public int entity_sentiment_count = 3;
