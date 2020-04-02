@@ -247,8 +247,22 @@ public class UserController {
 			mod.setStatusCode(2);
 			mod.setStatusMessage("Changed password successfully.");
 		}
-
 		return mod;
 	}
-
+	
+	@PostMapping("disableWebhook")
+	public MessageOutputModel disableWebhook(@RequestParam(value = "userName") String username) {
+		User user = userService.getUserByUsername(username);
+		MessageOutputModel mod = new MessageOutputModel();
+		if (!user.isAvailable()) {
+			mod.setStatusCode(3);
+			mod.setStatusMessage("Your account has been disabled. Please contact admin for more information!");
+		} else {
+			user.getUser().setLink_webhook("");
+			user = userService.saveUser(user);
+			mod.setStatusCode(2);
+			mod.setStatusMessage("Disable webhook notification successfully.");
+		}
+		return mod;
+	}
 }
