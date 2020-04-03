@@ -19,12 +19,6 @@ public class KeywordService {
 	@Autowired
 	private KeywordRepository keywordsRepository;
 
-//	@Transactional
-//	public Page<Keyword> keywordPaging(int Page) {
-//		Pageable page = PageRequest.of((Page - 1), 10);
-//		return keywordsRepository.findAll(page);
-//	}
-//
 	@Transactional
 	public Page<Keyword> searchKeyword(String keyword, int Page) {
 		Pageable page = PageRequest.of((Page - 1), 10);
@@ -52,11 +46,6 @@ public class KeywordService {
 		return keywordsRepository.findAllUserHaveKeyword();
 	}
 
-//	@Transactional
-//	public Keyword getByKeywordAndUserId(String keyword, String userId) {
-//		return keywordsRepository.findByUserIdAndKeyword(keyword, userId);
-//	}
-
 	@Transactional
 	public Keyword saveKeyword(Keyword kw) {
 		return keywordsRepository.save(kw);
@@ -66,11 +55,6 @@ public class KeywordService {
 	public Keyword getKeywordById(int id) {
 		return keywordsRepository.findById(id);
 	}
-
-//	@Transactional
-//	public Keyword updateKeyword(Keyword kw) {
-//		return keywordsRepository.save(kw);
-//	}
 
 	@Transactional
 	public void deleteKeyword(Keyword kw) {

@@ -1,16 +1,8 @@
 package fpt.capstone.betatest.model;
 
-import java.util.List;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.StringJoiner;
 
 public class Webhook {
 	String url;

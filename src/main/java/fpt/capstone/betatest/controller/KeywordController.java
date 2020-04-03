@@ -69,13 +69,6 @@ public class KeywordController {
 		}
 		return result;
 	}
-//
-//	@GetMapping("check")
-//	public Keyword checkExist(@RequestParam(value = "userId") String userId,
-//			@RequestParam(value = "keyword") String keyword) {
-//		Keyword result = keywordService.getByKeywordAndUserId(userId, keyword);
-//		return result;
-//	}
 
 	@PostMapping("createKeyword")
 	public MessageOutputModel createKeyword(@RequestParam(value = "keyword") String keyword,

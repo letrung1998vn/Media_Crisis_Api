@@ -27,7 +27,7 @@ public class UserService {
 	public List<User> findAll() {
 		return usersRepository.findAll();
 	}
-//	
+
 	@Transactional
 	public boolean checkUserExist(String username) {
 		boolean result = false;
@@ -55,9 +55,4 @@ public class UserService {
 		return usersRepository.findByUserNameContaining(userId, page);
 	}
 	
-	
-//	@Transactional
-//	public User getUserByUserName(String userName) {
-//		return usersRepository.findByUserName(userName);
-//	}
 }

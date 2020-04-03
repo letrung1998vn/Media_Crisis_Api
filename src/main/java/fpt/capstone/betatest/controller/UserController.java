@@ -207,12 +207,6 @@ public class UserController {
 
 		return result;
 	}
-	//
-	// @GetMapping("findAllUser")
-	// public List<User> findAllUser() {
-	// List<User> result = userService.getAll();
-	// return result;
-	// }
 
 	@PostMapping("updateProfile")
 	public MessageOutputModel updateProfile(@RequestParam(value = "userId") String userId,

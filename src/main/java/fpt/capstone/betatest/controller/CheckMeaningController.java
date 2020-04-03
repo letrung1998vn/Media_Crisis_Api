@@ -2,8 +2,14 @@
 package fpt.capstone.betatest.controller;
 
 import java.math.BigInteger;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,12 +28,14 @@ import fpt.capstone.betatest.entities.Comment;
 import fpt.capstone.betatest.entities.Crisis;
 import fpt.capstone.betatest.entities.Keyword;
 import fpt.capstone.betatest.entities.Keyword_Crawler;
+import fpt.capstone.betatest.entities.NegativeRatio;
 import fpt.capstone.betatest.entities.Post;
 import fpt.capstone.betatest.model.BaseThread;
 import fpt.capstone.betatest.services.CommentService;
 import fpt.capstone.betatest.services.CrisisService;
 import fpt.capstone.betatest.services.KeywordCrawlerService;
 import fpt.capstone.betatest.services.KeywordService;
+import fpt.capstone.betatest.services.NegativeRatioService;
 import fpt.capstone.betatest.services.NotificationContentService;
 import fpt.capstone.betatest.services.NotificationService;
 import fpt.capstone.betatest.services.NotificationTokenService;
@@ -59,13 +67,15 @@ public class CheckMeaningController {
 	UserService userService;
 	@Autowired
 	NotificationTokenService notificationTokenService;
+	@Autowired
+	NegativeRatioService negativeRatioService;
 
 	@GetMapping("check")
 	public void checkMeaning() throws Exception {
 		TextAPIClient client = new TextAPIClient("43faa103", "f2aaee05b21dabe934b89bd3198801e8");
 		CheckThread check = new CheckThread(client, crisisService, commentService, postService, keywordCrawlerService,
 				keywordService, notificationService, notificationContentService, userInfoService, userService,
-				notificationTokenService);
+				notificationTokenService, negativeRatioService);
 		check.start();
 	}
 
@@ -83,12 +93,14 @@ class CheckThread extends Thread {
 	UserInfoService userInfoService;
 	UserService userService;
 	NotificationTokenService notificationTokenService;
+	NegativeRatioService negativeRatioService;
+	final double diffenrentDate = 7;
 
 	public CheckThread(TextAPIClient client, CrisisService crisisService, CommentService commentService,
 			PostService postService, KeywordCrawlerService keywordCrawlerService, KeywordService keywordService,
 			NotificationService notificationService, NotificationContentService notificationContentService,
-			UserInfoService userInfoService, UserService userService,
-			NotificationTokenService notificationTokenService) {
+			UserInfoService userInfoService, UserService userService, NotificationTokenService notificationTokenService,
+			NegativeRatioService negativeRatioService) {
 		this.client = client;
 		this.crisisService = crisisService;
 		this.commentService = commentService;
@@ -100,6 +112,7 @@ class CheckThread extends Thread {
 		this.userInfoService = userInfoService;
 		this.userService = userService;
 		this.notificationTokenService = notificationTokenService;
+		this.negativeRatioService = negativeRatioService;
 	}
 
 	@Override
@@ -134,14 +147,26 @@ class CheckThread extends Thread {
 		List<Post> listPost = getRecentPost(keyword);
 		CheckMeaningCurrentPostThread CheckMeaningCurrentPostThread = new CheckMeaningCurrentPostThread(client, keyword,
 				listPost, crisisService, commentService, postService, keywordService, notificationService,
-				notificationContentService, userInfoService, userService, listCrisis, notificationTokenService);
+				notificationContentService, userInfoService, userService, listCrisis, notificationTokenService,
+				negativeRatioService);
 		CheckMeaningCurrentPostThread.start();
 	}
 
 	private List<Post> getRecentPost(String keyword) {
 		// Get The list of post with latest date in DB
 		List<Post> posts = postService.getEachPostContentWithLatestDate(keyword);
-		return posts;
+		List<Post> returnList = new ArrayList<>();
+		for (int i = 0; i < posts.size(); i++) {
+			Post post = posts.get(i);
+			long millis = System.currentTimeMillis();
+			Date date = new Date(millis);
+			long diffInMillies = Math.abs(date.getTime() - post.getCrawlDate().getTime());
+			long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
+			if (diff < diffenrentDate) {
+				returnList.add(post);
+			}
+		}
+		return returnList;
 	}
 }
 
@@ -151,7 +176,8 @@ class CheckMeaningCurrentPostThread extends BaseThread {
 			CrisisService crisisService, CommentService commentService, PostService postService,
 			KeywordService keywordService, NotificationService notificationService,
 			NotificationContentService notificationContentService, UserInfoService userInfoService,
-			UserService userService, List<Crisis> listCrisis, NotificationTokenService notificationTokenService) {
+			UserService userService, List<Crisis> listCrisis, NotificationTokenService notificationTokenService,
+			NegativeRatioService negativeRatioService) {
 		this.client = client;
 		this.keyword = keyword;
 		this.listPost = listPost;
@@ -165,6 +191,75 @@ class CheckMeaningCurrentPostThread extends BaseThread {
 		this.userService = userService;
 		this.listCrisis = listCrisis;
 		this.notificationTokenService = notificationTokenService;
+		this.negativeRatioService = negativeRatioService;
+	}
+
+	private List<Post> getIncreasePost(String keyword) {
+		// Get the list of post with two latest date in DB
+		List<Post> listPost = postService.getPostContentWithTwoLatestDate(keyword);
+		List<Post> resultList = new ArrayList<>();
+		List<Post> sameContentPost = new ArrayList<>();
+		List<Post> sameContentPostSorted = new ArrayList<>();
+		for (int i = 0; i < listPost.size(); i++) {
+			if (i < listPost.size() - 1) {
+				Post post = listPost.get(i);
+				sameContentPost = getListSameContent(listPost, post);
+				sameContentPostSorted = sortByCrawlDate(sameContentPost);
+				if (!checkExist(resultList, sameContentPostSorted.get(0).getPostContent())
+						&& sameContentPostSorted.size() == 2) {
+					resultList.addAll(sameContentPostSorted);
+				}
+			}
+		}
+		return resultList;
+	}
+
+	private boolean checkExist(List<Post> listPost, String postContent) {
+		for (int i = 0; i < listPost.size(); i++) {
+			String content = listPost.get(i).getPostContent();
+			if (postContent.equals(content)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private List<Post> getListSameContent(List<Post> listPost, Post checkPost) {
+		List<Post> result = new ArrayList<>();
+		for (int i = 0; i < listPost.size(); i++) {
+			Post post = listPost.get(i);
+			if (checkPost.getPostContent().equals(post.getPostContent())) {
+				result.add(post);
+			}
+		}
+		return result;
+	}
+
+	private List<Post> sortByCrawlDate(List<Post> listPost) {
+		List<Post> result = new ArrayList<>();
+		for (int i = 0; i < listPost.size(); i++) {
+			Post post = listPost.get(i);
+			if (result.size() == 0) {
+				result.add(post);
+			} else if (result.size() == 1) {
+				if (post.getCrawlDate().before(result.get(0).getCrawlDate())) {
+					Post newPost = result.get(0);
+					result.set(0, post);
+					result.add(newPost);
+				} else if (post.getCrawlDate().after(result.get(0).getCrawlDate())) {
+					result.add(post);
+				}
+			} else if (result.size() == 2) {
+				if (post.getCrawlDate().after(result.get(1).getCrawlDate())) {
+					result.set(0, result.get(1));
+					result.set(1, post);
+				} else if (post.getCrawlDate().after(result.get(0).getCrawlDate())
+						&& post.getCrawlDate().before(result.get(1).getCrawlDate())) {
+					result.set(0, post);
+				}
+			}
+		}
+		return result;
 	}
 
 	@Override
@@ -173,6 +268,7 @@ class CheckMeaningCurrentPostThread extends BaseThread {
 		double reactArray[] = new double[listPost.size()];
 		double shareArray[] = new double[listPost.size()];
 		double commentArray[] = new double[listPost.size()];
+		List<Post> listPostNegative = new ArrayList<>();
 		for (int i = 0; i < listPost.size(); i++) {
 			Post post = listPost.get(i);
 			reactArray[i] = post.getNumberOfReact();
@@ -224,6 +320,7 @@ class CheckMeaningCurrentPostThread extends BaseThread {
 						float confidence = sen.getOverallSentiment().getConfidence();
 						if (mean.equals(negative) && confidence > lowerConfidence
 								&& word.toLowerCase().equals(keyword.toLowerCase())) {
+							listPostNegative.add(post);
 							if (reactMean < lowMean && shareMean < lowMean && commentMean < lowMean) {
 								if (post.getNumberOfReply() > comment_upper_limit
 										|| post.getNumberOfReweet() > share_upper_limit
@@ -247,6 +344,41 @@ class CheckMeaningCurrentPostThread extends BaseThread {
 					}
 				}
 			}
+			double negativeRatio = listPost.size() / listPostNegative.size();
+			NegativeRatio lastNegativeRatio = negativeRatioService.getNegativeRatio(keyword, "post");
+			long millis = System.currentTimeMillis();
+			Date date = new Date(millis);
+			List<Post> listPostIncrease = getIncreasePost(keyword);
+			List<Post> listNewPost = new ArrayList<>();
+			boolean isNegativeIncrease = false;
+			if (lastNegativeRatio.getUpdateDate().before(date)) {
+				long diffInMillies = Math.abs(date.getTime() - lastNegativeRatio.getUpdateDate().getTime());
+				long diff = TimeUnit.HOURS.convert(diffInMillies, TimeUnit.MILLISECONDS);
+				if (diff > differenceHour) {
+					if (lastNegativeRatio.getRatio() < negativeRatio) {
+						lastNegativeRatio.setRatio(negativeRatio);
+						negativeRatioService.save(lastNegativeRatio);
+						isNegativeIncrease = true;
+					}
+				}
+			}
+			if (isNegativeIncrease) {
+				for (int i = 0; i < listPost.size(); i++) {
+					Post result = getNewPost(listPostIncrease, listPost.get(i));
+					if (result != null) {
+						listNewPost.add(listPost.get(i));
+					}
+				}
+			}
+			if (listNewPost.size() > 0) {
+				// send notification with the list of new post(new post is the post appear one
+				// time and lastest in db)
+				NotificationController notiController = new NotificationController();
+				notiController.sendListPostNotification(listNewPost, keyword, postService, commentService,
+						notificationService, notificationContentService, userInfoService, crisisService,
+						userService, keywordService, notificationTokenService);
+				
+			}
 			Thread.sleep(1000 * 60 * 1);
 			List<Comment> listComment = new ArrayList<>();
 			for (int i = 0; i < listPost.size(); i++) {
@@ -262,6 +394,18 @@ class CheckMeaningCurrentPostThread extends BaseThread {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	private Post getNewPost(List<Post> listPost, Post post) {
+		Post result = null;
+		for (int i = 0; i < listPost.size(); i++) {
+			Post checkPost = listPost.get(i);
+			if (checkPost.getId().equals(post.getId())) {
+				result = post;
+				break;
+			}
+		}
+		return result;
 	}
 
 	private void insertPostCrisis(Post post, CrisisService crisisService) {
@@ -575,7 +719,7 @@ class CheckMeaningCurrentCommentThread extends BaseThread {
 }
 
 class CheckMeaningIncreasePostThread extends BaseThread {
-	
+
 	public CheckMeaningIncreasePostThread(TextAPIClient client, String keyword, List<Post> listPost,
 			CrisisService crisisService, CommentService commentService, KeywordService keywordService,
 			NotificationService notificationService, NotificationContentService notificationContentService,
@@ -784,7 +928,7 @@ class CheckMeaningIncreasePostThread extends BaseThread {
 }
 
 class CheckMeaningIncreaseCommentThread extends BaseThread {
-	
+
 	public CheckMeaningIncreaseCommentThread(TextAPIClient client, String keyword, List<Comment> listComment,
 			CrisisService crisisService, KeywordService keywordService, NotificationService notificationService,
 			NotificationContentService notificationContentService, UserInfoService userInfoService,

@@ -156,7 +156,44 @@ public class NotificationController {
 		emailContent.setListLinkDetail(listLinkDetail);
 		return emailContent;
 	}
-
+	public void sendListPostNotification(List<Post> listPost, String keyword, PostService postService,
+			CommentService commentService, NotificationService notificationService,
+			NotificationContentService notificationContentService, UserInfoService userInfoService,
+			CrisisService crisisService, UserService userService, KeywordService keywordService,
+			NotificationTokenService notificationTokenService) {
+		List<User> listUser = new ArrayList<User>();
+		List<Keyword> listKeyWord = keywordService.getUserByKeyword(keyword);
+		for (int i = 0; i < listKeyWord.size(); i++) {
+			Keyword keyword1 = listKeyWord.get(i);
+			// get list user id
+			listUser.add(userService.getUserByUsername(keyword1.getUser().getUserName()));
+		}
+		for (int i = 0; i < listUser.size(); i++) {
+			User user = listUser.get(i);
+			try {
+//				String sendEmailResult = sendMail(user.getUserName(), userInfoService, keyword, sendCrisis);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			try {
+//				String result = sendWebhook(user, keyword);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			try {
+//				sendNotification(user, keyword, notificationTokenService, sendCrisis);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	public void sendListCommentNotification(List<Comment> listComment, String keyword, PostService postService,
+			CommentService commentService, NotificationService notificationService,
+			NotificationContentService notificationContentService, UserInfoService userInfoService,
+			CrisisService crisisService, UserService userService, KeywordService keywordService,
+			NotificationTokenService notificationTokenService) {
+		
+	}
 	public void sendNotification(List<Crisis> listcrisis, String keyword, PostService postService,
 			CommentService commentService, NotificationService notificationService,
 			NotificationContentService notificationContentService, UserInfoService userInfoService,

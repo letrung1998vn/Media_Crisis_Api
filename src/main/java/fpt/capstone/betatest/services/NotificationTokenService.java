@@ -8,9 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import fpt.capstone.betatest.entities.NotificationToken;
-import fpt.capstone.betatest.entities.Post;
 import fpt.capstone.betatest.repositories.NotificationTokenRepository;
-import fpt.capstone.betatest.repositories.PostRepository;
 
 @Service
 public class NotificationTokenService {

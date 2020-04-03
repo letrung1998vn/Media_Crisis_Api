@@ -13,14 +13,10 @@ import fpt.capstone.betatest.entities.User;
 @Repository("usersRepository")
 public interface UserRepository extends JpaRepository<User, Integer> {
 	
-//	public final static String GET_USER_BY_USERNAME = "SELECT lr FROM User lr WHERE UserName = :username";
-//	
-//	@Query(GET_USER_BY_USERNAME)
 	User findByUserName(String userName);
-//	
+
 	User findByUserNameAndPassword(String username,String password);
 	List<User> findAll();
 	Page<User> findByUserNameContaining(String username, Pageable pageable);
-//	
-//	User findByUserName(String userName);
+
 }
