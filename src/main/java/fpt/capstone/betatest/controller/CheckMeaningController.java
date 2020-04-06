@@ -363,21 +363,10 @@ class CheckMeaningCurrentPostThread extends BaseThread {
 				}
 			}
 			if (isNegativeIncrease) {
-				for (int i = 0; i < listPost.size(); i++) {
-					Post result = getNewPost(listPostIncrease, listPost.get(i));
-					if (result != null) {
-						listNewPost.add(listPost.get(i));
-					}
-				}
-			}
-			if (listNewPost.size() > 0) {
-				// send notification with the list of new post(new post is the post appear one
-				// time and lastest in db)
 				NotificationController notiController = new NotificationController();
-				notiController.sendListPostNotification(listNewPost, keyword, postService, commentService,
+				notiController.sendListPostNotification(listPost, keyword, postService, commentService,
 						notificationService, notificationContentService, userInfoService, crisisService,
 						userService, keywordService, notificationTokenService);
-				
 			}
 			Thread.sleep(1000 * 60 * 1);
 			List<Comment> listComment = new ArrayList<>();

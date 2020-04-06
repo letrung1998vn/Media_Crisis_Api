@@ -28,4 +28,8 @@ public class PostService {
 	public List<Post> getPostById(BigInteger id) {
 		return postRepository.getByPostId(id);
 	}
+	@Transactional
+	public Post getById(String id) {
+		return postRepository.getById(id);
+	}
 }
