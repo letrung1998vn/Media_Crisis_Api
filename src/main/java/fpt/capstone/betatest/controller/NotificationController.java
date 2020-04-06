@@ -34,7 +34,6 @@ import fpt.capstone.betatest.entities.NotificationToken;
 import fpt.capstone.betatest.entities.Notification_Content;
 import fpt.capstone.betatest.entities.Post;
 import fpt.capstone.betatest.entities.User;
-import fpt.capstone.betatest.entities.UserInfo;
 import fpt.capstone.betatest.model.EmailContentModel;
 import fpt.capstone.betatest.model.NotificationWebModel;
 import fpt.capstone.betatest.model.Webhook;
@@ -182,6 +181,69 @@ public class NotificationController {
 				notificationTokenService);
 	}
 
+	@GetMapping("testcallListComment")
+	public void testCallListComment() {
+		listComment = new ArrayList<>();
+		Comment comment = new Comment();
+		comment.setId("070f793d18a242cd8df573014a151b19");
+		comment.setPostId("6a590e34de664b8bb14ed8b3bfa79719");
+		comment.setCommentId(new BigInteger("1244809845661933568"));
+		comment.setCommentContent(
+				"b'@UncleBobsReason Ah gotcha. Tone is weird haha but ty anyway. Don\\xe2\\x80\\x99t want to make it seem like I should deserve way more.'");
+		String testDate = "2020-03-31 02:12:49.000";
+		DateFormat formatter = new SimpleDateFormat("yyyy-mm-dd HH:mm:ss");
+		Date date = null;
+		try {
+			date = formatter.parse(testDate);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		comment.setCreateDate(date);
+		comment.setLinkDetail("('https://twitter.com/', 'GenePark', '/status/', 1244809845661933568)");
+		comment.setNumberOfReact(0);
+		comment.setNumberOfReply(0);
+		testDate = "2020-03-31 02:14:36.500";
+		formatter = new SimpleDateFormat("yyyy-mm-dd HH:mm:ss");
+		date = null;
+		try {
+			date = formatter.parse(testDate);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		comment.setCrawlDate(date);
+		listComment.add(comment);
+		comment = new Comment();
+		comment.setId("23b3d7de096040b588fe5183c3292984");
+		comment.setPostId("7dceb272ee544e8fad2497c43b9a8195");
+		comment.setCommentId(new BigInteger("1244809965346455552"));
+		comment.setCommentContent("b'@BigDaddyEffy Absolutely'");
+		testDate = "2020-03-31 02:13:17.000";
+		formatter = new SimpleDateFormat("yyyy-mm-dd HH:mm:ss");
+		date = null;
+		try {
+			date = formatter.parse(testDate);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		comment.setCreateDate(date);
+		comment.setLinkDetail("('https://twitter.com/', 'Treg2Cole', '/status/', 1244809965346455552)");
+		comment.setNumberOfReact(0);
+		comment.setNumberOfReply(1);
+		testDate = "2020-03-31 02:26:13.593";
+		formatter = new SimpleDateFormat("yyyy-mm-dd HH:mm:ss");
+		date = null;
+		try {
+			date = formatter.parse(testDate);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		comment.setCrawlDate(date);
+		listComment.add(comment);
+		sendListCommentNotification(listComment, "corona", postService, commentService, notificationService,
+				notificationContentService, userInfoService, crisisService, userService, keywordService,
+				notificationTokenService);
+	}
+
 	@PostMapping("emailContent")
 	public EmailContentModel getEmailContent(@RequestParam(name = "keyword") String keyword,
 			@RequestParam(name = "id") String crisisId) {
@@ -236,12 +298,41 @@ public class NotificationController {
 		listLinkDetail = new ArrayList<>();
 		while (stk.hasMoreTokens()) {
 			id = stk.nextToken();
-			listPost.add(postService.getById(id));
+			listPost.add(postService.getPostById(id));
 		}
 		if (listPost.size() > 0) {
 			for (int i = 0; i < listPost.size(); i++) {
 				Post post = listPost.get(i);
 				String linkDetail = post.getLinkDetail();
+				linkDetail = linkDetail.replace("', '", "");
+				linkDetail = linkDetail.replace("', ", "");
+				linkDetail = linkDetail.replace("'", "");
+				linkDetail = linkDetail.replace("(", "");
+				linkDetail = linkDetail.replace(")", "");
+				listLinkDetail.add(linkDetail);
+			}
+		}
+		emailContent.setListLinkDetail(listLinkDetail);
+		return emailContent;
+	}
+
+	@PostMapping("emailContentListComment")
+	public EmailContentModel getEmailContentListComment(@RequestParam(name = "keyword") String keyword,
+			@RequestParam(name = "comment_id") String commentId) {
+		EmailContentModel emailContent = new EmailContentModel();
+		emailContent.setKeyword(keyword);
+		StringTokenizer stk = new StringTokenizer(commentId, ",");
+		String id;
+		listComment = new ArrayList<>();
+		listLinkDetail = new ArrayList<>();
+		while (stk.hasMoreTokens()) {
+			id = stk.nextToken();
+			listComment.add(commentService.getCommentById(id));
+		}
+		if (listComment.size() > 0) {
+			for (int i = 0; i < listComment.size(); i++) {
+				Comment comment = listComment.get(i);
+				String linkDetail = comment.getLinkDetail();
 				linkDetail = linkDetail.replace("', '", "");
 				linkDetail = linkDetail.replace("', ", "");
 				linkDetail = linkDetail.replace("'", "");
@@ -270,11 +361,9 @@ public class NotificationController {
 			listLinkDetail = new ArrayList<>();
 			User user = listUser.get(i);
 			getLinkDetailPost(listPost);
-			System.out.println("Size link: " + listLinkDetail.size());
-
 			if (user.getRole().equals("user")) {
 				try {
-					 sendEmailListPost(user.getUserName(), userInfoService, keyword, listPost);
+					sendEmailListPost(user.getUserName(), userInfoService, keyword, listPost);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -297,7 +386,35 @@ public class NotificationController {
 			NotificationContentService notificationContentService, UserInfoService userInfoService,
 			CrisisService crisisService, UserService userService, KeywordService keywordService,
 			NotificationTokenService notificationTokenService) {
-
+		List<User> listUser = new ArrayList<User>();
+		List<Keyword> listKeyWord = keywordService.getUserByKeyword(keyword);
+		for (int i = 0; i < listKeyWord.size(); i++) {
+			Keyword keyword1 = listKeyWord.get(i);
+			// get list user id
+			listUser.add(userService.getUserByUsername(keyword1.getUser().getUserName()));
+		}
+		for (int i = 0; i < listUser.size(); i++) {
+			listLinkDetail = new ArrayList<>();
+			User user = listUser.get(i);
+			getLinkDetailComment(listComment);
+			if (user.getRole().equals("user")) {
+				try {
+					sendMailListComment(user.getUserName(), userInfoService, keyword, listComment);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				try {
+					sendWebhook(user, keyword);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				try {
+					sendNotificationListComment(user, keyword, notificationTokenService, listComment);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		}
 	}
 
 	public void sendNotification(List<Crisis> listcrisis, String keyword, PostService postService,
@@ -388,12 +505,12 @@ public class NotificationController {
 
 	private void classifyCrisisType(Crisis crisis, PostService postService, CommentService commentService) {
 		if (crisis.getType().trim().equals("post")) {
-			List<Post> post = postService.getPostById(crisis.getContentId());
+			List<Post> post = postService.getPostByPostId(crisis.getContentId());
 			if (post != null) {
 				listPost.add(post.get(0));
 			}
 		} else if (crisis.getType().trim().equals("comment")) {
-			List<Comment> comment = commentService.getCommentById(crisis.getContentId());
+			List<Comment> comment = commentService.getCommentByCommentId(crisis.getContentId());
 			if (comment != null) {
 				listComment.add(comment.get(0));
 			}
@@ -431,6 +548,12 @@ public class NotificationController {
 		}
 	}
 
+	private void getLinkDetailComment(List<Comment> listComment) {
+		for (int i = 0; i < listComment.size(); i++) {
+			listLinkDetail.add(listComment.get(i).getLinkDetail());
+		}
+	}
+
 	private String createEmailLink(String keyword, List<Crisis> listCrisis) {
 		emailContent = "Here are crisis's link detail.<br/>";
 		emailContent += "Click to see more.<br/>";
@@ -460,6 +583,24 @@ public class NotificationController {
 		for (int i = 0; i < listPost.size(); i++) {
 			emailContent += listPost.get(i).getId();
 			if (i < listPost.size() - 1) {
+				emailContent += ",";
+			}
+		}
+		emailContent += "</h3>";
+		return emailContent;
+	}
+
+	private String createEmailLinkListComment(String keyword, List<Comment> listComment) {
+		emailContent = "Here are crisis's link detail.<br/>";
+		emailContent += "Click to see more.<br/>";
+		emailContent += "<h3>";
+		emailContent += "http://localhost:8084/MediaCrisis_Demo/WebLinkContentListComment";
+		emailContent += "?keyword=";
+		emailContent += keyword;
+		emailContent += "&comment_id=";
+		for (int i = 0; i < listComment.size(); i++) {
+			emailContent += listComment.get(i).getId();
+			if (i < listComment.size() - 1) {
 				emailContent += ",";
 			}
 		}
@@ -576,6 +717,61 @@ public class NotificationController {
 
 	}
 
+	private String sendMailListComment(String userName, UserInfoService userInfoService, String keyword,
+			List<Comment> listComment) {
+		// String message;
+		final String toAddress = userInfoService.getEmail(userName);
+		String result = "false";
+		Properties properties = new Properties();
+		properties.put("mail.smtp.host", host);
+		properties.put("mail.smtp.port", port);
+		properties.put("mail.smtp.auth", "true");
+		properties.put("mail.smtp.starttls.enable", "true");
+
+		// creates a new session with an authenticator
+		Authenticator auth = new Authenticator() {
+			public PasswordAuthentication getPasswordAuthentication() {
+				return new PasswordAuthentication(username, password);
+			}
+		};
+
+		Session session = Session.getInstance(properties, auth);
+
+		// creates a new e-mail message
+		Message msg = new MimeMessage(session);
+		try {
+			// Set From: header field of the header.
+			msg.setFrom(new InternetAddress(username));
+
+			// Set To: header field of the header.
+			InternetAddress[] toAddresses = { new InternetAddress(toAddress) };
+			msg.setRecipients(Message.RecipientType.TO, toAddresses);
+
+			// set Subject
+			msg.setSubject("Crisis notification!");
+
+			// set date
+			msg.setSentDate(new java.util.Date());
+
+			// set content
+			String content = createEmailLinkListComment(keyword, listComment);
+			msg.setContent(content, "text/html");
+
+			// send email
+			Transport.send(msg);
+			result = "OK";
+		} catch (AddressException e) {
+			e.printStackTrace();
+			result = "Wrong address";
+		} catch (MessagingException ex) {
+			ex.printStackTrace();
+			result = "Wrong message";
+		} finally {
+			return result;
+		}
+
+	}
+
 	private String createJsonStringWithLinkDetail(String keyword) {
 		String json = "";
 		json += "{\n";
@@ -619,12 +815,27 @@ public class NotificationController {
 	private String createJsonNotificationWithLinkDetailListPost(String notiToken, String keyword, List<Post> listPost) {
 		String json = "";
 		json += "{\n" + "  \"notification\": {\n" + "        \"title\": \"Notification for Keyword: " + keyword
-				+ "\",\n" + "        \"body\": \"We have detect abnormal increase post negative in keyword: "
-				+ keyword + "\",\n" + "        \"click_action\":\"WebLinkContentListPost?keyword=" + keyword
-				+ "&post_id=";
+				+ "\",\n" + "        \"body\": \"We have detect abnormal increase post negative in keyword: " + keyword
+				+ "\",\n" + "        \"click_action\":\"WebLinkContentListPost?keyword=" + keyword + "&post_id=";
 		for (int i = 0; i < listPost.size(); i++) {
 			json += listPost.get(i).getId();
 			if (i < listPost.size() - 1) {
+				json += ",";
+			}
+		}
+		json += "\"\n   },\n" + "  \"to\": \"" + notiToken + "\"\n" + "}";
+		return json;
+	}
+
+	private String createJsonNotificationWithLinkDetailListComment(String notiToken, String keyword,
+			List<Comment> listComment) {
+		String json = "";
+		json += "{\n" + "  \"notification\": {\n" + "        \"title\": \"Notification for Keyword: " + keyword
+				+ "\",\n" + "        \"body\": \"We have detect abnormal increase post negative in keyword: " + keyword
+				+ "\",\n" + "        \"click_action\":\"WebLinkContentListComment?keyword=" + keyword + "&comment_id=";
+		for (int i = 0; i < listComment.size(); i++) {
+			json += listComment.get(i).getId();
+			if (i < listComment.size() - 1) {
 				json += ",";
 			}
 		}
@@ -662,6 +873,20 @@ public class NotificationController {
 			NotificationToken notiToken = listNoti.get(i);
 			if (notiToken.isAvailable()) {
 				String json = createJsonNotificationWithLinkDetailListPost(notiToken.getNotiToken(), keyword, listPost);
+				NotificationWebModel noti = new NotificationWebModel("https://fcm.googleapis.com/fcm/send", json);
+				System.out.println("Status: " + noti.connect());
+			}
+		}
+	}
+
+	public void sendNotificationListComment(User user, String keyword,
+			NotificationTokenService notificationTokenService, List<Comment> listComment) {
+		List<NotificationToken> listNoti = notificationTokenService.getNotiTokenByUserId(user.getUserName());
+		for (int i = 0; i < listNoti.size(); i++) {
+			NotificationToken notiToken = listNoti.get(i);
+			if (notiToken.isAvailable()) {
+				String json = createJsonNotificationWithLinkDetailListComment(notiToken.getNotiToken(), keyword,
+						listComment);
 				NotificationWebModel noti = new NotificationWebModel("https://fcm.googleapis.com/fcm/send", json);
 				System.out.println("Status: " + noti.connect());
 			}

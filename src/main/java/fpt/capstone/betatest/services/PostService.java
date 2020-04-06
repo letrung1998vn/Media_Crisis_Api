@@ -25,11 +25,11 @@ public class PostService {
 	}
 	
 	@Transactional
-	public List<Post> getPostById(BigInteger id) {
+	public List<Post> getPostByPostId(BigInteger id) {
 		return postRepository.getByPostId(id);
 	}
 	@Transactional
-	public Post getById(String id) {
+	public Post getPostById(String id) {
 		return postRepository.getById(id);
 	}
 }
