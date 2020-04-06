@@ -280,9 +280,20 @@ class CheckMeaningCurrentPostThread extends BaseThread {
 					long diff = TimeUnit.HOURS.convert(diffInMillies, TimeUnit.MILLISECONDS);
 					if (diff > differenceHour) {
 						if (lastNegativeRatio.getRatio() < negativeRatio) {
+							if (negativeRatio - lastNegativeRatio.getRatio() < ratioLimit) {
+								lastNegativeRatio.setRatio(negativeRatio);
+								lastNegativeRatio.setUpdateDate(date);
+								negativeRatioService.save(lastNegativeRatio);
+								isNegativeIncrease = true;
+							} else {
+								lastNegativeRatio.setRatio(negativeRatio);
+								lastNegativeRatio.setUpdateDate(date);
+								negativeRatioService.save(lastNegativeRatio);
+							}
+						} else {
 							lastNegativeRatio.setRatio(negativeRatio);
+							lastNegativeRatio.setUpdateDate(date);
 							negativeRatioService.save(lastNegativeRatio);
-							isNegativeIncrease = true;
 						}
 					}
 				}
@@ -499,9 +510,20 @@ class CheckMeaningCurrentCommentThread extends BaseThread {
 					long diff = TimeUnit.HOURS.convert(diffInMillies, TimeUnit.MILLISECONDS);
 					if (diff > differenceHour) {
 						if (lastNegativeRatio.getRatio() < negativeRatio) {
+							if (negativeRatio - lastNegativeRatio.getRatio() < ratioLimit) {
+								lastNegativeRatio.setRatio(negativeRatio);
+								lastNegativeRatio.setUpdateDate(date);
+								negativeRatioService.save(lastNegativeRatio);
+								isNegativeIncrease = true;
+							} else {
+								lastNegativeRatio.setRatio(negativeRatio);
+								lastNegativeRatio.setUpdateDate(date);
+								negativeRatioService.save(lastNegativeRatio);
+							}
+						} else {
 							lastNegativeRatio.setRatio(negativeRatio);
+							lastNegativeRatio.setUpdateDate(date);
 							negativeRatioService.save(lastNegativeRatio);
-							isNegativeIncrease = true;
 						}
 					}
 				}

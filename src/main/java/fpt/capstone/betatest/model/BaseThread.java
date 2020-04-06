@@ -44,4 +44,5 @@ public abstract class BaseThread extends Thread {
 	public NotificationTokenService notificationTokenService;
 	public NegativeRatioService negativeRatioService;
 	public final double differenceHour = 8;
+	public final double ratioLimit = 0.1;
 }
