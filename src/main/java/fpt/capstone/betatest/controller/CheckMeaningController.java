@@ -351,16 +351,25 @@ class CheckMeaningCurrentPostThread extends BaseThread {
 			List<Post> listPostIncrease = getIncreasePost(keyword);
 			List<Post> listNewPost = new ArrayList<>();
 			boolean isNegativeIncrease = false;
-			if (lastNegativeRatio.getUpdateDate().before(date)) {
-				long diffInMillies = Math.abs(date.getTime() - lastNegativeRatio.getUpdateDate().getTime());
-				long diff = TimeUnit.HOURS.convert(diffInMillies, TimeUnit.MILLISECONDS);
-				if (diff > differenceHour) {
-					if (lastNegativeRatio.getRatio() < negativeRatio) {
-						lastNegativeRatio.setRatio(negativeRatio);
-						negativeRatioService.save(lastNegativeRatio);
-						isNegativeIncrease = true;
+			if(lastNegativeRatio!=null) {
+				if (lastNegativeRatio.getUpdateDate().before(date)) {
+					long diffInMillies = Math.abs(date.getTime() - lastNegativeRatio.getUpdateDate().getTime());
+					long diff = TimeUnit.HOURS.convert(diffInMillies, TimeUnit.MILLISECONDS);
+					if (diff > differenceHour) {
+						if (lastNegativeRatio.getRatio() < negativeRatio) {
+							lastNegativeRatio.setRatio(negativeRatio);
+							negativeRatioService.save(lastNegativeRatio);
+							isNegativeIncrease = true;
+						}
 					}
 				}
+			} else {
+				lastNegativeRatio=new NegativeRatio();
+				lastNegativeRatio.setKeyword(keyword);
+				lastNegativeRatio.setType("post");
+				lastNegativeRatio.setUpdateDate(date);
+				lastNegativeRatio.setRatio(negativeRatio);
+				negativeRatioService.save(lastNegativeRatio);
 			}
 			if (isNegativeIncrease) {
 				NotificationController notiController = new NotificationController();
