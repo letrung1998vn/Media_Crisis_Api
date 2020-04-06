@@ -194,74 +194,6 @@ class CheckMeaningCurrentPostThread extends BaseThread {
 		this.negativeRatioService = negativeRatioService;
 	}
 
-	private List<Post> getIncreasePost(String keyword) {
-		// Get the list of post with two latest date in DB
-		List<Post> listPost = postService.getPostContentWithTwoLatestDate(keyword);
-		List<Post> resultList = new ArrayList<>();
-		List<Post> sameContentPost = new ArrayList<>();
-		List<Post> sameContentPostSorted = new ArrayList<>();
-		for (int i = 0; i < listPost.size(); i++) {
-			if (i < listPost.size() - 1) {
-				Post post = listPost.get(i);
-				sameContentPost = getListSameContent(listPost, post);
-				sameContentPostSorted = sortByCrawlDate(sameContentPost);
-				if (!checkExist(resultList, sameContentPostSorted.get(0).getPostContent())
-						&& sameContentPostSorted.size() == 2) {
-					resultList.addAll(sameContentPostSorted);
-				}
-			}
-		}
-		return resultList;
-	}
-
-	private boolean checkExist(List<Post> listPost, String postContent) {
-		for (int i = 0; i < listPost.size(); i++) {
-			String content = listPost.get(i).getPostContent();
-			if (postContent.equals(content)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private List<Post> getListSameContent(List<Post> listPost, Post checkPost) {
-		List<Post> result = new ArrayList<>();
-		for (int i = 0; i < listPost.size(); i++) {
-			Post post = listPost.get(i);
-			if (checkPost.getPostContent().equals(post.getPostContent())) {
-				result.add(post);
-			}
-		}
-		return result;
-	}
-
-	private List<Post> sortByCrawlDate(List<Post> listPost) {
-		List<Post> result = new ArrayList<>();
-		for (int i = 0; i < listPost.size(); i++) {
-			Post post = listPost.get(i);
-			if (result.size() == 0) {
-				result.add(post);
-			} else if (result.size() == 1) {
-				if (post.getCrawlDate().before(result.get(0).getCrawlDate())) {
-					Post newPost = result.get(0);
-					result.set(0, post);
-					result.add(newPost);
-				} else if (post.getCrawlDate().after(result.get(0).getCrawlDate())) {
-					result.add(post);
-				}
-			} else if (result.size() == 2) {
-				if (post.getCrawlDate().after(result.get(1).getCrawlDate())) {
-					result.set(0, result.get(1));
-					result.set(1, post);
-				} else if (post.getCrawlDate().after(result.get(0).getCrawlDate())
-						&& post.getCrawlDate().before(result.get(1).getCrawlDate())) {
-					result.set(0, post);
-				}
-			}
-		}
-		return result;
-	}
-
 	@Override
 	public synchronized void start() {
 		EntityLevelSentimentParams.Builder builder = EntityLevelSentimentParams.newBuilder();
@@ -348,8 +280,6 @@ class CheckMeaningCurrentPostThread extends BaseThread {
 			NegativeRatio lastNegativeRatio = negativeRatioService.getNegativeRatio(keyword, "post");
 			long millis = System.currentTimeMillis();
 			Date date = new Date(millis);
-			List<Post> listPostIncrease = getIncreasePost(keyword);
-			List<Post> listNewPost = new ArrayList<>();
 			boolean isNegativeIncrease = false;
 			if(lastNegativeRatio!=null) {
 				if (lastNegativeRatio.getUpdateDate().before(date)) {
@@ -392,18 +322,6 @@ class CheckMeaningCurrentPostThread extends BaseThread {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-	}
-
-	private Post getNewPost(List<Post> listPost, Post post) {
-		Post result = null;
-		for (int i = 0; i < listPost.size(); i++) {
-			Post checkPost = listPost.get(i);
-			if (checkPost.getId().equals(post.getId())) {
-				result = post;
-				break;
-			}
-		}
-		return result;
 	}
 
 	private void insertPostCrisis(Post post, CrisisService crisisService) {
