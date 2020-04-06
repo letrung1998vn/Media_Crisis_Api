@@ -1,11 +1,6 @@
 
 package fpt.capstone.betatest.controller;
 
-import java.math.BigInteger;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -14,7 +9,6 @@ import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.aylien.textapi.TextAPIClient;
@@ -26,7 +20,6 @@ import com.aylien.textapi.responses.Sentiment;
 
 import fpt.capstone.betatest.entities.Comment;
 import fpt.capstone.betatest.entities.Crisis;
-import fpt.capstone.betatest.entities.Keyword;
 import fpt.capstone.betatest.entities.Keyword_Crawler;
 import fpt.capstone.betatest.entities.NegativeRatio;
 import fpt.capstone.betatest.entities.Post;
@@ -281,7 +274,7 @@ class CheckMeaningCurrentPostThread extends BaseThread {
 			long millis = System.currentTimeMillis();
 			Date date = new Date(millis);
 			boolean isNegativeIncrease = false;
-			if(lastNegativeRatio!=null) {
+			if (lastNegativeRatio != null) {
 				if (lastNegativeRatio.getUpdateDate().before(date)) {
 					long diffInMillies = Math.abs(date.getTime() - lastNegativeRatio.getUpdateDate().getTime());
 					long diff = TimeUnit.HOURS.convert(diffInMillies, TimeUnit.MILLISECONDS);
@@ -294,7 +287,7 @@ class CheckMeaningCurrentPostThread extends BaseThread {
 					}
 				}
 			} else {
-				lastNegativeRatio=new NegativeRatio();
+				lastNegativeRatio = new NegativeRatio();
 				lastNegativeRatio.setKeyword(keyword);
 				lastNegativeRatio.setType("post");
 				lastNegativeRatio.setUpdateDate(date);
@@ -304,8 +297,8 @@ class CheckMeaningCurrentPostThread extends BaseThread {
 			if (isNegativeIncrease) {
 				NotificationController notiController = new NotificationController();
 				notiController.sendListPostNotification(listPost, keyword, postService, commentService,
-						notificationService, notificationContentService, userInfoService, crisisService,
-						userService, keywordService, notificationTokenService);
+						notificationService, notificationContentService, userInfoService, crisisService, userService,
+						keywordService, notificationTokenService);
 			}
 			Thread.sleep(1000 * 60 * 1);
 			List<Comment> listComment = new ArrayList<>();
@@ -415,6 +408,7 @@ class CheckMeaningCurrentCommentThread extends BaseThread {
 		EntityLevelSentimentParams.Builder builder = EntityLevelSentimentParams.newBuilder();
 		double reactArray[] = new double[listComment.size()];
 		double commentArray[] = new double[listComment.size()];
+		List<Comment> listCommentNegative = new ArrayList<>();
 		for (int i = 0; i < listComment.size(); i++) {
 			Comment comment = listComment.get(i);
 			reactArray[i] = comment.getNumberOfReact();
@@ -493,6 +487,37 @@ class CheckMeaningCurrentCommentThread extends BaseThread {
 						}
 					}
 				}
+			}
+			double negativeRatio = listComment.size() / listCommentNegative.size();
+			NegativeRatio lastNegativeRatio = negativeRatioService.getNegativeRatio(keyword, "comment");
+			long millis = System.currentTimeMillis();
+			Date date = new Date(millis);
+			boolean isNegativeIncrease = false;
+			if (lastNegativeRatio != null) {
+				if (lastNegativeRatio.getUpdateDate().before(date)) {
+					long diffInMillies = Math.abs(date.getTime() - lastNegativeRatio.getUpdateDate().getTime());
+					long diff = TimeUnit.HOURS.convert(diffInMillies, TimeUnit.MILLISECONDS);
+					if (diff > differenceHour) {
+						if (lastNegativeRatio.getRatio() < negativeRatio) {
+							lastNegativeRatio.setRatio(negativeRatio);
+							negativeRatioService.save(lastNegativeRatio);
+							isNegativeIncrease = true;
+						}
+					}
+				}
+			} else {
+				lastNegativeRatio = new NegativeRatio();
+				lastNegativeRatio.setKeyword(keyword);
+				lastNegativeRatio.setType("comment");
+				lastNegativeRatio.setUpdateDate(date);
+				lastNegativeRatio.setRatio(negativeRatio);
+				negativeRatioService.save(lastNegativeRatio);
+			}
+			if (isNegativeIncrease) {
+				NotificationController notiController = new NotificationController();
+				notiController.sendListCommentNotification(listCommentNegative, keyword, postService, commentService,
+						notificationService, notificationContentService, userInfoService, crisisService, userService,
+						keywordService, notificationTokenService);
 			}
 			this.sleep(1000 * 60 * 1);
 			List<Post> listPost = getIncreasePost(keyword);
