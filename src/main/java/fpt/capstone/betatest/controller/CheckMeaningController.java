@@ -20,7 +20,9 @@ import com.aylien.textapi.responses.Sentiment;
 
 import fpt.capstone.betatest.entities.Comment;
 import fpt.capstone.betatest.entities.Crisis;
+import fpt.capstone.betatest.entities.Keyword;
 import fpt.capstone.betatest.entities.Keyword_Crawler;
+import fpt.capstone.betatest.entities.LastStandard;
 import fpt.capstone.betatest.entities.NegativeRatio;
 import fpt.capstone.betatest.entities.Post;
 import fpt.capstone.betatest.model.BaseThread;
@@ -28,6 +30,7 @@ import fpt.capstone.betatest.services.CommentService;
 import fpt.capstone.betatest.services.CrisisService;
 import fpt.capstone.betatest.services.KeywordCrawlerService;
 import fpt.capstone.betatest.services.KeywordService;
+import fpt.capstone.betatest.services.LastStandardService;
 import fpt.capstone.betatest.services.NegativeRatioService;
 import fpt.capstone.betatest.services.NotificationContentService;
 import fpt.capstone.betatest.services.NotificationService;
@@ -62,13 +65,15 @@ public class CheckMeaningController {
 	NotificationTokenService notificationTokenService;
 	@Autowired
 	NegativeRatioService negativeRatioService;
+	@Autowired
+	LastStandardService lastStandardService;
 
 	@GetMapping("check")
 	public void checkMeaning() throws Exception {
 		TextAPIClient client = new TextAPIClient("43faa103", "f2aaee05b21dabe934b89bd3198801e8");
 		CheckThread check = new CheckThread(client, crisisService, commentService, postService, keywordCrawlerService,
 				keywordService, notificationService, notificationContentService, userInfoService, userService,
-				notificationTokenService, negativeRatioService);
+				notificationTokenService, negativeRatioService, lastStandardService);
 		check.start();
 	}
 
@@ -88,12 +93,13 @@ class CheckThread extends Thread {
 	NotificationTokenService notificationTokenService;
 	NegativeRatioService negativeRatioService;
 	final double diffenrentDate = 7;
+	LastStandardService lastStandardService;
 
 	public CheckThread(TextAPIClient client, CrisisService crisisService, CommentService commentService,
 			PostService postService, KeywordCrawlerService keywordCrawlerService, KeywordService keywordService,
 			NotificationService notificationService, NotificationContentService notificationContentService,
 			UserInfoService userInfoService, UserService userService, NotificationTokenService notificationTokenService,
-			NegativeRatioService negativeRatioService) {
+			NegativeRatioService negativeRatioService, LastStandardService lastStandardService) {
 		this.client = client;
 		this.crisisService = crisisService;
 		this.commentService = commentService;
@@ -106,6 +112,7 @@ class CheckThread extends Thread {
 		this.userService = userService;
 		this.notificationTokenService = notificationTokenService;
 		this.negativeRatioService = negativeRatioService;
+		this.lastStandardService = lastStandardService;
 	}
 
 	@Override
@@ -115,7 +122,9 @@ class CheckThread extends Thread {
 		List<Crisis> listCrisis = new ArrayList<>();
 		for (int i = 0; i < listKeyword.size(); i++) {
 			try {
-				System.out.println("Keyword: " + listKeyword.get(i).getKeyword());
+				Keyword_Crawler keyword = listKeyword.get(i);
+				calStandard(keyword.getKeyword());
+				System.out.println("Keyword: " + keyword.getKeyword());
 				listCrisis = new ArrayList<>();
 				DetectCrisisInCurrent(listKeyword.get(i).getKeyword(), client, listCrisis);
 				System.out.println("Size: " + listCrisis.size());
@@ -134,6 +143,155 @@ class CheckThread extends Thread {
 			}
 		}
 		this.interrupt();
+	}
+
+	private void calStandard(String keyword) {
+		List<Post> listPost = getNewPost(keyword);
+		List<Comment> listComment = new ArrayList<>();
+		for (int i = 0; i < listPost.size(); i++) {
+			Post post = listPost.get(i);
+			listComment.addAll(commentService.getCommentByPostId(post.getId()));
+			post.setNew(false);
+		}
+		calPostStandard(keyword, listPost);
+		calCommentStandard(keyword, listComment);
+		for (int i = 0; i < listPost.size(); i++) {
+			Post post = listPost.get(i);
+			post.setNew(false);
+			postService.save(post);
+		}
+	}
+
+	private void calCommentStandard(String keyword, List<Comment> listComment) {
+		double totalNewReactMean = 0;
+		double totalNewCommentMean = 0;
+
+		LastStandard lastCommentStandardReact = lastStandardService.getLastStandard(keyword, "comment", "react");
+		LastStandard lastCommentStandardComment = lastStandardService.getLastStandard(keyword, "comment", "comment");
+
+		double lastCommentReactVariance = Math.pow(lastCommentStandardReact.getLastStandard(), 2)
+				* lastCommentStandardReact.getLastNumber();
+		double lastCommentCommentVariance = Math.pow(lastCommentStandardComment.getLastStandard(), 2)
+				* lastCommentStandardComment.getLastNumber();
+
+		double totalNewCommentReact = lastCommentStandardReact.getLastNumber() + listComment.size();
+		double tolalLastCommentReact = lastCommentStandardReact.getLastMean()
+				* lastCommentStandardReact.getLastNumber();
+
+		double totalNewCommentComment = lastCommentStandardComment.getLastNumber() + listComment.size();
+		double tolalLastCommentComment = lastCommentStandardComment.getLastMean()
+				* lastCommentStandardComment.getLastNumber();
+
+		double reactMean = (tolalLastCommentReact + totalNewCommentReact) / (totalNewCommentReact);
+
+		double commentMean = (tolalLastCommentComment + totalNewCommentComment) / (totalNewCommentComment);
+
+		for (int i = 0; i < listComment.size(); i++) {
+			Comment comment = listComment.get(i);
+			totalNewReactMean += (comment.getNumberOfReact() - reactMean)
+					* (comment.getNumberOfReact() - lastCommentStandardReact.getLastMean());
+			totalNewCommentMean += (comment.getNumberOfReply() - commentMean)
+					* (comment.getNumberOfReply() - lastCommentStandardComment.getLastMean());
+		}
+
+		double commentReactVariance = lastCommentReactVariance + totalNewReactMean;
+		double newCommentReactStandard = Math
+				.sqrt((commentReactVariance) / (listComment.size() + lastCommentStandardReact.getLastNumber()));
+
+		double postCommentVariance = lastCommentCommentVariance + totalNewCommentMean;
+		double newCommentCommentStandard = Math
+				.sqrt((postCommentVariance) / (listComment.size() + lastCommentStandardComment.getLastNumber()));
+
+		lastCommentStandardReact.setLastMean(reactMean);
+		lastCommentStandardComment.setLastMean(commentMean);
+
+		lastCommentStandardReact.setLastNumber(totalNewCommentReact);
+		lastCommentStandardComment.setLastNumber(totalNewCommentComment);
+
+		lastCommentStandardReact.setLastStandard(newCommentReactStandard);
+		lastCommentStandardComment.setLastStandard(newCommentCommentStandard);
+
+		lastStandardService.save(lastCommentStandardReact);
+		lastStandardService.save(lastCommentStandardComment);
+
+	}
+
+	private void calPostStandard(String keyword, List<Post> listPost) {
+		double totalNewReactMean = 0;
+		double totalNewShareMean = 0;
+		double totalNewCommentMean = 0;
+
+		LastStandard lastPostStandardReact = lastStandardService.getLastStandard(keyword, "post", "react");
+		LastStandard lastPostStandardShare = lastStandardService.getLastStandard(keyword, "post", "share");
+		LastStandard lastPostStandardComment = lastStandardService.getLastStandard(keyword, "post", "comment");
+
+		double lastPostReactVariance = Math.pow(lastPostStandardReact.getLastStandard(), 2)
+				* lastPostStandardReact.getLastNumber();
+		double lastPostShareVariance = Math.pow(lastPostStandardShare.getLastStandard(), 2)
+				* lastPostStandardShare.getLastNumber();
+		double lastPostCommentVariance = Math.pow(lastPostStandardComment.getLastStandard(), 2)
+				* lastPostStandardComment.getLastNumber();
+
+		double totalNewPostReact = lastPostStandardReact.getLastNumber() + listPost.size();
+		double tolalLastPostReact = lastPostStandardReact.getLastMean() * lastPostStandardReact.getLastNumber();
+
+		double totalNewPostShare = lastPostStandardShare.getLastNumber() + listPost.size();
+		double tolalLastPostShare = lastPostStandardShare.getLastMean() * lastPostStandardShare.getLastNumber();
+
+		double totalNewPostComment = lastPostStandardComment.getLastNumber() + listPost.size();
+		double tolalLastPostComment = lastPostStandardComment.getLastMean() * lastPostStandardComment.getLastNumber();
+
+		double reactMean = (tolalLastPostReact + totalNewPostReact) / (totalNewPostReact);
+
+		double shareMean = (tolalLastPostShare + totalNewPostShare) / (totalNewPostShare);
+
+		double commentMean = (tolalLastPostComment + totalNewPostComment) / (totalNewPostComment);
+
+		for (int i = 0; i < listPost.size(); i++) {
+			Post post = listPost.get(i);
+			totalNewReactMean += (post.getNumberOfReact() - reactMean)
+					* (post.getNumberOfReact() - lastPostStandardReact.getLastMean());
+			totalNewShareMean += (post.getNumberOfReweet() - shareMean)
+					* (post.getNumberOfReweet() - lastPostStandardReact.getLastMean());
+			totalNewCommentMean += (post.getNumberOfReply() - commentMean)
+					* (post.getNumberOfReply() - lastPostStandardComment.getLastMean());
+		}
+
+		double postReactVariance = lastPostReactVariance + totalNewReactMean;
+		double newPostReactStandard = Math
+				.sqrt((postReactVariance) / (listPost.size() + lastPostStandardReact.getLastNumber()));
+
+		double postShareVariance = lastPostShareVariance + totalNewShareMean;
+		double newPostShareStandard = Math
+				.sqrt((postShareVariance) / (listPost.size() + lastPostStandardReact.getLastNumber()));
+
+		double postCommentVariance = lastPostCommentVariance + totalNewCommentMean;
+		double newPostCommentStandard = Math
+				.sqrt((postCommentVariance) / (listPost.size() + lastPostStandardComment.getLastNumber()));
+
+		lastPostStandardReact.setLastMean(reactMean);
+		lastPostStandardShare.setLastMean(shareMean);
+		lastPostStandardComment.setLastMean(commentMean);
+
+		lastPostStandardReact.setLastNumber(totalNewPostReact);
+		lastPostStandardShare.setLastNumber(totalNewPostShare);
+		lastPostStandardComment.setLastNumber(totalNewPostComment);
+
+		lastPostStandardReact.setLastStandard(newPostReactStandard);
+		lastPostStandardShare.setLastStandard(newPostShareStandard);
+		lastPostStandardComment.setLastStandard(newPostCommentStandard);
+
+		lastStandardService.save(lastPostStandardReact);
+		lastStandardService.save(lastPostStandardShare);
+		lastStandardService.save(lastPostStandardComment);
+	}
+
+	private static double mean(double[] m) {
+		double sum = 0;
+		for (int i = 0; i < m.length; i++) {
+			sum += m[i];
+		}
+		return sum / m.length;
 	}
 
 	private void DetectCrisisInCurrent(String keyword, TextAPIClient client, List<Crisis> listCrisis) throws Exception {
@@ -160,6 +318,12 @@ class CheckThread extends Thread {
 			}
 		}
 		return returnList;
+	}
+
+	private List<Post> getNewPost(String keyword) {
+		// Get The list of post with latest date in DB
+		List<Post> posts = postService.getNewPost(keyword, true);
+		return posts;
 	}
 }
 

@@ -21,4 +21,5 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
 	
 	List<Post> getByPostId(BigInteger id);
 	Post getById(String id);
+	List<Post> findByKeyWordAndIsNew(String keyword, Boolean isNew);
 }

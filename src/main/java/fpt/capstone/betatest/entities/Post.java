@@ -15,33 +15,36 @@ public class Post implements Serializable {
 	@Id
 	@Column(name = "uuid_post")
 	private String id;
-	
+
 	@Column(name = "post_id")
 	private BigInteger postId;
-	
+
 	@Column(name = "post_content")
 	private String postContent;
-	
+
 	@Column(name = "create_date")
 	private Date createDate;
-	
+
 	@Column(name = "link_detail")
 	private String linkDetail;
-	
+
 	@Column(name = "number_of_react")
 	private float numberOfReact;
-	
+
 	@Column(name = "number_of_retweet")
 	private float numberOfReweet;
-	
+
 	@Column(name = "number_of_reply")
 	private float numberOfReply;
-	
+
 	@Column(name = "crawl_date")
 	private Date crawlDate;
-	
+
 	@Column(name = "keyword")
 	private String keyword;
+
+	@Column(name = "isNew")
+	private boolean isNew;
 
 	public String getId() {
 		return id;
@@ -122,6 +125,13 @@ public class Post implements Serializable {
 	public void setKeyword(String keyword) {
 		this.keyword = keyword;
 	}
-	
-	
+
+	public boolean isNew() {
+		return isNew;
+	}
+
+	public void setNew(boolean isNew) {
+		this.isNew = isNew;
+	}
+
 }

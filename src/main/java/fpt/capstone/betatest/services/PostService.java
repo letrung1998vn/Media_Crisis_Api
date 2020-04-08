@@ -32,4 +32,12 @@ public class PostService {
 	public Post getPostById(String id) {
 		return postRepository.getById(id);
 	}
+	@Transactional
+	public List<Post> getNewPost(String keyword, Boolean isNew) {
+		return postRepository.findByKeyWordAndIsNew(keyword,isNew);
+	}
+	@Transactional
+	public void save(Post post) {
+		postRepository.save(post);
+	}
 }
