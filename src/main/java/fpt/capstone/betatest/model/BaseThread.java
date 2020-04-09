@@ -10,6 +10,7 @@ import fpt.capstone.betatest.entities.Post;
 import fpt.capstone.betatest.services.CommentService;
 import fpt.capstone.betatest.services.CrisisService;
 import fpt.capstone.betatest.services.KeywordService;
+import fpt.capstone.betatest.services.LastStandardService;
 import fpt.capstone.betatest.services.NegativeRatioService;
 import fpt.capstone.betatest.services.NotificationContentService;
 import fpt.capstone.betatest.services.NotificationService;
@@ -45,4 +46,5 @@ public abstract class BaseThread extends Thread {
 	public NegativeRatioService negativeRatioService;
 	public final double differenceHour = 8;
 	public final double ratioLimit = 0.1;
+	public LastStandardService lastStandardService;
 }
