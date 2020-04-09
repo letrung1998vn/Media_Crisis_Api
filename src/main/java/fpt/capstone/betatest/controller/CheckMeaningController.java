@@ -147,19 +147,60 @@ class CheckThread extends Thread {
 
 	private void calStandard(String keyword) {
 		List<Post> listPost = getNewPost(keyword);
+		List<Post> listFirstPost = new ArrayList<>();
+		List<Post> listSencondPost = new ArrayList<>();
 		List<Comment> listComment = new ArrayList<>();
+		List<Comment> listFirstComment = new ArrayList<>();
+		List<Comment> listSencondComment = new ArrayList<>();
 		for (int i = 0; i < listPost.size(); i++) {
 			Post post = listPost.get(i);
 			listComment.addAll(commentService.getCommentByPostId(post.getId()));
-			post.setNew(false);
 		}
+		listFirstPost.addAll(listPost);
 		calPostStandard(keyword, listPost);
 		calCommentStandard(keyword, listComment);
+		for (int i = 0; i < listFirstPost.size(); i++) {
+			Post post = listFirstPost.get(i);
+			listFirstComment.addAll(commentService.getCommentByPostId(post.getId()));
+		}
+		for (int i = 0; i < listFirstPost.size(); i++) {
+			Post post = listFirstPost.get(i);
+			Post secondLastPost = postService.getSecondLastNewPost(post.getCrawlDate(), post.getPostId());
+			if (secondLastPost == null) {
+				listFirstPost.remove(i);
+			} else {
+				listSencondPost.add(secondLastPost);
+			}
+		}
+		for (int i = 0; i < listSencondPost.size(); i++) {
+			Post secondPost = listSencondPost.get(i);
+			List<Comment> listSecondCommentInDb = commentService.getCommentByPostId(secondPost.getId());
+			for (int y = 0; y < listSecondCommentInDb.size(); y++) {
+				Comment sencondCommentInDb = listSecondCommentInDb.get(i);
+				if (checkCommentExist(listFirstComment, sencondCommentInDb)) {
+					listSencondComment.add(sencondCommentInDb);
+				}
+			}
+		}
+		calIncreasePostStandard(keyword, listFirstPost, listSencondPost);
+		calIncreaseCommentStandard(keyword, listFirstComment, listSencondComment);
 		for (int i = 0; i < listPost.size(); i++) {
 			Post post = listPost.get(i);
 			post.setNew(false);
 			postService.save(post);
 		}
+	}
+
+	private boolean checkCommentExist(List<Comment> listComment, Comment comment) {
+		boolean result = false;
+		for (int i = 0; i < listComment.size(); i++) {
+			Comment com = listComment.get(i);
+			if (com.getId().equals(comment.getId())) {
+				result = true;
+				break;
+			}
+		}
+		return result;
 	}
 
 	private void calCommentStandard(String keyword, List<Comment> listComment) {
@@ -384,6 +425,281 @@ class CheckThread extends Thread {
 			lastPostStandardReact.setType("post");
 			lastPostStandardShare.setType("post");
 			lastPostStandardComment.setType("post");
+
+			lastStandardService.save(lastPostStandardReact);
+			lastStandardService.save(lastPostStandardShare);
+			lastStandardService.save(lastPostStandardComment);
+		}
+
+	}
+
+	private void calIncreaseCommentStandard(String keyword, List<Comment> listComment,
+			List<Comment> listSecondComment) {
+		LastStandard lastCommentStandardReact = lastStandardService.getLastStandard(keyword, "increaseComment",
+				"react");
+		LastStandard lastCommentStandardComment = lastStandardService.getLastStandard(keyword, "increaseComment",
+				"comment");
+		if (lastCommentStandardReact != null && lastCommentStandardComment != null) {
+			double totalNewReactMean = 0;
+			double totalNewCommentMean = 0;
+
+			double totalNewReact = 0;
+			double totalNewComment = 0;
+
+			for (int i = 0; i < listComment.size(); i++) {
+				Comment comment = listComment.get(i);
+				int pos = getSameCommentPos(listSecondComment, comment);
+				Comment secondComment = listSecondComment.get(pos);
+				totalNewReact += comment.getNumberOfReact() - secondComment.getNumberOfReact();
+				totalNewComment += comment.getNumberOfReply() - secondComment.getNumberOfReply();
+			}
+
+			double lastCommentReactVariance = Math.pow(lastCommentStandardReact.getLastStandard(), 2)
+					* lastCommentStandardReact.getLastNumber();
+			double lastCommentCommentVariance = Math.pow(lastCommentStandardComment.getLastStandard(), 2)
+					* lastCommentStandardComment.getLastNumber();
+
+			double totalNewCommentReact = lastCommentStandardReact.getLastNumber() + listComment.size();
+			double tolalLastCommentReact = lastCommentStandardReact.getLastMean()
+					* lastCommentStandardReact.getLastNumber();
+
+			double totalNewCommentComment = lastCommentStandardComment.getLastNumber() + listComment.size();
+			double tolalLastCommentComment = lastCommentStandardComment.getLastMean()
+					* lastCommentStandardComment.getLastNumber();
+
+			double reactMean = (tolalLastCommentReact + totalNewReact) / (totalNewCommentReact);
+
+			double commentMean = (tolalLastCommentComment + totalNewComment) / (totalNewCommentComment);
+
+			for (int i = 0; i < listComment.size(); i++) {
+				Comment comment = listComment.get(i);
+				int pos = getSameCommentPos(listSecondComment, comment);
+				Comment secondComment = listSecondComment.get(pos);
+				double increaseReact = comment.getNumberOfReact() - secondComment.getNumberOfReact();
+				double increaseComment = comment.getNumberOfReply() - secondComment.getNumberOfReply();
+				totalNewReactMean += (increaseReact - reactMean)
+						* (increaseReact - lastCommentStandardReact.getLastMean());
+				totalNewCommentMean += (increaseComment - commentMean)
+						* (increaseComment - lastCommentStandardComment.getLastMean());
+			}
+
+			double commentReactVariance = lastCommentReactVariance + totalNewReactMean;
+			double newCommentReactStandard = Math
+					.sqrt((commentReactVariance) / (listComment.size() + lastCommentStandardReact.getLastNumber()));
+
+			double postCommentVariance = lastCommentCommentVariance + totalNewCommentMean;
+			double newCommentCommentStandard = Math
+					.sqrt((postCommentVariance) / (listComment.size() + lastCommentStandardComment.getLastNumber()));
+
+			lastCommentStandardReact.setLastMean(reactMean);
+			lastCommentStandardComment.setLastMean(commentMean);
+
+			lastCommentStandardReact.setLastNumber(totalNewCommentReact);
+			lastCommentStandardComment.setLastNumber(totalNewCommentComment);
+
+			lastCommentStandardReact.setLastStandard(newCommentReactStandard);
+			lastCommentStandardComment.setLastStandard(newCommentCommentStandard);
+
+			lastStandardService.save(lastCommentStandardReact);
+			lastStandardService.save(lastCommentStandardComment);
+		} else {
+			lastCommentStandardReact = new LastStandard();
+			lastCommentStandardComment = new LastStandard();
+			double reactArray[] = new double[listComment.size()];
+			double commentArray[] = new double[listComment.size()];
+			for (int i = 0; i < listComment.size(); i++) {
+				Comment comment = listComment.get(i);
+				int pos = getSameCommentPos(listSecondComment, comment);
+				Comment secondComment = listSecondComment.get(pos);
+				reactArray[i] = comment.getNumberOfReact() - secondComment.getNumberOfReact();
+				commentArray[i] = comment.getNumberOfReply() - secondComment.getNumberOfReply();
+			}
+			double reactStandard = calculateSD(reactArray);
+			double reactMean = mean(reactArray);
+
+			double commentStandard = calculateSD(commentArray);
+			double commentMean = mean(commentArray);
+
+			lastCommentStandardReact.setKeyword(keyword);
+			lastCommentStandardComment.setKeyword(keyword);
+
+			lastCommentStandardReact.setLastMean(reactMean);
+			lastCommentStandardComment.setLastMean(commentMean);
+
+			lastCommentStandardReact.setLastNumber(listComment.size());
+			lastCommentStandardComment.setLastNumber(listComment.size());
+
+			lastCommentStandardReact.setLastStandard(reactStandard);
+			lastCommentStandardComment.setLastStandard(commentStandard);
+
+			lastCommentStandardReact.setNumberType("react");
+			lastCommentStandardComment.setNumberType("comment");
+
+			lastCommentStandardReact.setType("increaseComment");
+			lastCommentStandardComment.setType("increaseComment");
+
+			lastStandardService.save(lastCommentStandardReact);
+			lastStandardService.save(lastCommentStandardComment);
+		}
+	}
+
+	private int getSameCommentPos(List<Comment> listComment, Comment comment) {
+		int result = -1;
+		for (int i = 0; i < listComment.size(); i++) {
+			Comment com = listComment.get(i);
+			if (com.getId().equals(comment.getId())) {
+				result = i;
+				break;
+			}
+		}
+		return result;
+	}
+
+	private int getSamePostPos(List<Post> listPost, Post post) {
+		int result = -1;
+		for (int i = 0; i < listPost.size(); i++) {
+			Post pst = listPost.get(i);
+			if (pst.getId().equals(post.getId())) {
+				result = i;
+				break;
+			}
+		}
+		return result;
+	}
+
+	private void calIncreasePostStandard(String keyword, List<Post> listPost, List<Post> listSecondPost) {
+		LastStandard lastPostStandardReact = lastStandardService.getLastStandard(keyword, "increasePost", "react");
+		LastStandard lastPostStandardShare = lastStandardService.getLastStandard(keyword, "increasePost", "share");
+		LastStandard lastPostStandardComment = lastStandardService.getLastStandard(keyword, "increasePost", "comment");
+
+		if (lastPostStandardReact != null && lastPostStandardShare != null && lastPostStandardComment != null) {
+			double totalNewReactMean = 0;
+			double totalNewShareMean = 0;
+			double totalNewCommentMean = 0;
+
+			double totalNewReact = 0;
+			double totalNewShare = 0;
+			double totalNewComment = 0;
+			for (int i = 0; i < listPost.size(); i++) {
+				Post post = listPost.get(i);
+				int pos = getSamePostPos(listSecondPost, post);
+				Post secondPost = listSecondPost.get(pos);
+				totalNewReact += post.getNumberOfReact() - secondPost.getNumberOfReact();
+				totalNewShare += post.getNumberOfReweet() - secondPost.getNumberOfReweet();
+				totalNewComment += post.getNumberOfReply() - secondPost.getNumberOfReply();
+			}
+			double lastPostReactVariance = Math.pow(lastPostStandardReact.getLastStandard(), 2)
+					* lastPostStandardReact.getLastNumber();
+			double lastPostShareVariance = Math.pow(lastPostStandardShare.getLastStandard(), 2)
+					* lastPostStandardShare.getLastNumber();
+			double lastPostCommentVariance = Math.pow(lastPostStandardComment.getLastStandard(), 2)
+					* lastPostStandardComment.getLastNumber();
+
+			double totalNewPostReact = lastPostStandardReact.getLastNumber() + listPost.size();
+			double tolalLastPostReact = lastPostStandardReact.getLastMean() * lastPostStandardReact.getLastNumber();
+
+			double totalNewPostShare = lastPostStandardShare.getLastNumber() + listPost.size();
+			double tolalLastPostShare = lastPostStandardShare.getLastMean() * lastPostStandardShare.getLastNumber();
+
+			double totalNewPostComment = lastPostStandardComment.getLastNumber() + listPost.size();
+			double tolalLastPostComment = lastPostStandardComment.getLastMean()
+					* lastPostStandardComment.getLastNumber();
+
+			double reactMean = (tolalLastPostReact + totalNewReact) / (totalNewPostReact);
+
+			double shareMean = (tolalLastPostShare + totalNewShare) / (totalNewPostShare);
+
+			double commentMean = (tolalLastPostComment + totalNewComment) / (totalNewPostComment);
+
+			for (int i = 0; i < listPost.size(); i++) {
+				Post post = listPost.get(i);
+				int pos = getSamePostPos(listSecondPost, post);
+				Post secondPost = listSecondPost.get(pos);
+				double increaseReact = post.getNumberOfReact() - secondPost.getNumberOfReact();
+				double increaseShare = post.getNumberOfReweet() - secondPost.getNumberOfReweet();
+				double increaseComment = post.getNumberOfReply() - secondPost.getNumberOfReply();
+				totalNewReactMean += (increaseReact - reactMean)
+						* (increaseReact - lastPostStandardReact.getLastMean());
+				totalNewShareMean += (increaseShare - shareMean)
+						* (increaseShare - lastPostStandardReact.getLastMean());
+				totalNewCommentMean += (increaseComment - commentMean)
+						* (increaseComment - lastPostStandardComment.getLastMean());
+			}
+
+			double postReactVariance = lastPostReactVariance + totalNewReactMean;
+			double newPostReactStandard = Math
+					.sqrt((postReactVariance) / (listPost.size() + lastPostStandardReact.getLastNumber()));
+
+			double postShareVariance = lastPostShareVariance + totalNewShareMean;
+			double newPostShareStandard = Math
+					.sqrt((postShareVariance) / (listPost.size() + lastPostStandardReact.getLastNumber()));
+
+			double postCommentVariance = lastPostCommentVariance + totalNewCommentMean;
+			double newPostCommentStandard = Math
+					.sqrt((postCommentVariance) / (listPost.size() + lastPostStandardComment.getLastNumber()));
+
+			lastPostStandardReact.setLastMean(reactMean);
+			lastPostStandardShare.setLastMean(shareMean);
+			lastPostStandardComment.setLastMean(commentMean);
+
+			lastPostStandardReact.setLastNumber(totalNewPostReact);
+			lastPostStandardShare.setLastNumber(totalNewPostShare);
+			lastPostStandardComment.setLastNumber(totalNewPostComment);
+
+			lastPostStandardReact.setLastStandard(newPostReactStandard);
+			lastPostStandardShare.setLastStandard(newPostShareStandard);
+			lastPostStandardComment.setLastStandard(newPostCommentStandard);
+
+			lastStandardService.save(lastPostStandardReact);
+			lastStandardService.save(lastPostStandardShare);
+			lastStandardService.save(lastPostStandardComment);
+		} else {
+			lastPostStandardReact = new LastStandard();
+			lastPostStandardComment = new LastStandard();
+			lastPostStandardShare = new LastStandard();
+			double reactArray[] = new double[listPost.size()];
+			double shareArray[] = new double[listPost.size()];
+			double commentArray[] = new double[listPost.size()];
+			for (int i = 0; i < listPost.size(); i++) {
+				Post post = listPost.get(i);
+				int pos = getSamePostPos(listSecondPost, post);
+				Post secondPost = listSecondPost.get(pos);
+				reactArray[i] = post.getNumberOfReact() - secondPost.getNumberOfReact();
+				shareArray[i] = post.getNumberOfReweet() - secondPost.getNumberOfReweet();
+				commentArray[i] = post.getNumberOfReply() - secondPost.getNumberOfReply();
+			}
+			double reactStandard = calculateSD(reactArray);
+			double reactMean = mean(reactArray);
+
+			double shareStandard = calculateSD(shareArray);
+			double shareMean = mean(shareArray);
+
+			double commentStandard = calculateSD(commentArray);
+			double commentMean = mean(commentArray);
+
+			lastPostStandardReact.setKeyword(keyword);
+			lastPostStandardShare.setKeyword(keyword);
+			lastPostStandardComment.setKeyword(keyword);
+
+			lastPostStandardReact.setLastMean(reactMean);
+			lastPostStandardShare.setLastMean(shareMean);
+			lastPostStandardComment.setLastMean(commentMean);
+
+			lastPostStandardReact.setLastNumber(listPost.size());
+			lastPostStandardShare.setLastNumber(listPost.size());
+			lastPostStandardComment.setLastNumber(listPost.size());
+
+			lastPostStandardReact.setLastStandard(reactStandard);
+			lastPostStandardShare.setLastStandard(shareStandard);
+			lastPostStandardComment.setLastStandard(commentStandard);
+
+			lastPostStandardReact.setNumberType("react");
+			lastPostStandardShare.setNumberType("share");
+			lastPostStandardComment.setNumberType("comment");
+
+			lastPostStandardReact.setType("increasePost");
+			lastPostStandardShare.setType("increasePost");
+			lastPostStandardComment.setType("increasePost");
 
 			lastStandardService.save(lastPostStandardReact);
 			lastStandardService.save(lastPostStandardShare);
@@ -766,7 +1082,7 @@ class CheckMeaningCurrentCommentThread extends BaseThread {
 			CheckMeaningIncreasePostThread CheckMeaningIncreasePostThread = new CheckMeaningIncreasePostThread(client,
 					keyword, listPost, crisisService, commentService, keywordService, notificationService,
 					notificationContentService, userInfoService, userService, postService, listCrisis,
-					notificationTokenService);
+					notificationTokenService, lastStandardService);
 			CheckMeaningIncreasePostThread.start();
 			this.interrupt();
 		} catch (Exception e) {
@@ -882,7 +1198,7 @@ class CheckMeaningIncreasePostThread extends BaseThread {
 			CrisisService crisisService, CommentService commentService, KeywordService keywordService,
 			NotificationService notificationService, NotificationContentService notificationContentService,
 			UserInfoService userInfoService, UserService userService, PostService postService, List<Crisis> listCrisis,
-			NotificationTokenService notificationTokenService) {
+			NotificationTokenService notificationTokenService, LastStandardService lastStandardService) {
 		this.client = client;
 		this.keyword = keyword;
 		this.listPost = listPost;
@@ -896,31 +1212,7 @@ class CheckMeaningIncreasePostThread extends BaseThread {
 		this.postService = postService;
 		this.listCrisis = listCrisis;
 		this.notificationTokenService = notificationTokenService;
-	}
-
-	private static double calculateSD(double numArray[]) {
-		double sum = 0.0, standardDeviation = 0.0;
-		int length = numArray.length;
-
-		for (double num : numArray) {
-			sum += num;
-		}
-
-		double mean = sum / length;
-
-		for (double num : numArray) {
-			standardDeviation += Math.pow(num - mean, 2);
-		}
-
-		return Math.sqrt(standardDeviation / length);
-	}
-
-	private static double mean(double[] m) {
-		double sum = 0;
-		for (int i = 0; i < m.length; i++) {
-			sum += m[i];
-		}
-		return sum / m.length;
+		this.lastStandardService = lastStandardService;
 	}
 
 	private boolean containCrisis(List<Crisis> listCrisis, Crisis crisis) {
@@ -959,32 +1251,22 @@ class CheckMeaningIncreasePostThread extends BaseThread {
 	@Override
 	public synchronized void start() {
 		EntityLevelSentimentParams.Builder builder = EntityLevelSentimentParams.newBuilder();
-		double reactArray[] = new double[listPost.size()];
-		double shareArray[] = new double[listPost.size()];
-		double commentArray[] = new double[listPost.size()];
-		for (int i = 0; i < listPost.size(); i = i + 2) {
-			Post lastPost = listPost.get(i);
-			Post newPost = listPost.get(i + 1);
-			reactArray[i] = newPost.getNumberOfReact() - lastPost.getNumberOfReact();
-			shareArray[i] = newPost.getNumberOfReweet() - lastPost.getNumberOfReweet();
-			commentArray[i] = newPost.getNumberOfReply() - lastPost.getNumberOfReply();
-		}
-		double reactStandard = calculateSD(reactArray);
-		double reactMean = mean(reactArray);
+		LastStandard lastPostStandardReact = lastStandardService.getLastStandard(keyword, "increasePost", "react");
+		LastStandard lastPostStandardShare = lastStandardService.getLastStandard(keyword, "increasePost", "share");
+		LastStandard lastPostStandardComment = lastStandardService.getLastStandard(keyword, "increasePost", "comment");
+		double reactStandard = lastPostStandardReact.getLastStandard();
+		double reactMean = lastPostStandardReact.getLastMean();
 		double react_anomaly_cut_off = reactStandard * 2;
-		double react_lower_limit = reactMean - react_anomaly_cut_off;
 		double react_upper_limit = reactMean + react_anomaly_cut_off;
 
-		double shareStandard = calculateSD(shareArray);
-		double shareMean = mean(shareArray);
+		double shareStandard = lastPostStandardShare.getLastStandard();
+		double shareMean = lastPostStandardShare.getLastMean();
 		double share_anomaly_cut_off = shareStandard * 2;
-		double share_lower_limit = shareMean - share_anomaly_cut_off;
 		double share_upper_limit = shareMean + share_anomaly_cut_off;
 
-		double commentStandard = calculateSD(commentArray);
-		double commentMean = mean(commentArray);
+		double commentStandard = lastPostStandardComment.getLastStandard();
+		double commentMean = lastPostStandardComment.getLastMean();
 		double comment_anomaly_cut_off = commentStandard * 2;
-		double comment_lower_limit = commentMean - comment_anomaly_cut_off;
 		double comment_upper_limit = commentMean + comment_anomaly_cut_off;
 		try {
 			if (listPost.size() < 2) {
@@ -1015,27 +1297,11 @@ class CheckMeaningIncreasePostThread extends BaseThread {
 						String word = sen.getMentions()[0].getText();
 						if (mean.equals(negative) && confidence > lowerConfidence
 								&& word.toLowerCase().equals(keyword.toLowerCase())) {
-							if (reactMean < lowMean && shareMean < lowMean && commentMean < lowMean) {
-								if ((post.getNumberOfReply() - nextPost.getNumberOfReply()) > comment_upper_limit
-										|| (post.getNumberOfReweet() - nextPost.getNumberOfReweet()) > share_upper_limit
-										|| (post.getNumberOfReact()
-												- nextPost.getNumberOfReact()) > react_upper_limit) {
-									// Add Crisis To Db
-									insertPostCrisis(nextPost, crisisService);
-								} else {
-									// Save crisis and check if already add or not
-									if (reactStandard > lowStandard || shareStandard > lowStandard
-											|| commentStandard > lowStandard) {
-										if ((post.getNumberOfReply() - nextPost.getNumberOfReply()) > commentMean
-												|| (post.getNumberOfReweet() - nextPost.getNumberOfReweet()) > shareMean
-												|| (post.getNumberOfReact()
-														- nextPost.getNumberOfReact()) > reactMean) {
-											insertPostCrisis(nextPost, crisisService);
-										}
-									} else {
-										insertPostCrisis(nextPost, crisisService);
-									}
-								}
+							if ((post.getNumberOfReply() - nextPost.getNumberOfReply()) > comment_upper_limit
+									|| (post.getNumberOfReweet() - nextPost.getNumberOfReweet()) > share_upper_limit
+									|| (post.getNumberOfReact() - nextPost.getNumberOfReact()) > react_upper_limit) {
+								// Add Crisis To Db
+								insertPostCrisis(nextPost, crisisService);
 							}
 						}
 					}
@@ -1061,7 +1327,8 @@ class CheckMeaningIncreasePostThread extends BaseThread {
 			}
 			CheckMeaningIncreaseCommentThread CheckMeaningIncreaseCommentThread = new CheckMeaningIncreaseCommentThread(
 					client, keyword, listComment, crisisService, keywordService, notificationService,
-					notificationContentService, userInfoService, userService, commentService, postService, listCrisis);
+					notificationContentService, userInfoService, userService, commentService, postService, listCrisis,
+					lastStandardService);
 			CheckMeaningIncreaseCommentThread.start();
 			this.interrupt();
 		} catch (Exception e) {
@@ -1090,7 +1357,8 @@ class CheckMeaningIncreaseCommentThread extends BaseThread {
 	public CheckMeaningIncreaseCommentThread(TextAPIClient client, String keyword, List<Comment> listComment,
 			CrisisService crisisService, KeywordService keywordService, NotificationService notificationService,
 			NotificationContentService notificationContentService, UserInfoService userInfoService,
-			UserService userService, CommentService commentService, PostService postService, List<Crisis> listCrisis) {
+			UserService userService, CommentService commentService, PostService postService, List<Crisis> listCrisis,
+			LastStandardService lastStandardService) {
 		this.client = client;
 		this.keyword = keyword;
 		this.listComment = listComment;
@@ -1103,31 +1371,7 @@ class CheckMeaningIncreaseCommentThread extends BaseThread {
 		this.commentService = commentService;
 		this.postService = postService;
 		this.listCrisis = listCrisis;
-	}
-
-	private static double calculateSD(double numArray[]) {
-		double sum = 0.0, standardDeviation = 0.0;
-		int length = numArray.length;
-
-		for (double num : numArray) {
-			sum += num;
-		}
-
-		double mean = sum / length;
-
-		for (double num : numArray) {
-			standardDeviation += Math.pow(num - mean, 2);
-		}
-
-		return Math.sqrt(standardDeviation / length);
-	}
-
-	private static double mean(double[] m) {
-		double sum = 0;
-		for (int i = 0; i < m.length; i++) {
-			sum += m[i];
-		}
-		return sum / m.length;
+		this.lastStandardService = lastStandardService;
 	}
 
 	private boolean containCrisis(List<Crisis> listCrisis, Crisis crisis) {
@@ -1165,6 +1409,10 @@ class CheckMeaningIncreaseCommentThread extends BaseThread {
 	@Override
 	public synchronized void start() {
 		EntityLevelSentimentParams.Builder builder = EntityLevelSentimentParams.newBuilder();
+		LastStandard lastCommentStandardReact = lastStandardService.getLastStandard(keyword, "increaseComment",
+				"react");
+		LastStandard lastCommentStandardComment = lastStandardService.getLastStandard(keyword, "increaseComment",
+				"comment");
 		int size = 0;
 		double reactArray[] = new double[listComment.size() / 2];
 		double commentArray[] = new double[listComment.size() / 2];
@@ -1174,16 +1422,14 @@ class CheckMeaningIncreaseCommentThread extends BaseThread {
 			reactArray[i] = newComment.getNumberOfReact() - lastComment.getNumberOfReact();
 			commentArray[i] = newComment.getNumberOfReply() - lastComment.getNumberOfReply();
 		}
-		double reactStandard = calculateSD(reactArray);
-		double reactMean = mean(reactArray);
+		double reactStandard = lastCommentStandardReact.getLastStandard();
+		double reactMean = lastCommentStandardReact.getLastMean();
 		double react_anomaly_cut_off = reactStandard * 2;
-		double react_lower_limit = reactMean - react_anomaly_cut_off;
 		double react_upper_limit = reactMean + react_anomaly_cut_off;
 
-		double commentStandard = calculateSD(commentArray);
-		double commentMean = mean(commentArray);
+		double commentStandard = lastCommentStandardComment.getLastStandard();
+		double commentMean = lastCommentStandardComment.getLastMean();
 		double comment_anomaly_cut_off = commentStandard * 2;
-		double comment_lower_limit = commentMean - comment_anomaly_cut_off;
 		double comment_upper_limit = commentMean + comment_anomaly_cut_off;
 		try {
 			for (int i = 0; i < listComment.size(); i += 2) {
@@ -1205,24 +1451,11 @@ class CheckMeaningIncreaseCommentThread extends BaseThread {
 						String word = sen.getMentions()[0].getText();
 						if (mean.equals(negative) && confidence > lowerConfidence
 								&& word.toLowerCase().equals(keyword.toLowerCase())) {
-							if (reactMean < lowMean && commentMean < lowMean) {
-								if ((lastComment.getNumberOfReply()
-										- newComment.getNumberOfReply()) > comment_upper_limit
-										|| (lastComment.getNumberOfReact()
-												- newComment.getNumberOfReact()) > react_upper_limit) {
-									// Add Crisis to Db
-									insertCommentCrisis(newComment, crisisService);
-								}
-							} else {
-								if (reactStandard > lowStandard || commentStandard > lowStandard) {
-									if ((lastComment.getNumberOfReply() - newComment.getNumberOfReply()) > commentMean
-											|| (lastComment.getNumberOfReact()
-													- newComment.getNumberOfReact()) > reactMean) {
-										insertCommentCrisis(newComment, crisisService);
-									}
-								} else {
-									insertCommentCrisis(newComment, crisisService);
-								}
+							if ((lastComment.getNumberOfReply() - newComment.getNumberOfReply()) > comment_upper_limit
+									|| (lastComment.getNumberOfReact()
+											- newComment.getNumberOfReact()) > react_upper_limit) {
+								// Add Crisis to Db
+								insertCommentCrisis(newComment, crisisService);
 							}
 						}
 					}
@@ -1234,23 +1467,11 @@ class CheckMeaningIncreaseCommentThread extends BaseThread {
 					countHit += sentiment_count;
 					if (sentiment.getPolarity().equals(negative)
 							&& sentiment.getPolarityConfidence() > lowerConfidence) {
-						if (reactMean < lowMean && commentMean < lowMean) {
-							if ((lastComment.getNumberOfReply() - newComment.getNumberOfReply()) > comment_upper_limit
-									|| (lastComment.getNumberOfReact()
-											- newComment.getNumberOfReact()) > react_upper_limit) {
-								Crisis result = crisisService.findCrisis(newComment.getCommentId(), "comment", keyword);
-								insertCommentCrisis(newComment, crisisService);
-							}
-						} else {
-							if (reactStandard > lowStandard || commentStandard > lowStandard) {
-								if ((lastComment.getNumberOfReply() - newComment.getNumberOfReply()) > commentMean
-										|| (lastComment.getNumberOfReact()
-												- newComment.getNumberOfReact()) > reactMean) {
-									insertCommentCrisis(newComment, crisisService);
-								}
-							} else {
-								insertCommentCrisis(newComment, crisisService);
-							}
+						if ((lastComment.getNumberOfReply() - newComment.getNumberOfReply()) > comment_upper_limit
+								|| (lastComment.getNumberOfReact()
+										- newComment.getNumberOfReact()) > react_upper_limit) {
+							// Add Crisis to Db
+							insertCommentCrisis(newComment, crisisService);
 						}
 					}
 				}

@@ -1,6 +1,7 @@
 package fpt.capstone.betatest.repositories;
 
 import java.math.BigInteger;
+import java.util.Date;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -18,8 +19,14 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
 
 	@Query(nativeQuery = true, value = "select * from Post where keyword=?1 order by post_content")
 	List<Post> getPostContentWithTwoLatestDate(String keyword);
-	
+
 	List<Post> getByPostId(BigInteger id);
+
 	Post getById(String id);
+
 	List<Post> findByKeyWordAndIsNew(String keyword, Boolean isNew);
+
+	@Query(nativeQuery = true, value = "select TOP 1 * from Post " + "where crawl_date < ?1 "
+			+ "and post_id= ?2 order by crawl_date desc")
+	Post getSecondLastNewPost(Date crawlDate, BigInteger postId);
 }
