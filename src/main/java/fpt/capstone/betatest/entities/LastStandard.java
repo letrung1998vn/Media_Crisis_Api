@@ -1,10 +1,9 @@
 package fpt.capstone.betatest.entities;
 
-import java.math.BigInteger;
-import java.util.Date;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
@@ -12,8 +11,9 @@ import javax.persistence.Table;
 @Table(name = "LastStandard")
 public class LastStandard {
 	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id")
-	private String id;
+	private int id;
 
 	@Column(name = "keyword")
 	private String keyword;
@@ -22,22 +22,22 @@ public class LastStandard {
 	private String type;
 
 	@Column(name = "last_standard")
-	private double lastStandard;
+	private float lastStandard;
 
 	@Column(name = "last_mean")
-	private double lastMean;
+	private float lastMean;
 
 	@Column(name = "last_number")
-	private double lastNumber;
+	private int lastNumber;
 
 	@Column(name = "number_type")
 	private String numberType;
 
-	public String getId() {
+	public int getId() {
 		return id;
 	}
 
-	public void setId(String id) {
+	public void setId(int id) {
 		this.id = id;
 	}
 
@@ -57,27 +57,27 @@ public class LastStandard {
 		this.type = type;
 	}
 
-	public double getLastStandard() {
+	public float getLastStandard() {
 		return lastStandard;
 	}
 
-	public void setLastStandard(double lastStandard) {
+	public void setLastStandard(float lastStandard) {
 		this.lastStandard = lastStandard;
 	}
 
-	public double getLastMean() {
+	public float getLastMean() {
 		return lastMean;
 	}
 
-	public void setLastMean(double lastMean) {
+	public void setLastMean(float lastMean) {
 		this.lastMean = lastMean;
 	}
 
-	public double getLastNumber() {
+	public int getLastNumber() {
 		return lastNumber;
 	}
 
-	public void setLastNumber(double lastNumber) {
+	public void setLastNumber(int lastNumber) {
 		this.lastNumber = lastNumber;
 	}
 

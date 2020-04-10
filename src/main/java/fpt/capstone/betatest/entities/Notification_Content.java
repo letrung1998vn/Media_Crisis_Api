@@ -11,13 +11,13 @@ import javax.persistence.Table;
 @Table(name = "Notification_Content")
 public class Notification_Content {
 	@Id
-	@GeneratedValue(strategy=GenerationType.IDENTITY)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id")
 	private int id;
-	
+
 	@Column(name = "crisis_id")
 	private int crisisId;
-	
+
 	@Column(name = "notification_id")
 	private int notificationId;
 
@@ -53,10 +53,5 @@ public class Notification_Content {
 	public void setNotificationId(int notificationId) {
 		this.notificationId = notificationId;
 	}
-
-	
-	
-	
-	
 
 }

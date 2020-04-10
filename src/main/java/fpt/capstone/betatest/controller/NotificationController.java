@@ -506,12 +506,12 @@ public class NotificationController {
 	private void classifyCrisisType(Crisis crisis, PostService postService, CommentService commentService) {
 		if (crisis.getType().trim().equals("post")) {
 			List<Post> post = postService.getPostByPostId(crisis.getContentId());
-			if (post != null) {
+			if (post != null && post.size() > 0) {
 				listPost.add(post.get(0));
 			}
 		} else if (crisis.getType().trim().equals("comment")) {
 			List<Comment> comment = commentService.getCommentByCommentId(crisis.getContentId());
-			if (comment != null) {
+			if (comment != null && comment.size() > 0) {
 				listComment.add(comment.get(0));
 			}
 		}

@@ -39,7 +39,7 @@ public class PostService {
 
 	@Transactional
 	public List<Post> getNewPost(String keyword, Boolean isNew) {
-		return postRepository.findByKeyWordAndIsNew(keyword, isNew);
+		return postRepository.findByKeywordAndIsNew(keyword, isNew);
 	}
 
 	@Transactional
