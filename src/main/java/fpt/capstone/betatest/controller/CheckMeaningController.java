@@ -223,15 +223,13 @@ class CheckThread extends Thread {
 				double totalNewReact = 0;
 				double totalNewComment = 0;
 
-				double[] newReact = new double[listComment.size()];
-				double[] newComment = new double[listComment.size()];
+				double newReactVariance = 0;
+				double newCommentVariance = 0;
 
 				for (int i = 0; i < listComment.size(); i++) {
 					Comment comment = listComment.get(i);
 					totalNewReact += comment.getNumberOfReact();
 					totalNewComment += comment.getNumberOfReply();
-					newReact[i] = comment.getNumberOfReact();
-					newComment[i] = comment.getNumberOfReply();
 				}
 
 				int totalNewCommentReact = lastCommentStandardReact.getLastNumber() + listComment.size();
@@ -246,6 +244,11 @@ class CheckThread extends Thread {
 
 				double commentMean = (tolalLastCommentComment + totalNewComment) / (totalNewCommentComment);
 
+				for (int i = 0; i < listComment.size(); i++) {
+					Comment comment = listComment.get(i);
+					newReactVariance += Math.pow(comment.getNumberOfReact() - reactMean, 2);
+					newCommentVariance += Math.pow(comment.getNumberOfReply() - commentMean, 2);
+				}
 				double leftSideStandardReact = totalNewCommentReact
 						* (Math.pow(reactMean - lastCommentStandardReact.getLastMean(), 2)
 								+ Math.pow(lastCommentStandardReact.getLastStandard(), 2));
@@ -253,21 +256,10 @@ class CheckThread extends Thread {
 						* (Math.pow(reactMean - lastCommentStandardComment.getLastMean(), 2)
 								+ Math.pow(lastCommentStandardComment.getLastStandard(), 2));
 
-				double newStandardReact = calculateSD(newReact);
-				double newStandardComment = calculateSD(newComment);
-
-				double newMeanReact = mean(newReact);
-				double newMeanComment = mean(newComment);
-
-				double rightSideStandardReact = listComment.size()
-						* (Math.pow(reactMean - newMeanReact, 2) + Math.pow(newStandardReact, 2));
-				double rightSideStandardComment = listComment.size()
-						* (Math.pow(reactMean - newMeanComment, 2) + Math.pow(newStandardComment, 2));
-
-				double commentReactVariance = leftSideStandardReact + rightSideStandardReact;
+				double commentReactVariance = leftSideStandardReact + newReactVariance;
 				double newCommentReactStandard = Math.sqrt((commentReactVariance) / (totalNewCommentReact));
 
-				double postCommentVariance = leftSideStandardComment + rightSideStandardComment;
+				double postCommentVariance = leftSideStandardComment + newCommentVariance;
 				double newCommentCommentStandard = Math.sqrt((postCommentVariance) / (totalNewCommentComment));
 
 				lastCommentStandardReact.setLastMean((float) reactMean);
@@ -327,9 +319,9 @@ class CheckThread extends Thread {
 		LastStandard lastPostStandardReact = lastStandardService.getLastStandard(keyword, "post", "react");
 		LastStandard lastPostStandardShare = lastStandardService.getLastStandard(keyword, "post", "share");
 		LastStandard lastPostStandardComment = lastStandardService.getLastStandard(keyword, "post", "comment");
-		double[] newReact = new double[listPost.size()];
-		double[] newShare = new double[listPost.size()];
-		double[] newComment = new double[listPost.size()];
+		double newReactVariance = 0;
+		double newShareVariance = 0;
+		double newCommentVariance = 0;
 		if (lastPostStandardReact != null && lastPostStandardShare != null && lastPostStandardComment != null) {
 			if (listPost.size() > 0) {
 
@@ -341,9 +333,6 @@ class CheckThread extends Thread {
 					totalNewReact += post.getNumberOfReact();
 					totalNewShare += post.getNumberOfReweet();
 					totalNewComment += post.getNumberOfReply();
-					newReact[i] = post.getNumberOfReact();
-					newShare[i] = post.getNumberOfReweet();
-					newComment[i] = post.getNumberOfReply();
 				}
 
 				int totalNewPostReact = lastPostStandardReact.getLastNumber() + listPost.size();
@@ -362,6 +351,12 @@ class CheckThread extends Thread {
 
 				double commentMean = (tolalLastPostComment + totalNewComment) / (totalNewPostComment);
 
+				for (int i = 0; i < listPost.size(); i++) {
+					Post post = listPost.get(i);
+					newReactVariance += Math.pow(post.getNumberOfReact() - reactMean, 2);
+					newShareVariance += Math.pow(post.getNumberOfReweet() - shareMean, 2);
+					newCommentVariance += Math.pow(post.getNumberOfReply() - commentMean, 2);
+				}
 				double leftSideStandardReact = totalNewPostReact
 						* (Math.pow(reactMean - lastPostStandardReact.getLastMean(), 2)
 								+ Math.pow(lastPostStandardReact.getLastStandard(), 2));
@@ -372,28 +367,13 @@ class CheckThread extends Thread {
 						* (Math.pow(reactMean - lastPostStandardComment.getLastMean(), 2)
 								+ Math.pow(lastPostStandardComment.getLastStandard(), 2));
 
-				double newStandardReact = calculateSD(newReact);
-				double newStandardShare = calculateSD(newShare);
-				double newStandardComment = calculateSD(newComment);
-
-				double newMeanReact = mean(newReact);
-				double newMeanShare = mean(newShare);
-				double newMeanComment = mean(newComment);
-
-				double rightSideStandardReact = listPost.size()
-						* (Math.pow(reactMean - newMeanReact, 2) + Math.pow(newStandardReact, 2));
-				double rightSideStandardShare = listPost.size()
-						* (Math.pow(reactMean - newMeanShare, 2) + Math.pow(newStandardShare, 2));
-				double rightSideStandardComment = listPost.size()
-						* (Math.pow(reactMean - newMeanComment, 2) + Math.pow(newStandardComment, 2));
-
-				double postReactVariance = leftSideStandardReact + rightSideStandardReact;
+				double postReactVariance = leftSideStandardReact + newReactVariance;
 				double newPostReactStandard = Math.sqrt((postReactVariance) / (totalNewPostReact));
 
-				double postShareVariance = leftSideStandardShare + rightSideStandardShare;
+				double postShareVariance = leftSideStandardShare + newShareVariance;
 				double newPostShareStandard = Math.sqrt((postShareVariance) / (totalNewPostShare));
 
-				double postCommentVariance = leftSideStandardComment + rightSideStandardComment;
+				double postCommentVariance = leftSideStandardComment + newCommentVariance;
 				double newPostCommentStandard = Math.sqrt((postCommentVariance) / (totalNewPostComment));
 
 				lastPostStandardReact.setLastMean((float) reactMean);
@@ -474,8 +454,8 @@ class CheckThread extends Thread {
 				"comment");
 		if (lastCommentStandardReact != null && lastCommentStandardComment != null) {
 			if (listComment.size() > 0) {
-				double[] newReact = new double[listComment.size()];
-				double[] newComment = new double[listComment.size()];
+				double newReactVariance = 0;
+				double newCommentVariance = 0;
 				double totalNewReact = 0;
 				double totalNewComment = 0;
 
@@ -485,8 +465,6 @@ class CheckThread extends Thread {
 					Comment secondComment = listSecondComment.get(pos);
 					totalNewReact += comment.getNumberOfReact() - secondComment.getNumberOfReact();
 					totalNewComment += comment.getNumberOfReply() - secondComment.getNumberOfReply();
-					newReact[i] = comment.getNumberOfReact() - secondComment.getNumberOfReact();
-					newComment[i] = comment.getNumberOfReply() - secondComment.getNumberOfReply();
 				}
 
 				int totalNewCommentReact = lastCommentStandardReact.getLastNumber() + listComment.size();
@@ -501,6 +479,16 @@ class CheckThread extends Thread {
 
 				double commentMean = (tolalLastCommentComment + totalNewComment) / (totalNewCommentComment);
 
+				for (int i = 0; i < listComment.size(); i++) {
+					Comment comment = listComment.get(i);
+					int pos = getSameCommentPos(listSecondComment, comment);
+					Comment secondComment = listSecondComment.get(pos);
+					newReactVariance += Math
+							.pow(comment.getNumberOfReact() - secondComment.getNumberOfReact() - reactMean, 2);
+					newCommentVariance += Math
+							.pow(comment.getNumberOfReply() - secondComment.getNumberOfReply() - commentMean, 2);
+				}
+
 				double leftSideStandardReact = totalNewCommentReact
 						* (Math.pow(reactMean - lastCommentStandardReact.getLastMean(), 2)
 								+ Math.pow(lastCommentStandardReact.getLastStandard(), 2));
@@ -508,21 +496,10 @@ class CheckThread extends Thread {
 						* (Math.pow(reactMean - lastCommentStandardComment.getLastMean(), 2)
 								+ Math.pow(lastCommentStandardComment.getLastStandard(), 2));
 
-				double newStandardReact = calculateSD(newReact);
-				double newStandardComment = calculateSD(newComment);
-
-				double newMeanReact = mean(newReact);
-				double newMeanComment = mean(newComment);
-
-				double rightSideStandardReact = listComment.size()
-						* (Math.pow(reactMean - newMeanReact, 2) + Math.pow(newStandardReact, 2));
-				double rightSideStandardComment = listComment.size()
-						* (Math.pow(reactMean - newMeanComment, 2) + Math.pow(newStandardComment, 2));
-
-				double commentReactVariance = leftSideStandardReact + rightSideStandardReact;
+				double commentReactVariance = leftSideStandardReact + newReactVariance;
 				double newCommentReactStandard = Math.sqrt((commentReactVariance) / (totalNewCommentReact));
 
-				double postCommentVariance = leftSideStandardComment + rightSideStandardComment;
+				double postCommentVariance = leftSideStandardComment + newCommentVariance;
 				double newCommentCommentStandard = Math.sqrt((postCommentVariance) / (totalNewCommentComment));
 
 				lastCommentStandardReact.setLastMean((float) reactMean);
@@ -600,9 +577,9 @@ class CheckThread extends Thread {
 		if (lastPostStandardReact != null && lastPostStandardShare != null && lastPostStandardComment != null) {
 			if (listPost.size() > 0) {
 
-				double[] newReact = new double[listPost.size()];
-				double[] newShare = new double[listPost.size()];
-				double[] newComment = new double[listPost.size()];
+				double newReactVariance = 0;
+				double newShareVariance = 0;
+				double newCommentVariance = 0;
 
 				double totalNewReact = 0;
 				double totalNewShare = 0;
@@ -613,9 +590,6 @@ class CheckThread extends Thread {
 					totalNewReact += post.getNumberOfReact() - secondPost.getNumberOfReact();
 					totalNewShare += post.getNumberOfReweet() - secondPost.getNumberOfReweet();
 					totalNewComment += post.getNumberOfReply() - secondPost.getNumberOfReply();
-					newReact[i] = post.getNumberOfReact() - secondPost.getNumberOfReact();
-					newShare[i] = post.getNumberOfReweet() - secondPost.getNumberOfReweet();
-					newComment[i] = post.getNumberOfReply() - secondPost.getNumberOfReply();
 				}
 
 				int totalNewPostReact = lastPostStandardReact.getLastNumber() + listPost.size();
@@ -633,7 +607,16 @@ class CheckThread extends Thread {
 				double shareMean = (tolalLastPostShare + totalNewShare) / (totalNewPostShare);
 
 				double commentMean = (tolalLastPostComment + totalNewComment) / (totalNewPostComment);
-
+				for (int i = 0; i < listPost.size(); i++) {
+					Post post = listPost.get(i);
+					Post secondPost = listSecondPost.get(i);
+					newReactVariance += Math.pow(post.getNumberOfReact() - secondPost.getNumberOfReact() - reactMean,
+							2);
+					newShareVariance += Math.pow(post.getNumberOfReweet() - secondPost.getNumberOfReweet() - shareMean,
+							2);
+					newCommentVariance += Math
+							.pow(post.getNumberOfReply() - secondPost.getNumberOfReply() - commentMean, 2);
+				}
 				double leftSideStandardReact = totalNewPostReact
 						* (Math.pow(reactMean - lastPostStandardReact.getLastMean(), 2)
 								+ Math.pow(lastPostStandardReact.getLastStandard(), 2));
@@ -644,28 +627,13 @@ class CheckThread extends Thread {
 						* (Math.pow(reactMean - lastPostStandardComment.getLastMean(), 2)
 								+ Math.pow(lastPostStandardComment.getLastStandard(), 2));
 
-				double newStandardReact = calculateSD(newReact);
-				double newStandardShare = calculateSD(newShare);
-				double newStandardComment = calculateSD(newComment);
-
-				double newMeanReact = mean(newReact);
-				double newMeanShare = mean(newShare);
-				double newMeanComment = mean(newComment);
-
-				double rightSideStandardReact = listPost.size()
-						* (Math.pow(reactMean - newMeanReact, 2) + Math.pow(newStandardReact, 2));
-				double rightSideStandardShare = listPost.size()
-						* (Math.pow(reactMean - newMeanShare, 2) + Math.pow(newStandardShare, 2));
-				double rightSideStandardComment = listPost.size()
-						* (Math.pow(reactMean - newMeanComment, 2) + Math.pow(newStandardComment, 2));
-
-				double postReactVariance = leftSideStandardReact + rightSideStandardReact;
+				double postReactVariance = leftSideStandardReact + newReactVariance;
 				double newPostReactStandard = Math.sqrt((postReactVariance) / (totalNewPostReact));
 
-				double postShareVariance = leftSideStandardShare + rightSideStandardShare;
+				double postShareVariance = leftSideStandardShare + newShareVariance;
 				double newPostShareStandard = Math.sqrt((postShareVariance) / (totalNewPostShare));
 
-				double postCommentVariance = leftSideStandardComment + rightSideStandardComment;
+				double postCommentVariance = leftSideStandardComment + newCommentVariance;
 				double newPostCommentStandard = Math.sqrt((postCommentVariance) / (totalNewPostComment));
 
 				lastPostStandardReact.setLastMean((float) reactMean);
