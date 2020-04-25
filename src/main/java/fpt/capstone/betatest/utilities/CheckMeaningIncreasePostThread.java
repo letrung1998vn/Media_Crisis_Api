@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import com.aylien.textapi.TextAPIClient;
 import com.aylien.textapi.parameters.EntityLevelSentimentParams;
@@ -20,6 +21,7 @@ import fpt.capstone.betatest.services.CrisisService;
 import fpt.capstone.betatest.services.LastStandardService;
 import fpt.capstone.betatest.services.NotificationService;
 
+@Service
 public class CheckMeaningIncreasePostThread extends BaseThread{
 	@Autowired
 	private NotificationService notificationService;

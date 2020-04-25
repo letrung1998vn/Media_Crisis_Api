@@ -3,6 +3,7 @@ package fpt.capstone.betatest.utilities;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import com.aylien.textapi.TextAPIClient;
 import com.aylien.textapi.parameters.EntityLevelSentimentParams;
@@ -18,6 +19,7 @@ import fpt.capstone.betatest.model.BaseThread;
 import fpt.capstone.betatest.services.CrisisService;
 import fpt.capstone.betatest.services.LastStandardService;
 
+@Service
 public class CheckMeaningIncreaseCommentThread extends BaseThread{
 	
 	@Autowired

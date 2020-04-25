@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import com.aylien.textapi.TextAPIClient;
 
@@ -15,6 +16,7 @@ import fpt.capstone.betatest.services.CheckMeaningService;
 import fpt.capstone.betatest.services.KeywordCrawlerService;
 import fpt.capstone.betatest.services.NotificationService;
 
+@Service
 public class CheckThread extends Thread {
 	
 	@Autowired

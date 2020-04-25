@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import com.aylien.textapi.TextAPIClient;
 import com.aylien.textapi.parameters.EntityLevelSentimentParams;
@@ -26,6 +27,7 @@ import fpt.capstone.betatest.services.NegativeRatioService;
 import fpt.capstone.betatest.services.NotificationService;
 import fpt.capstone.betatest.services.PostService;
 
+@Service
 public class CheckMeaningCurrentCommentThread extends BaseThread{
 
 	
