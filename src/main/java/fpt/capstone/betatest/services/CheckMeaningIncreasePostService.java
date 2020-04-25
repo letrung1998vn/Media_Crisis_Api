@@ -1,4 +1,4 @@
-package fpt.capstone.betatest.utilities;
+package fpt.capstone.betatest.services;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +22,7 @@ import fpt.capstone.betatest.services.LastStandardService;
 import fpt.capstone.betatest.services.NotificationService;
 
 @Service
-public class CheckMeaningIncreasePostThread extends BaseThread{
+public class CheckMeaningIncreasePostService extends BaseThread{
 	@Autowired
 	private NotificationService notificationService;
 	
@@ -35,8 +35,7 @@ public class CheckMeaningIncreasePostThread extends BaseThread{
 	@Autowired
 	private CommentService commentService;
 	
-	
-	public CheckMeaningIncreasePostThread(TextAPIClient client, String keyword, List<Post> listPost, List<Crisis> listCrisis) {
+	public void setData(TextAPIClient client, String keyword, List<Post> listPost, List<Crisis> listCrisis) {
 		this.client = client;
 		this.keyword = keyword;
 		this.listPost = listPost;
@@ -114,8 +113,8 @@ public class CheckMeaningIncreasePostThread extends BaseThread{
 						listComment.add(newPostComment.get(result));
 					}
 				}
-				CheckMeaningIncreaseCommentThread CheckMeaningIncreaseCommentThread = new CheckMeaningIncreaseCommentThread(
-						client, keyword, listComment,listCrisis);
+				CheckMeaningIncreaseCommentService CheckMeaningIncreaseCommentThread = new CheckMeaningIncreaseCommentService();
+				CheckMeaningIncreaseCommentThread.setData(client, keyword, listComment, listCrisis);
 				CheckMeaningIncreaseCommentThread.start();
 				this.interrupt();
 			} catch (Exception e) {

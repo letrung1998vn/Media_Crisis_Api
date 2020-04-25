@@ -1,20 +1,19 @@
 package fpt.capstone.betatest.services;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.aylien.textapi.TextAPIClient;
+
 import fpt.capstone.betatest.entities.Comment;
 import fpt.capstone.betatest.entities.Crisis;
 import fpt.capstone.betatest.entities.LastStandard;
 import fpt.capstone.betatest.entities.Post;
-import fpt.capstone.betatest.utilities.CheckMeaningCurrentPostThread;
+import fpt.capstone.betatest.utilities.CheckMeaningCurrentPostService;
 
 @Service
 public class CheckMeaningService {
@@ -630,8 +629,8 @@ public class CheckMeaningService {
 		public void detectCrisisInCurrent(String keyword, TextAPIClient client, List<Crisis> listCrisis) throws Exception {
 			List<Post> listPost = postService.getRecentPost(keyword);
 			if (listPost.size() > 0) {
-				CheckMeaningCurrentPostThread CheckMeaningCurrentPostThread = new CheckMeaningCurrentPostThread(client, keyword, listPost, listCrisis);
-//				CheckMeaningCurrentPostThread.setData();
+				CheckMeaningCurrentPostService CheckMeaningCurrentPostThread = new CheckMeaningCurrentPostService();
+				CheckMeaningCurrentPostThread.setData(client, keyword, listPost, listCrisis);
 				CheckMeaningCurrentPostThread.start();
 			}
 		}

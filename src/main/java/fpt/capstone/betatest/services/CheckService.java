@@ -1,4 +1,4 @@
-package fpt.capstone.betatest.utilities;
+package fpt.capstone.betatest.services;
 
 
 
@@ -17,7 +17,7 @@ import fpt.capstone.betatest.services.KeywordCrawlerService;
 import fpt.capstone.betatest.services.NotificationService;
 
 @Service
-public class CheckThread extends Thread {
+public class CheckService extends Thread {
 	
 	@Autowired
 	private CheckMeaningService checkMeaningService;
@@ -30,11 +30,9 @@ public class CheckThread extends Thread {
 	
 	TextAPIClient client;
 	
-
-	public CheckThread(TextAPIClient client) {
+	public void setData(TextAPIClient client) {
 		this.client = client;
 	}
-
 	@Override
 	public synchronized void start() {
 		List<Keyword_Crawler> listKeyword = keywordCrawlerService.getAllKeyword();
