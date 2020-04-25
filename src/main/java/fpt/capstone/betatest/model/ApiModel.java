@@ -1,10 +1,6 @@
 package fpt.capstone.betatest.model;
 
 
-import java.util.ArrayList;
-import java.util.List;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 //import fpt.capstone.betatest.entities.Comment;
 //import fpt.capstone.betatest.entities.Post;

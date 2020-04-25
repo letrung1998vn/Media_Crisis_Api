@@ -20,4 +20,14 @@ public class LastStandardService {
 	public void save(LastStandard lastStandard) {
 		lastStandardRepository.save(lastStandard);
 	}
+	
+	
+	
+	@Transactional
+	public double calUpperLimit(double standard, double mean) {
+		double anomaly_cut_off = standard * 2;
+		double upper_limit = mean + anomaly_cut_off;
+		return upper_limit;
+	}
+	
 }

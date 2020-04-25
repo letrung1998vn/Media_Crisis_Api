@@ -1,8 +1,10 @@
 package fpt.capstone.betatest.services;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.transaction.Transactional;
 
@@ -17,6 +19,11 @@ public class PostService {
 	@Autowired
 	private PostRepository postRepository;
 
+	@Autowired
+	private CheckMeaningService checkMeaningService;
+	
+	final long diffenrentDate = 7;
+	
 	@Transactional
 	public List<Post> getEachPostContentWithLatestDate(String keyword) {
 		return postRepository.getEachPostContentWithLatestDate(keyword);
@@ -51,4 +58,44 @@ public class PostService {
 	public Post getSecondLastNewPost(Date crawlDate, BigInteger postId) {
 		return postRepository.getSecondLastNewPost(crawlDate, postId);
 	}
+	
+	@Transactional
+	public List<Post> getIncreasePost(String keyword) {
+		// Get the list of post with two latest date in DB
+		List<Post> listPost = this.getPostContentWithTwoLatestDate(keyword);
+		List<Post> resultList = new ArrayList<>();
+		List<Post> sameContentPost = new ArrayList<>();
+		List<Post> sameContentPostSorted = new ArrayList<>();
+		for (int i = 0; i < listPost.size(); i++) {
+			if (i < listPost.size() - 1) {
+				Post post = listPost.get(i);
+				sameContentPost = checkMeaningService.getListSameContent(listPost, post);
+				sameContentPostSorted = checkMeaningService.sortByCrawlDate(sameContentPost);
+				if (!checkMeaningService.checkExist(resultList, sameContentPostSorted.get(0).getPostContent())
+						&& sameContentPostSorted.size() == 2) {
+					resultList.addAll(sameContentPostSorted);
+				}
+			}
+		}
+		return resultList;
+	}
+	
+	@Transactional
+	public List<Post> getRecentPost(String keyword) {
+		// Get The list of post with latest date in DB
+		List<Post> posts = this.getEachPostContentWithLatestDate(keyword);
+		List<Post> returnList = new ArrayList<>();
+		for (int i = 0; i < posts.size(); i++) {
+			Post post = posts.get(i);
+			long millis = System.currentTimeMillis();
+			Date date = new Date(millis);
+			long diffInMillies = Math.abs(date.getTime() - post.getCrawlDate().getTime());
+			long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
+			if (diff < diffenrentDate) {
+				returnList.add(post);
+			}
+		}
+		return returnList;
+	}
+
 }

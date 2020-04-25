@@ -2,7 +2,6 @@ package fpt.capstone.betatest.model;
 
 import java.util.List;
 
-import fpt.capstone.betatest.entities.Keyword;
 
 public class EmailContentModel {
 	String keyword;

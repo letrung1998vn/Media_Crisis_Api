@@ -23,8 +23,20 @@ public class CommentService {
 	public List<Comment> getCommentByCommentId(BigInteger id) {
 		return commentRepository.findByCommentId(id);
 	}
+	
 	@Transactional
 	public Comment getCommentById(String id) {
 		return commentRepository.findById(id);
 	}
+	
+	@Transactional
+	public int findComment(List<Comment> listComment, Comment comment) {
+		for (int i = 0; i < listComment.size(); i++) {
+			if (comment.getCommentContent().equals(listComment.get(i).getCommentContent())) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
 }

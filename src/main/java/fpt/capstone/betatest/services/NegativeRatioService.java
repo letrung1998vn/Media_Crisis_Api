@@ -11,6 +11,8 @@ import fpt.capstone.betatest.repositories.NegativeRatioRepository;
 public class NegativeRatioService {
 	@Autowired
 	private NegativeRatioRepository negativeRatioRepository;
+	
+	
 	@Transactional
 	public NegativeRatio getNegativeRatio(String keyword, String type) {
 		return negativeRatioRepository.findByKeywordAndType(keyword, type);
@@ -18,5 +20,10 @@ public class NegativeRatioService {
 	@Transactional
 	public void save(NegativeRatio negativeRatio) {
 		negativeRatioRepository.save(negativeRatio);
+	}
+	
+	@Transactional
+	public double calNegativeRatio(int listPost , int listPostNegative) {
+		return (listPost/listPostNegative);
 	}
 }

@@ -8,15 +8,11 @@ import org.springframework.stereotype.Service;
 
 import fpt.capstone.betatest.entities.UserInfo;
 import fpt.capstone.betatest.repositories.UserInfoRepository;
-import fpt.capstone.betatest.repositories.UserRepository;
 
 @Service
 public class UserInfoService {
 	@Autowired
 	private UserInfoRepository usersInfoRepository;
-	
-	@Autowired
-	private UserRepository userRepository;
 	
 	@Transactional
 	public UserInfo saveUser(UserInfo u) {

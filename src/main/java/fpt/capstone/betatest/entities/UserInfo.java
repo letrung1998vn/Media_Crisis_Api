@@ -2,7 +2,6 @@ package fpt.capstone.betatest.entities;
 
 import java.io.Serializable;
 import javax.persistence.*;
-import java.util.List;
 
 /**
  * The persistent class for the UserInfo database table.
