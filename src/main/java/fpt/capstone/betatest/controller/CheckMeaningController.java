@@ -8,7 +8,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.aylien.textapi.TextAPIClient;
 
-import fpt.capstone.betatest.utilities.CheckService;
+import fpt.capstone.betatest.services.CheckService;
+
 
 
 @RestController

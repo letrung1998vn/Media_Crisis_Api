@@ -13,7 +13,6 @@ import fpt.capstone.betatest.entities.Comment;
 import fpt.capstone.betatest.entities.Crisis;
 import fpt.capstone.betatest.entities.LastStandard;
 import fpt.capstone.betatest.entities.Post;
-import fpt.capstone.betatest.utilities.CheckMeaningCurrentPostService;
 
 @Service
 public class CheckMeaningService {
