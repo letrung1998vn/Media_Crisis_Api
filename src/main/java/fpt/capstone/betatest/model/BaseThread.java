@@ -14,7 +14,8 @@ public abstract class BaseThread extends Thread {
 	public final String negative = "negative";
 	public final int lowMean = 10000;
 	public final int lowStandard = 5000;
-	public final String type = "post";
+	public final String postType = "post";
+	public final String commentType = "comment";
 	public int totalCount = 60;
 	public int entity_sentiment_count = 3;
 	public int sentiment_count = 1;
@@ -25,9 +26,5 @@ public abstract class BaseThread extends Thread {
 	public List<Crisis> listCrisis;
 	public List<Post> listPost;
 	public final double differenceHour = 8;
-	public final double ratioLimit = 0.1;
-	public void start(TextAPIClient client, String keyword, List<Post> listPost, List<Crisis> listCrisis) {
-		// TODO Auto-generated method stub
-		
-	}
+	public final double ratioLimit = 0.05;
 }

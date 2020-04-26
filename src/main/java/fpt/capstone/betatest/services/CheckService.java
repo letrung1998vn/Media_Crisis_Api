@@ -5,6 +5,8 @@ package fpt.capstone.betatest.services;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -33,6 +35,7 @@ public class CheckService extends Thread {
 	public void setData(TextAPIClient client) {
 		this.client = client;
 	}
+	
 	@Override
 	public synchronized void start() {
 		List<Keyword_Crawler> listKeyword = keywordCrawlerService.getAllKeyword();

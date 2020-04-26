@@ -53,6 +53,10 @@ public class NotificationController {
 			@RequestParam(name = "comment_id") String commentId) {
 		return notificationContentService.getEmailContentListComment(keyword, commentId);
 	}
-
+	@PostMapping("emailContentList")
+	public EmailContentModel getEmailContentList(@RequestParam(name = "keyword") String keyword,
+			@RequestParam(name = "id") String Id) {
+		return notificationContentService.getEmailContentList(keyword, Id);
+	}
 }
 

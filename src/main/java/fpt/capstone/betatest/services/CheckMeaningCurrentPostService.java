@@ -30,19 +30,21 @@ public class CheckMeaningCurrentPostService extends BaseThread {
 
 	@Autowired
 	private LastStandardService lastStandardService;
-	
+
 	@Autowired
 	private NotificationService notificationService;
-	
+
 	@Autowired
 	private NegativeRatioService negativeRatioService;
-	
-	
+
 	@Autowired
 	private CrisisService crisisService;
-	
+
 	@Autowired
 	private CommentService commentService;
+
+	@Autowired
+	private CheckMeaningCurrentCommentService CheckMeaningCurrentCommentThread;
 
 	public void setData(TextAPIClient client, String keyword, List<Post> listPost, List<Crisis> listCrisis) {
 		this.client = client;
@@ -50,20 +52,25 @@ public class CheckMeaningCurrentPostService extends BaseThread {
 		this.listPost = listPost;
 		this.listCrisis = listCrisis;
 	}
+
 	@Override
-	public synchronized void start(TextAPIClient client, String keyword, List<Post> listPost, List<Crisis> listCrisis) {
+	public synchronized void start() {
 		LastStandard lastPostStandardReact = lastStandardService.getLastStandard(keyword, "post", "react");
 		LastStandard lastPostStandardShare = lastStandardService.getLastStandard(keyword, "post", "share");
 		LastStandard lastPostStandardComment = lastStandardService.getLastStandard(keyword, "post", "comment");
-		
-		double react_upper_limit = lastStandardService.calUpperLimit(lastPostStandardReact.getLastStandard(), lastPostStandardReact.getLastMean());
 
-		double share_upper_limit = lastStandardService.calUpperLimit(lastPostStandardShare.getLastStandard(), lastPostStandardShare.getLastMean());
+		double react_upper_limit = lastStandardService.calUpperLimit(lastPostStandardReact.getLastStandard(),
+				lastPostStandardReact.getLastMean());
 
-		double comment_upper_limit = lastStandardService.calUpperLimit(lastPostStandardComment.getLastStandard(), lastPostStandardComment.getLastMean());
+		double share_upper_limit = lastStandardService.calUpperLimit(lastPostStandardShare.getLastStandard(),
+				lastPostStandardShare.getLastMean());
+
+		double comment_upper_limit = lastStandardService.calUpperLimit(lastPostStandardComment.getLastStandard(),
+				lastPostStandardComment.getLastMean());
 		try {
 			List<Post> listPostNegative = new ArrayList<>();
 			EntityLevelSentimentParams.Builder builder = EntityLevelSentimentParams.newBuilder();
+
 			if (listPost.size() == 0) {
 				if (listCrisis.size() > 0) {
 					notificationService.sendNotification(listCrisis, keyword);
@@ -93,7 +100,7 @@ public class CheckMeaningCurrentPostService extends BaseThread {
 									|| post.getNumberOfReweet() > share_upper_limit
 									|| post.getNumberOfReact() > react_upper_limit) {
 								// Save crisis and check if already add or not
-								crisisService.insertPostCrisis(post, keyword, type , listCrisis);
+								listCrisis = crisisService.insertPostCrisis(post, keyword, postType, listCrisis);
 							}
 						}
 					}
@@ -110,7 +117,7 @@ public class CheckMeaningCurrentPostService extends BaseThread {
 					long diff = TimeUnit.HOURS.convert(diffInMillies, TimeUnit.MILLISECONDS);
 					if (diff > differenceHour) {
 						if (lastNegativeRatio.getRatio() < negativeRatio) {
-							if (negativeRatio - lastNegativeRatio.getRatio() < ratioLimit) {
+							if (negativeRatio - lastNegativeRatio.getRatio() > ratioLimit) {
 								lastNegativeRatio.setRatio(negativeRatio);
 								lastNegativeRatio.setUpdateDate(date);
 								negativeRatioService.save(lastNegativeRatio);
@@ -144,7 +151,6 @@ public class CheckMeaningCurrentPostService extends BaseThread {
 				Post post = listPost.get(i);
 				listComment.addAll(commentService.getCommentByPostId(post.getId()));
 			}
-			CheckMeaningCurrentCommentService CheckMeaningCurrentCommentThread = new CheckMeaningCurrentCommentService();
 			CheckMeaningCurrentCommentThread.setData(client, keyword, listComment, listCrisis);
 			CheckMeaningCurrentCommentThread.start();
 			this.interrupt();
@@ -152,5 +158,5 @@ public class CheckMeaningCurrentPostService extends BaseThread {
 			e.printStackTrace();
 		}
 	}
-	
+
 }

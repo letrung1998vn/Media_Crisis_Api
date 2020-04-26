@@ -35,6 +35,9 @@ public class CheckMeaningIncreasePostService extends BaseThread{
 	@Autowired
 	private CommentService commentService;
 	
+	@Autowired
+	private CheckMeaningIncreaseCommentService CheckMeaningIncreaseCommentThread;
+	
 	public void setData(TextAPIClient client, String keyword, List<Post> listPost, List<Crisis> listCrisis) {
 		this.client = client;
 		this.keyword = keyword;
@@ -89,7 +92,7 @@ public class CheckMeaningIncreasePostService extends BaseThread{
 										|| (post.getNumberOfReact()
 												- nextPost.getNumberOfReact()) > react_upper_limit) {
 									// Add Crisis To Db
-									crisisService.insertPostCrisis(nextPost, word, type, listCrisis);;
+									listCrisis = crisisService.insertPostCrisis(nextPost, word, postType, listCrisis);;
 								}
 							}
 						}
@@ -113,7 +116,6 @@ public class CheckMeaningIncreasePostService extends BaseThread{
 						listComment.add(newPostComment.get(result));
 					}
 				}
-				CheckMeaningIncreaseCommentService CheckMeaningIncreaseCommentThread = new CheckMeaningIncreaseCommentService();
 				CheckMeaningIncreaseCommentThread.setData(client, keyword, listComment, listCrisis);
 				CheckMeaningIncreaseCommentThread.start();
 				this.interrupt();

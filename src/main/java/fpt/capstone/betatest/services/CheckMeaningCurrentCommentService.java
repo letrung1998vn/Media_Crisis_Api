@@ -28,30 +28,33 @@ import fpt.capstone.betatest.services.NotificationService;
 import fpt.capstone.betatest.services.PostService;
 
 @Service
-public class CheckMeaningCurrentCommentService extends BaseThread{
+public class CheckMeaningCurrentCommentService extends BaseThread {
 
-	
 	@Autowired
 	private NotificationService notificationService;
-	
+
 	@Autowired
 	private LastStandardService lastStandardService;
-	
+
 	@Autowired
 	private PostService postService;
-	
+
 	@Autowired
 	private NegativeRatioService negativeRatioService;
-	
+
 	@Autowired
 	private CrisisService crisisService;
-	
+
+	@Autowired
+	private CheckMeaningIncreasePostService CheckMeaningIncreasePostThread;
+
 	public void setData(TextAPIClient client, String keyword, List<Comment> listComment, List<Crisis> listCrisis) {
 		this.client = client;
 		this.keyword = keyword;
 		this.listComment = listComment;
 		this.listCrisis = listCrisis;
 	}
+
 	@Override
 	public synchronized void start() {
 		EntityLevelSentimentParams.Builder builder = EntityLevelSentimentParams.newBuilder();
@@ -59,9 +62,11 @@ public class CheckMeaningCurrentCommentService extends BaseThread{
 		LastStandard lastCommentStandardReact = lastStandardService.getLastStandard(keyword, "comment", "react");
 		LastStandard lastCommentStandardComment = lastStandardService.getLastStandard(keyword, "comment", "comment");
 
-		double react_upper_limit = lastStandardService.calUpperLimit(lastCommentStandardReact.getLastStandard(), lastCommentStandardReact.getLastMean());
+		double react_upper_limit = lastStandardService.calUpperLimit(lastCommentStandardReact.getLastStandard(),
+				lastCommentStandardReact.getLastMean());
 
-		double comment_upper_limit = lastStandardService.calUpperLimit(lastCommentStandardComment.getLastStandard(), lastCommentStandardComment.getLastMean());
+		double comment_upper_limit = lastStandardService.calUpperLimit(lastCommentStandardComment.getLastStandard(),
+				lastCommentStandardComment.getLastMean());
 		try {
 			for (int i = 0; i < listComment.size(); i++) {
 				if (totalCount - countHit < entity_sentiment_count) {
@@ -81,9 +86,11 @@ public class CheckMeaningCurrentCommentService extends BaseThread{
 						float confidence = sen.getOverallSentiment().getConfidence();
 						if (mean.equals(negative) && confidence > lowerConfidence
 								&& word.toLowerCase().equals(keyword.toLowerCase())) {
+							listCommentNegative.add(comment);
 							if (comment.getNumberOfReply() > comment_upper_limit
 									|| comment.getNumberOfReact() > react_upper_limit) {
-								crisisService.insertCommentCrisis(comment , keyword, listCrisis,type);
+								listCrisis = crisisService.insertCommentCrisis(comment, keyword, listCrisis,
+										commentType);
 							}
 						}
 					}
@@ -99,14 +106,15 @@ public class CheckMeaningCurrentCommentService extends BaseThread{
 					countHit += sentiment_count;
 					if (sentiment.getPolarity().equals(negative)
 							&& sentiment.getPolarityConfidence() > lowerConfidence) {
+						listCommentNegative.add(comment);
 						if (comment.getNumberOfReply() > comment_upper_limit
 								|| comment.getNumberOfReact() > react_upper_limit) {
-							crisisService.insertCommentCrisis(comment, keyword, listCrisis, type);;
+							listCrisis = crisisService.insertCommentCrisis(comment, keyword, listCrisis, commentType);
 						}
 					}
 				}
 			}
-			double negativeRatio = listComment.size() / listCommentNegative.size();
+			double negativeRatio = (double) listCommentNegative.size() / (double) listComment.size();
 			NegativeRatio lastNegativeRatio = negativeRatioService.getNegativeRatio(keyword, "comment");
 			long millis = System.currentTimeMillis();
 			Date date = new Date(millis);
@@ -117,7 +125,7 @@ public class CheckMeaningCurrentCommentService extends BaseThread{
 					long diff = TimeUnit.HOURS.convert(diffInMillies, TimeUnit.MILLISECONDS);
 					if (diff > differenceHour) {
 						if (lastNegativeRatio.getRatio() < negativeRatio) {
-							if (negativeRatio - lastNegativeRatio.getRatio() < ratioLimit) {
+							if (negativeRatio - lastNegativeRatio.getRatio() > ratioLimit) {
 								lastNegativeRatio.setRatio(negativeRatio);
 								lastNegativeRatio.setUpdateDate(date);
 								negativeRatioService.save(lastNegativeRatio);
@@ -147,7 +155,6 @@ public class CheckMeaningCurrentCommentService extends BaseThread{
 			}
 			this.sleep(1000 * 60 * 1);
 			List<Post> listPost = postService.getIncreasePost(keyword);
-			CheckMeaningIncreasePostService CheckMeaningIncreasePostThread = new CheckMeaningIncreasePostService();
 			CheckMeaningIncreasePostThread.setData(client, keyword, listPost, listCrisis);
 			CheckMeaningIncreasePostThread.start();
 			this.interrupt();

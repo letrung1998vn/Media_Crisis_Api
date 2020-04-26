@@ -17,13 +17,13 @@ import fpt.capstone.betatest.repositories.CrisisRepository;
 public class CrisisService {
 	@Autowired
 	private CrisisRepository crisisRepository;
-	
+
 	@Autowired
 	private PostService postService;
-	
+
 	@Autowired
 	private CommentService commentService;
-	
+
 	@Transactional
 	public void saveCrisis(Crisis crisis) {
 		crisisRepository.save(crisis);
@@ -33,16 +33,17 @@ public class CrisisService {
 	public Crisis findCrisis(BigInteger ContentId, String Type, String keyword) {
 		return crisisRepository.findByContentIdAndTypeAndKeyword(ContentId, Type, keyword);
 	}
-	
+
 	@Transactional
 	public List<Crisis> getCrisisByKeyword(String keyword) {
 		return crisisRepository.findByKeyword(keyword);
 	}
+
 	@Transactional
 	public Crisis getCrisisById(int id) {
 		return crisisRepository.findById(id);
 	}
-	
+
 	@Transactional
 	public void classifyCrisisType(List<Post> listPost, List<Comment> listComment, Crisis crisis) {
 		if (crisis.getType().trim().equals("post")) {
@@ -57,7 +58,7 @@ public class CrisisService {
 			}
 		}
 	}
-	
+
 	@Transactional
 	public boolean containCrisis(List<Crisis> listCrisis, Crisis crisis) {
 		boolean result = false;
@@ -72,9 +73,9 @@ public class CrisisService {
 		}
 		return result;
 	}
-	
+
 	@Transactional
-	public void insertPostCrisis(Post post, String keyword, String type, List<Crisis> listCrisis) {
+	public List<Crisis> insertPostCrisis(Post post, String keyword, String type, List<Crisis> listCrisis) {
 		Crisis result = this.findCrisis(post.getPostId(), "post", keyword);
 		if (result == null) {
 			Crisis crisis = new Crisis();
@@ -91,10 +92,11 @@ public class CrisisService {
 				listCrisis.add(result);
 			}
 		}
+		return listCrisis;
 	}
-	
+
 	@Transactional
-	public void insertCommentCrisis(Comment comment, String keyword , List<Crisis> listCrisis, String type) {
+	public List<Crisis> insertCommentCrisis(Comment comment, String keyword, List<Crisis> listCrisis, String type) {
 		Crisis result = this.findCrisis(comment.getCommentId(), "comment", keyword);
 		if (result == null) {
 			Crisis crisis = new Crisis();
@@ -110,11 +112,11 @@ public class CrisisService {
 				listCrisis.add(result);
 			}
 		}
+		return listCrisis;
 	}
 
-	
 	@Transactional
-	public void classifyCrisisType(Crisis crisis,List<Post> listPost, List<Comment> listComment) {
+	public void classifyCrisisType(Crisis crisis, List<Post> listPost, List<Comment> listComment) {
 		if (crisis.getType().trim().equals("post")) {
 			List<Post> post = postService.getPostByPostId(crisis.getContentId());
 			if (post != null && post.size() > 0) {
@@ -127,5 +129,5 @@ public class CrisisService {
 			}
 		}
 	}
-	
+
 }

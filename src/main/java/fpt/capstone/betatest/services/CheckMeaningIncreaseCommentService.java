@@ -83,7 +83,7 @@ public class CheckMeaningIncreaseCommentService extends BaseThread{
 										|| (lastComment.getNumberOfReact()
 												- newComment.getNumberOfReact()) > react_upper_limit) {
 									// Add Crisis to Db
-									crisisService.insertCommentCrisis(newComment, word, listCrisis, word);;
+									listCrisis = crisisService.insertCommentCrisis(newComment, word, listCrisis, commentType);
 								}
 							}
 						}
@@ -99,7 +99,7 @@ public class CheckMeaningIncreaseCommentService extends BaseThread{
 									|| (lastComment.getNumberOfReact()
 											- newComment.getNumberOfReact()) > react_upper_limit) {
 								// Add Crisis to Db
-								crisisService.insertCommentCrisis(newComment, keyword, listCrisis, type);;
+								listCrisis = crisisService.insertCommentCrisis(newComment, keyword, listCrisis, commentType);;
 							}
 						}
 					}
