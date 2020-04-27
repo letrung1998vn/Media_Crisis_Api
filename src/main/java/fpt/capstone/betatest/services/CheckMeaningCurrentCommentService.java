@@ -48,6 +48,9 @@ public class CheckMeaningCurrentCommentService extends BaseThread {
 	@Autowired
 	private CheckMeaningIncreasePostService CheckMeaningIncreasePostThread;
 
+	@Autowired
+	private CheckMeaningService checkMeaningService;
+
 	public void setData(TextAPIClient client, String keyword, List<Comment> listComment, List<Crisis> listCrisis) {
 		this.client = client;
 		this.keyword = keyword;
@@ -57,55 +60,46 @@ public class CheckMeaningCurrentCommentService extends BaseThread {
 
 	@Override
 	public synchronized void start() {
-		EntityLevelSentimentParams.Builder builder = EntityLevelSentimentParams.newBuilder();
-		List<Comment> listCommentNegative = new ArrayList<>();
-		LastStandard lastCommentStandardReact = lastStandardService.getLastStandard(keyword, "comment", "react");
-		LastStandard lastCommentStandardComment = lastStandardService.getLastStandard(keyword, "comment", "comment");
+		boolean interruptFlag = false;
+		if (listComment.size() <= 0) {
+			interruptFlag = true;
+			if (listCrisis.size() > 0) {
+				notificationService.sendNotification(listCrisis, keyword);
+			}
+		}
+		if (!interruptFlag) {
+			List<Comment> listCommentNegative = new ArrayList<>();
+			LastStandard lastCommentStandardReact = lastStandardService.getLastStandard(keyword, "comment", "react");
+			LastStandard lastCommentStandardComment = lastStandardService.getLastStandard(keyword, "comment",
+					"comment");
 
-		double react_upper_limit = lastStandardService.calUpperLimit(lastCommentStandardReact.getLastStandard(),
-				lastCommentStandardReact.getLastMean());
+			double react_upper_limit = lastStandardService.calUpperLimit(lastCommentStandardReact.getLastStandard(),
+					lastCommentStandardReact.getLastMean());
 
-		double comment_upper_limit = lastStandardService.calUpperLimit(lastCommentStandardComment.getLastStandard(),
-				lastCommentStandardComment.getLastMean());
-		try {
-			for (int i = 0; i < listComment.size(); i++) {
-				if (totalCount - countHit < entity_sentiment_count) {
-					countHit = 0;
-					this.sleep(1000 * 60 * 1);
-				}
-				Comment comment = listComment.get(i);
-				builder.setText(comment.getCommentContent());
-				EntitiesSentiment elsa = client.entityLevelSentiment(builder.build());
-				List<EntitiySentiments> list = elsa.getEntitiySentiments();
-				countHit += entity_sentiment_count;
-				if (list.size() > 0) {
-					for (int x = 0; x < list.size(); x++) {
-						EntitiySentiments sen = list.get(x);
-						String word = sen.getMentions()[0].getText();
-						String mean = sen.getOverallSentiment().getPolarity();
-						float confidence = sen.getOverallSentiment().getConfidence();
-						if (mean.equals(negative) && confidence > lowerConfidence
-								&& word.toLowerCase().equals(keyword.toLowerCase())) {
-							listCommentNegative.add(comment);
-							if (comment.getNumberOfReply() > comment_upper_limit
-									|| comment.getNumberOfReact() > react_upper_limit) {
-								listCrisis = crisisService.insertCommentCrisis(comment, keyword, listCrisis,
-										commentType);
-							}
-						}
+			double comment_upper_limit = lastStandardService.calUpperLimit(lastCommentStandardComment.getLastStandard(),
+					lastCommentStandardComment.getLastMean());
+			try {
+				long startMillis = System.currentTimeMillis();
+				Date startDate = new Date(startMillis);
+				for (int i = 0; i < listComment.size(); i++) {
+					long currentMillis = System.currentTimeMillis();
+					Date currentDate = new Date(currentMillis);
+					long diffInMillies = Math.abs(currentDate.getTime() - startDate.getTime());
+					long diff = TimeUnit.MINUTES.convert(diffInMillies, TimeUnit.MILLISECONDS);
+					if (diff >= 1 && countHit != 0) {
+						startDate = currentDate;
+						countHit = 0;
 					}
-				} else {
-					if (totalCount - countHit < sentiment_count) {
+					if (countHit != 0 && totalCount - countHit < entity_sentiment_count) {
 						countHit = 0;
 						this.sleep(1000 * 60 * 1);
 					}
-					SentimentParams.Builder sentimentBuilder = SentimentParams.newBuilder();
-					sentimentBuilder.setText(comment.getCommentContent());
-					sentimentBuilder.setMode("tweet");
-					Sentiment sentiment = client.sentiment(sentimentBuilder.build());
-					countHit += sentiment_count;
-					if (sentiment.getPolarity().equals(negative)
-							&& sentiment.getPolarityConfidence() > lowerConfidence) {
+					Comment comment = listComment.get(i);
+					if (comment.isNegative() == null) {
+						checkMeaningService.updateMeaningComment(comment, client, keyword);
+						countHit += entity_sentiment_count;
+					}
+					if (comment.isNegative()) {
 						listCommentNegative.add(comment);
 						if (comment.getNumberOfReply() > comment_upper_limit
 								|| comment.getNumberOfReact() > react_upper_limit) {
@@ -113,53 +107,53 @@ public class CheckMeaningCurrentCommentService extends BaseThread {
 						}
 					}
 				}
-			}
-			double negativeRatio = (double) listCommentNegative.size() / (double) listComment.size();
-			NegativeRatio lastNegativeRatio = negativeRatioService.getNegativeRatio(keyword, "comment");
-			long millis = System.currentTimeMillis();
-			Date date = new Date(millis);
-			boolean isNegativeIncrease = false;
-			if (lastNegativeRatio != null) {
-				if (lastNegativeRatio.getUpdateDate().before(date)) {
-					long diffInMillies = Math.abs(date.getTime() - lastNegativeRatio.getUpdateDate().getTime());
-					long diff = TimeUnit.HOURS.convert(diffInMillies, TimeUnit.MILLISECONDS);
-					if (diff > differenceHour) {
-						if (lastNegativeRatio.getRatio() < negativeRatio) {
-							if (negativeRatio - lastNegativeRatio.getRatio() > ratioLimit) {
-								lastNegativeRatio.setRatio(negativeRatio);
-								lastNegativeRatio.setUpdateDate(date);
-								negativeRatioService.save(lastNegativeRatio);
-								isNegativeIncrease = true;
+				double negativeRatio = (double) listCommentNegative.size() / (double) listComment.size();
+				NegativeRatio lastNegativeRatio = negativeRatioService.getNegativeRatio(keyword, "comment");
+				long millis = System.currentTimeMillis();
+				Date date = new Date(millis);
+				boolean isNegativeIncrease = false;
+				if (lastNegativeRatio != null) {
+					if (lastNegativeRatio.getUpdateDate().before(date)) {
+						long diffInMillies = Math.abs(date.getTime() - lastNegativeRatio.getUpdateDate().getTime());
+						long diff = TimeUnit.HOURS.convert(diffInMillies, TimeUnit.MILLISECONDS);
+						if (diff > differenceHour) {
+							if (lastNegativeRatio.getRatio() < negativeRatio) {
+								if (negativeRatio - lastNegativeRatio.getRatio() > ratioLimit) {
+									lastNegativeRatio.setRatio(negativeRatio);
+									lastNegativeRatio.setUpdateDate(date);
+									negativeRatioService.save(lastNegativeRatio);
+									isNegativeIncrease = true;
+								} else {
+									lastNegativeRatio.setRatio(negativeRatio);
+									lastNegativeRatio.setUpdateDate(date);
+									negativeRatioService.save(lastNegativeRatio);
+								}
 							} else {
 								lastNegativeRatio.setRatio(negativeRatio);
 								lastNegativeRatio.setUpdateDate(date);
 								negativeRatioService.save(lastNegativeRatio);
 							}
-						} else {
-							lastNegativeRatio.setRatio(negativeRatio);
-							lastNegativeRatio.setUpdateDate(date);
-							negativeRatioService.save(lastNegativeRatio);
 						}
 					}
+				} else {
+					lastNegativeRatio = new NegativeRatio();
+					lastNegativeRatio.setKeyword(keyword);
+					lastNegativeRatio.setType("comment");
+					lastNegativeRatio.setUpdateDate(date);
+					lastNegativeRatio.setRatio(negativeRatio);
+					negativeRatioService.save(lastNegativeRatio);
 				}
-			} else {
-				lastNegativeRatio = new NegativeRatio();
-				lastNegativeRatio.setKeyword(keyword);
-				lastNegativeRatio.setType("comment");
-				lastNegativeRatio.setUpdateDate(date);
-				lastNegativeRatio.setRatio(negativeRatio);
-				negativeRatioService.save(lastNegativeRatio);
+				if (isNegativeIncrease) {
+					notificationService.sendListCommentNotification(listCommentNegative, keyword);
+				}
+				this.sleep(1000 * 60 * 1);
+				List<Post> listPost = postService.getIncreasePost(keyword);
+				CheckMeaningIncreasePostThread.setData(client, keyword, listPost, listCrisis);
+				CheckMeaningIncreasePostThread.start();
+				this.interrupt();
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
-			if (isNegativeIncrease) {
-				notificationService.sendListCommentNotification(listCommentNegative, keyword);
-			}
-			this.sleep(1000 * 60 * 1);
-			List<Post> listPost = postService.getIncreasePost(keyword);
-			CheckMeaningIncreasePostThread.setData(client, keyword, listPost, listCrisis);
-			CheckMeaningIncreasePostThread.start();
-			this.interrupt();
-		} catch (Exception e) {
-			e.printStackTrace();
 		}
 	}
 }

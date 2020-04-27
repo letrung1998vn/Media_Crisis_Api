@@ -23,7 +23,7 @@ public class CheckMeaningController {
 	
 	@GetMapping("check")
 	public void checkMeaning() throws Exception {
-		TextAPIClient client = new TextAPIClient("e6d02d73", "5b2cf266e4f8e1f86f413065e03dafc1");
+		TextAPIClient client = new TextAPIClient("43faa103", "f2aaee05b21dabe934b89bd3198801e8");
 		check.setData(client);
 		check.start();
 	}

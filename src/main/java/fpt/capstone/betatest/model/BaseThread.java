@@ -12,8 +12,6 @@ import fpt.capstone.betatest.entities.Post;
 public abstract class BaseThread extends Thread {
 	public final double lowerConfidence = 0.5;
 	public final String negative = "negative";
-	public final int lowMean = 10000;
-	public final int lowStandard = 5000;
 	public final String postType = "post";
 	public final String commentType = "comment";
 	public int totalCount = 60;

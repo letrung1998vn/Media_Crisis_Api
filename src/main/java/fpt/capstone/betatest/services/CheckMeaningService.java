@@ -8,6 +8,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.aylien.textapi.TextAPIClient;
+import com.aylien.textapi.parameters.EntityLevelSentimentParams;
+import com.aylien.textapi.parameters.SentimentParams;
+import com.aylien.textapi.responses.EntitiesSentiment;
+import com.aylien.textapi.responses.EntitiySentiments;
+import com.aylien.textapi.responses.Sentiment;
 
 import fpt.capstone.betatest.entities.Comment;
 import fpt.capstone.betatest.entities.Crisis;
@@ -25,9 +30,13 @@ public class CheckMeaningService {
 
 	@Autowired
 	private LastStandardService lastStandardService;
-	
+
 	@Autowired
 	private CheckMeaningCurrentPostService CheckMeaningCurrentPostThread;
+
+	public final double lowerConfidence = 0.5;
+	public final String negative = "negative";
+
 	@Transactional
 	public void calStandard(String keyword) {
 		List<Post> listPost = postService.getNewPost(keyword, true);
@@ -669,4 +678,83 @@ public class CheckMeaningService {
 		return result;
 	}
 
+	@Transactional
+	public Post updateMeaningPost(Post post, TextAPIClient client, String keyword) {
+		boolean flag = false;
+		try {
+			EntityLevelSentimentParams.Builder builder = EntityLevelSentimentParams.newBuilder();
+			builder.setText(post.getPostContent());
+			EntitiesSentiment elsa = client.entityLevelSentiment(builder.build());
+			List<EntitiySentiments> list = elsa.getEntitiySentiments();
+			if (list.size() > 0) {
+				for (int x = 0; x < list.size(); x++) {
+					EntitiySentiments sen = list.get(x);
+					String word = sen.getMentions()[0].getText();
+					String mean = sen.getOverallSentiment().getPolarity();
+					float confidence = sen.getOverallSentiment().getConfidence();
+					if (mean.equals(negative) && confidence > lowerConfidence
+							&& word.toLowerCase().equals(keyword.toLowerCase())) {
+						flag = true;
+						break;
+					}
+				}
+			}
+			if (flag) {
+				post.setNegative(true);
+				post = postService.save(post);
+			} else {
+				post.setNegative(false);
+				post = postService.save(post);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return post;
+	}
+
+	@Transactional
+	public Comment updateMeaningComment(Comment comment, TextAPIClient client, String keyword) {
+		boolean flag = false;
+		try {
+			EntityLevelSentimentParams.Builder builder = EntityLevelSentimentParams.newBuilder();
+			builder.setText(comment.getCommentContent());
+			EntitiesSentiment elsa = client.entityLevelSentiment(builder.build());
+			List<EntitiySentiments> list = elsa.getEntitiySentiments();
+			if (list.size() > 0) {
+				for (int x = 0; x < list.size(); x++) {
+					EntitiySentiments sen = list.get(x);
+					String word = sen.getMentions()[0].getText();
+					String mean = sen.getOverallSentiment().getPolarity();
+					float confidence = sen.getOverallSentiment().getConfidence();
+					if (mean.equals(negative) && confidence > lowerConfidence
+							&& word.toLowerCase().equals(keyword.toLowerCase())) {
+						flag = true;
+						break;
+					}
+				}
+				if (flag) {
+					comment.setNegative(true);
+					comment = commentService.save(comment);
+				} else {
+					comment.setNegative(false);
+					comment = commentService.save(comment);
+				}
+			} else {
+				SentimentParams.Builder sentimentBuilder = SentimentParams.newBuilder();
+				sentimentBuilder.setText(comment.getCommentContent());
+				sentimentBuilder.setMode("tweet");
+				Sentiment sentiment = client.sentiment(sentimentBuilder.build());
+				if (sentiment.getPolarity().equals(negative) && sentiment.getPolarityConfidence() > lowerConfidence) {
+					comment.setNegative(true);
+					comment = commentService.save(comment);
+				} else {
+					comment.setNegative(false);
+					comment = commentService.save(comment);
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return comment;
+	}
 }

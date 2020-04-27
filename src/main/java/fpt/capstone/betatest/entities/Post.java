@@ -46,6 +46,9 @@ public class Post implements Serializable {
 	@Column(name = "isNew")
 	private boolean isNew;
 
+	@Column(name = "isNegative")
+	private Boolean isNegative;
+	
 	public String getId() {
 		return id;
 	}
@@ -132,6 +135,14 @@ public class Post implements Serializable {
 
 	public void setNew(boolean isNew) {
 		this.isNew = isNew;
+	}
+
+	public Boolean isNegative() {
+		return isNegative;
+	}
+
+	public void setNegative(Boolean isNegative) {
+		this.isNegative = isNegative;
 	}
 
 }

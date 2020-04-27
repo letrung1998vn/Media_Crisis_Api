@@ -50,8 +50,8 @@ public class PostService {
 	}
 
 	@Transactional
-	public void save(Post post) {
-		postRepository.save(post);
+	public Post save(Post post) {
+		return postRepository.save(post);
 	}
 
 	@Transactional
