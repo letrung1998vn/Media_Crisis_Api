@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import com.aylien.textapi.TextAPIClient;
 import com.aylien.textapi.parameters.EntityLevelSentimentParams;
 
+import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import fpt.capstone.betatest.entities.Comment;
 import fpt.capstone.betatest.entities.Crisis;
 import fpt.capstone.betatest.entities.LastStandard;
@@ -37,8 +38,8 @@ public class CheckMeaningIncreasePostService extends BaseThread {
 	@Autowired
 	private CheckMeaningService checkMeaningService;
 
-	public void setData(TextAPIClient client, String keyword, List<Post> listPost, List<Crisis> listCrisis) {
-		this.client = client;
+	public void setData(StanfordCoreNLP pipeline, String keyword, List<Post> listPost, List<Crisis> listCrisis) {
+		this.pipeline = pipeline;
 		this.keyword = keyword;
 		this.listPost = listPost;
 		this.listCrisis = listCrisis;
@@ -91,11 +92,11 @@ public class CheckMeaningIncreasePostService extends BaseThread {
 						Post post = listPost.get(i);
 						Post nextPost = listPost.get(i + 1);
 						if (post.isNegative() == null) {
-							post = checkMeaningService.updateMeaningPost(post, client, keyword);
+							post = checkMeaningService.updateMeaningPost(post, pipeline, keyword);
 							countHit += entity_sentiment_count;
 						}
 						if (nextPost.isNegative() == null) {
-							nextPost = checkMeaningService.updateMeaningPost(nextPost, client, keyword);
+							nextPost = checkMeaningService.updateMeaningPost(nextPost, pipeline, keyword);
 							countHit += entity_sentiment_count;
 						}
 						if (post.isNegative() && nextPost.isNegative()) {
@@ -103,6 +104,7 @@ public class CheckMeaningIncreasePostService extends BaseThread {
 									|| (post.getNumberOfReweet() - nextPost.getNumberOfReweet()) > share_upper_limit
 									|| (post.getNumberOfReact() - nextPost.getNumberOfReact()) > react_upper_limit) {
 								// Add Crisis To Db
+								System.out.println("Crisis post increase: "+ nextPost.getPostId());
 								listCrisis = crisisService.insertPostCrisis(nextPost, keyword, postType, listCrisis);
 							}
 						}
@@ -125,7 +127,7 @@ public class CheckMeaningIncreasePostService extends BaseThread {
 							listComment.add(newPostComment.get(result));
 						}
 					}
-					CheckMeaningIncreaseCommentThread.setData(client, keyword, listComment, listCrisis);
+					CheckMeaningIncreaseCommentThread.setData(pipeline, keyword, listComment, listCrisis);
 					CheckMeaningIncreaseCommentThread.start();
 					this.interrupt();
 				} catch (Exception e) {

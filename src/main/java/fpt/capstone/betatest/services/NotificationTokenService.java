@@ -26,10 +26,12 @@ public class NotificationTokenService {
 	public void saveToken(NotificationToken notiToken) {
 		notificationTokenRepository.save(notiToken);
 	}
+
 	@Transactional
 	public NotificationToken getNotiTokenByUserIdAndNotiToken(String userId, String notiToken) {
 		return notificationTokenRepository.findByUserNameAndNotiToken(userId, notiToken);
 	}
+
 	@Transactional
 	public void deleteToken(NotificationToken notiToken) {
 		notificationTokenRepository.delete(notiToken);
@@ -61,9 +63,9 @@ public class NotificationTokenService {
 		}
 		return mod;
 	}
-	
+
 	@Transactional
-	public MessageOutputModel checkExist(String username , String token) {
+	public MessageOutputModel checkExist(String username, String token) {
 		MessageOutputModel mod = new MessageOutputModel();
 		mod.setStatusCode(0);
 		NotificationToken notiToken = this.getNotiTokenByUserIdAndNotiToken(username, token);
@@ -76,9 +78,9 @@ public class NotificationTokenService {
 		}
 		return mod;
 	}
-	
+
 	@Transactional
-	public MessageOutputModel disableNotiToken(User user , String username, String token) {
+	public MessageOutputModel disableNotiToken(User user, String username, String token) {
 		MessageOutputModel mod = new MessageOutputModel();
 		if (user.isAvailable()) {
 			NotificationToken notiToken = this.getNotiTokenByUserIdAndNotiToken(username, token);
@@ -92,6 +94,5 @@ public class NotificationTokenService {
 		}
 		return mod;
 	}
-	
-	
-}	
+
+}

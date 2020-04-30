@@ -2,6 +2,7 @@ package fpt.capstone.betatest.services;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,15 @@ import fpt.capstone.betatest.entities.Comment;
 import fpt.capstone.betatest.entities.Crisis;
 import fpt.capstone.betatest.entities.LastStandard;
 import fpt.capstone.betatest.entities.Post;
+
+import edu.stanford.nlp.ling.CoreAnnotations;
+import edu.stanford.nlp.neural.rnn.RNNCoreAnnotations;
+import edu.stanford.nlp.pipeline.Annotation;
+import edu.stanford.nlp.pipeline.StanfordCoreNLP;
+import edu.stanford.nlp.sentiment.SentimentCoreAnnotations;
+import edu.stanford.nlp.simple.SentimentClass;
+import edu.stanford.nlp.trees.Tree;
+import edu.stanford.nlp.util.CoreMap;
 
 @Service
 public class CheckMeaningService {
@@ -619,10 +629,11 @@ public class CheckMeaningService {
 	}
 
 	@Transactional
-	public void detectCrisisInCurrent(String keyword, TextAPIClient client, List<Crisis> listCrisis) throws Exception {
+	public void detectCrisisInCurrent(String keyword, StanfordCoreNLP pipeline, List<Crisis> listCrisis)
+			throws Exception {
 		List<Post> listPost = postService.getRecentPost(keyword);
 		if (listPost.size() > 0) {
-			CheckMeaningCurrentPostThread.setData(client, keyword, listPost, listCrisis);
+			CheckMeaningCurrentPostThread.setData(pipeline, keyword, listPost, listCrisis);
 			CheckMeaningCurrentPostThread.start();
 		}
 	}
@@ -679,23 +690,36 @@ public class CheckMeaningService {
 	}
 
 	@Transactional
-	public Post updateMeaningPost(Post post, TextAPIClient client, String keyword) {
+	public Post updateMeaningPost(Post post, StanfordCoreNLP pipeline, String keyword) {
 		boolean flag = false;
 		try {
-			EntityLevelSentimentParams.Builder builder = EntityLevelSentimentParams.newBuilder();
-			builder.setText(post.getPostContent());
-			EntitiesSentiment elsa = client.entityLevelSentiment(builder.build());
-			List<EntitiySentiments> list = elsa.getEntitiySentiments();
-			if (list.size() > 0) {
-				for (int x = 0; x < list.size(); x++) {
-					EntitiySentiments sen = list.get(x);
-					String word = sen.getMentions()[0].getText();
-					String mean = sen.getOverallSentiment().getPolarity();
-					float confidence = sen.getOverallSentiment().getConfidence();
-					if (mean.equals(negative) && confidence > lowerConfidence
-							&& word.toLowerCase().equals(keyword.toLowerCase())) {
+			Annotation annotation = pipeline.process(post.getPostContent());
+			List<CoreMap> listSentence = annotation.get(CoreAnnotations.SentencesAnnotation.class);
+			List<Double> sm = new ArrayList<>();
+			int totalSentiment = 0;
+			double totalNegativeConfidence = 0;
+			int sentenceContainKeyword = 0;
+			for (CoreMap sentence : annotation.get(CoreAnnotations.SentencesAnnotation.class)) {
+				String entity = sentence.get(CoreAnnotations.TextAnnotation.class);
+				if (entity.toLowerCase().contains(keyword.toLowerCase())) {
+					sentenceContainKeyword++;
+					Tree tree = sentence.get(SentimentCoreAnnotations.SentimentAnnotatedTree.class);
+					sm = RNNCoreAnnotations.getPredictionsAsStringList(tree);
+					totalSentiment += RNNCoreAnnotations.getPredictedClass(tree);
+					if (RNNCoreAnnotations.getPredictedClass(tree) <= 2) {
+						for (int i = 0; i < 2; i++) {
+							totalNegativeConfidence += sm.get(i);
+						}
+					}
+				}
+			}
+			if (sentenceContainKeyword != 0) {
+				double meanSentiment = (double) totalSentiment / (double) sentenceContainKeyword;
+				double confidence = 0;
+				if (meanSentiment <= 2.25) {
+					confidence = totalNegativeConfidence / (double) sentenceContainKeyword;
+					if (confidence >= 0.5) {
 						flag = true;
-						break;
 					}
 				}
 			}
@@ -713,44 +737,45 @@ public class CheckMeaningService {
 	}
 
 	@Transactional
-	public Comment updateMeaningComment(Comment comment, TextAPIClient client, String keyword) {
+	public Comment updateMeaningComment(Comment comment, StanfordCoreNLP pipeline, String keyword) {
 		boolean flag = false;
 		try {
-			EntityLevelSentimentParams.Builder builder = EntityLevelSentimentParams.newBuilder();
-			builder.setText(comment.getCommentContent());
-			EntitiesSentiment elsa = client.entityLevelSentiment(builder.build());
-			List<EntitiySentiments> list = elsa.getEntitiySentiments();
-			if (list.size() > 0) {
-				for (int x = 0; x < list.size(); x++) {
-					EntitiySentiments sen = list.get(x);
-					String word = sen.getMentions()[0].getText();
-					String mean = sen.getOverallSentiment().getPolarity();
-					float confidence = sen.getOverallSentiment().getConfidence();
-					if (mean.equals(negative) && confidence > lowerConfidence
-							&& word.toLowerCase().equals(keyword.toLowerCase())) {
-						flag = true;
-						break;
+			Annotation annotation = pipeline.process(comment.getCommentContent());
+			List<CoreMap> listSentence = annotation.get(CoreAnnotations.SentencesAnnotation.class);
+			List<Double> sm = new ArrayList<>();
+			int totalSentiment = 0;
+			double totalNegativeConfidence = 0;
+			int sentenceContainKeyword = 0;
+			for (CoreMap sentence : annotation.get(CoreAnnotations.SentencesAnnotation.class)) {
+				sentenceContainKeyword++;
+				String entity = sentence.get(CoreAnnotations.TextAnnotation.class);
+				if (entity.toLowerCase().contains(keyword.toLowerCase())) {
+					Tree tree = sentence.get(SentimentCoreAnnotations.SentimentAnnotatedTree.class);
+					sm = RNNCoreAnnotations.getPredictionsAsStringList(tree);
+					totalSentiment += RNNCoreAnnotations.getPredictedClass(tree);
+					if (RNNCoreAnnotations.getPredictedClass(tree) <= 2) {
+						for (int i = 0; i < 2; i++) {
+							totalNegativeConfidence += sm.get(i);
+						}
 					}
 				}
-				if (flag) {
-					comment.setNegative(true);
-					comment = commentService.save(comment);
-				} else {
-					comment.setNegative(false);
-					comment = commentService.save(comment);
+			}
+			if (sentenceContainKeyword != 0) {
+			double meanSentiment = (double) totalSentiment / (double) listSentence.size();
+			double confidence = 0;
+			if (meanSentiment <= 2.25) {
+				confidence = totalNegativeConfidence / (double) listSentence.size();
+				if (confidence >= 0.5) {
+					flag = true;
 				}
+			}
+			}
+			if (flag) {
+				comment.setNegative(true);
+				comment = commentService.save(comment);
 			} else {
-				SentimentParams.Builder sentimentBuilder = SentimentParams.newBuilder();
-				sentimentBuilder.setText(comment.getCommentContent());
-				sentimentBuilder.setMode("tweet");
-				Sentiment sentiment = client.sentiment(sentimentBuilder.build());
-				if (sentiment.getPolarity().equals(negative) && sentiment.getPolarityConfidence() > lowerConfidence) {
-					comment.setNegative(true);
-					comment = commentService.save(comment);
-				} else {
-					comment.setNegative(false);
-					comment = commentService.save(comment);
-				}
+				comment.setNegative(false);
+				comment = commentService.save(comment);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

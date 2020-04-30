@@ -15,6 +15,7 @@ import com.aylien.textapi.responses.EntitiesSentiment;
 import com.aylien.textapi.responses.EntitiySentiments;
 import com.aylien.textapi.responses.Sentiment;
 
+import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import fpt.capstone.betatest.entities.Comment;
 import fpt.capstone.betatest.entities.Crisis;
 import fpt.capstone.betatest.entities.LastStandard;
@@ -51,8 +52,8 @@ public class CheckMeaningCurrentCommentService extends BaseThread {
 	@Autowired
 	private CheckMeaningService checkMeaningService;
 
-	public void setData(TextAPIClient client, String keyword, List<Comment> listComment, List<Crisis> listCrisis) {
-		this.client = client;
+	public void setData(StanfordCoreNLP pipeline, String keyword, List<Comment> listComment, List<Crisis> listCrisis) {
+		this.pipeline = pipeline;
 		this.keyword = keyword;
 		this.listComment = listComment;
 		this.listCrisis = listCrisis;
@@ -96,7 +97,7 @@ public class CheckMeaningCurrentCommentService extends BaseThread {
 					}
 					Comment comment = listComment.get(i);
 					if (comment.isNegative() == null) {
-						checkMeaningService.updateMeaningComment(comment, client, keyword);
+						checkMeaningService.updateMeaningComment(comment, pipeline, keyword);
 						countHit += entity_sentiment_count;
 					}
 					if (comment.isNegative()) {
@@ -108,6 +109,7 @@ public class CheckMeaningCurrentCommentService extends BaseThread {
 					}
 				}
 				double negativeRatio = (double) listCommentNegative.size() / (double) listComment.size();
+				System.out.println("Check comment ratio:" + negativeRatio);
 				NegativeRatio lastNegativeRatio = negativeRatioService.getNegativeRatio(keyword, "comment");
 				long millis = System.currentTimeMillis();
 				Date date = new Date(millis);
@@ -148,7 +150,7 @@ public class CheckMeaningCurrentCommentService extends BaseThread {
 				}
 				this.sleep(1000 * 60 * 1);
 				List<Post> listPost = postService.getIncreasePost(keyword);
-				CheckMeaningIncreasePostThread.setData(client, keyword, listPost, listCrisis);
+				CheckMeaningIncreasePostThread.setData(pipeline, keyword, listPost, listCrisis);
 				CheckMeaningIncreasePostThread.start();
 				this.interrupt();
 			} catch (Exception e) {

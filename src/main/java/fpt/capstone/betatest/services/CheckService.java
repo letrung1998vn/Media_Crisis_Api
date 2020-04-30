@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import com.aylien.textapi.TextAPIClient;
 
+import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import fpt.capstone.betatest.entities.Crisis;
 import fpt.capstone.betatest.entities.Keyword_Crawler;
 import fpt.capstone.betatest.services.CheckMeaningService;
@@ -27,11 +28,10 @@ public class CheckService extends Thread {
 
 	@Autowired
 	private KeywordCrawlerService keywordCrawlerService;
+	StanfordCoreNLP pipeline;
 
-	TextAPIClient client;
-
-	public void setData(TextAPIClient client) {
-		this.client = client;
+	public void setData(StanfordCoreNLP pipeline) {
+		this.pipeline = pipeline;
 	}
 
 	@Override
@@ -47,17 +47,17 @@ public class CheckService extends Thread {
 						Keyword_Crawler keyword = listKeyword.get(i);
 						checkMeaningService.calStandard(keyword.getKeyword());
 						listCrisis = new ArrayList<>();
-						checkMeaningService.detectCrisisInCurrent(listKeyword.get(i).getKeyword(), client, listCrisis);
+						checkMeaningService.detectCrisisInCurrent(listKeyword.get(i).getKeyword(), pipeline, listCrisis);
 						if (listCrisis.size() > 0) {
 							notificationService.sendNotification(listCrisis, listKeyword.get(i).getKeyword());
-						}
+						} 
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
 				}
 				a++;
 				System.out.println("Sleep " + a + "th");
-				this.sleep(1000 * 60 * 10);
+				this.sleep(1000 * 60 * 2);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

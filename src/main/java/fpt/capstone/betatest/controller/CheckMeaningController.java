@@ -1,6 +1,7 @@
 
 package fpt.capstone.betatest.controller;
 
+import java.util.Properties;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,10 +10,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.aylien.textapi.TextAPIClient;
 
+import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import fpt.capstone.betatest.services.CheckService;
 import fpt.capstone.betatest.services.UserService;
-
-
 
 @RestController
 @RequestMapping("/checkMeaning")
@@ -20,13 +20,14 @@ import fpt.capstone.betatest.services.UserService;
 public class CheckMeaningController {
 	@Autowired
 	CheckService check;
-	
+
 	@GetMapping("check")
 	public void checkMeaning() throws Exception {
-		TextAPIClient client = new TextAPIClient("43faa103", "f2aaee05b21dabe934b89bd3198801e8");
-		check.setData(client);
+		Properties props = new Properties();
+		props.setProperty("annotators", "tokenize, ssplit, pos, lemma, parse, ner, sentiment");
+		StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
+		check.setData(pipeline);
 		check.start();
 	}
 
 }
-

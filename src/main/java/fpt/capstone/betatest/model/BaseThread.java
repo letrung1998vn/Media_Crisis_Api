@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.aylien.textapi.TextAPIClient;
 
+import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import fpt.capstone.betatest.entities.Comment;
 import fpt.capstone.betatest.entities.Crisis;
 import fpt.capstone.betatest.entities.Post;
@@ -18,7 +19,7 @@ public abstract class BaseThread extends Thread {
 	public int entity_sentiment_count = 3;
 	public int sentiment_count = 1;
 	public int countHit = 0;
-	public TextAPIClient client;
+	public StanfordCoreNLP pipeline;
 	public String keyword;
 	public List<Comment> listComment;
 	public List<Crisis> listCrisis;

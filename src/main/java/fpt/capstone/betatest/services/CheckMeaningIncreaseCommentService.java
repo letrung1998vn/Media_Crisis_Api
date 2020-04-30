@@ -14,6 +14,7 @@ import com.aylien.textapi.responses.EntitiesSentiment;
 import com.aylien.textapi.responses.EntitiySentiments;
 import com.aylien.textapi.responses.Sentiment;
 
+import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import fpt.capstone.betatest.entities.Comment;
 import fpt.capstone.betatest.entities.Crisis;
 import fpt.capstone.betatest.entities.LastStandard;
@@ -36,8 +37,8 @@ public class CheckMeaningIncreaseCommentService extends BaseThread {
 	@Autowired
 	private NotificationService notificationService;
 
-	public void setData(TextAPIClient client, String keyword, List<Comment> listComment, List<Crisis> listCrisis) {
-		this.client = client;
+	public void setData(StanfordCoreNLP pipeline, String keyword, List<Comment> listComment, List<Crisis> listCrisis) {
+		this.pipeline = pipeline;
 		this.keyword = keyword;
 		this.listComment = listComment;
 		this.listCrisis = listCrisis;
@@ -97,11 +98,11 @@ public class CheckMeaningIncreaseCommentService extends BaseThread {
 						Comment lastComment = listComment.get(i);
 						Comment newComment = listComment.get(i + 1);
 						if (lastComment.isNegative() == null) {
-							lastComment = checkMeaningService.updateMeaningComment(lastComment, client, keyword);
+							lastComment = checkMeaningService.updateMeaningComment(lastComment, pipeline, keyword);
 							countHit += entity_sentiment_count;
 						}
 						if (newComment.isNegative() == null) {
-							newComment = checkMeaningService.updateMeaningComment(newComment, client, keyword);
+							newComment = checkMeaningService.updateMeaningComment(newComment, pipeline, keyword);
 							countHit += entity_sentiment_count;
 						}
 						if (lastComment.isNegative() && newComment.isNegative()) {
@@ -109,6 +110,7 @@ public class CheckMeaningIncreaseCommentService extends BaseThread {
 									|| (lastComment.getNumberOfReact()
 											- newComment.getNumberOfReact()) > react_upper_limit) {
 								// Add Crisis to Db
+								System.out.println("Crisis comment increase: "+ newComment.getCommentId());
 								listCrisis = crisisService.insertCommentCrisis(newComment, keyword, listCrisis,
 										commentType);
 							}

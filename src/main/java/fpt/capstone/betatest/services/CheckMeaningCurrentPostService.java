@@ -13,6 +13,7 @@ import com.aylien.textapi.parameters.EntityLevelSentimentParams;
 import com.aylien.textapi.responses.EntitiesSentiment;
 import com.aylien.textapi.responses.EntitiySentiments;
 
+import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import fpt.capstone.betatest.entities.Comment;
 import fpt.capstone.betatest.entities.Crisis;
 import fpt.capstone.betatest.entities.LastStandard;
@@ -49,8 +50,8 @@ public class CheckMeaningCurrentPostService extends BaseThread {
 	@Autowired
 	private CheckMeaningService checkMeaningService;
 
-	public void setData(TextAPIClient client, String keyword, List<Post> listPost, List<Crisis> listCrisis) {
-		this.client = client;
+	public void setData(StanfordCoreNLP pipeline, String keyword, List<Post> listPost, List<Crisis> listCrisis) {
+		this.pipeline = pipeline;
 		this.keyword = keyword;
 		this.listPost = listPost;
 		this.listCrisis = listCrisis;
@@ -98,7 +99,7 @@ public class CheckMeaningCurrentPostService extends BaseThread {
 					}
 					Post post = listPost.get(i);
 					if (post.isNegative() == null) {
-						post = checkMeaningService.updateMeaningPost(post, client, keyword);
+						post = checkMeaningService.updateMeaningPost(post, pipeline, keyword);
 						countHit += entity_sentiment_count;
 					}
 					if (post.isNegative()) {
@@ -112,11 +113,14 @@ public class CheckMeaningCurrentPostService extends BaseThread {
 					}
 				}
 				double negativeRatio = negativeRatioService.calNegativeRatio(listPost.size(), listPostNegative.size());
+				System.out.println("Check post ratio:" + negativeRatio);
 				NegativeRatio lastNegativeRatio = negativeRatioService.getNegativeRatio(keyword, "post");
 				long millis = System.currentTimeMillis();
 				Date date = new Date(millis);
+				System.out.println("Curent date: " + date);
 				boolean isNegativeIncrease = false;
 				if (lastNegativeRatio != null) {
+					System.out.println("Db date: " + lastNegativeRatio.getUpdateDate());
 					if (lastNegativeRatio.getUpdateDate().before(date)) {
 						long diffInMillies = Math.abs(date.getTime() - lastNegativeRatio.getUpdateDate().getTime());
 						long diff = TimeUnit.HOURS.convert(diffInMillies, TimeUnit.MILLISECONDS);
@@ -156,7 +160,7 @@ public class CheckMeaningCurrentPostService extends BaseThread {
 					Post post = listPost.get(i);
 					listComment.addAll(commentService.getCommentByPostId(post.getId()));
 				}
-				CheckMeaningCurrentCommentThread.setData(client, keyword, listComment, listCrisis);
+				CheckMeaningCurrentCommentThread.setData(pipeline, keyword, listComment, listCrisis);
 				CheckMeaningCurrentCommentThread.start();
 				this.interrupt();
 			} catch (Exception e) {
