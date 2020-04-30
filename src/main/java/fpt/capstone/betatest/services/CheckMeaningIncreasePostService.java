@@ -1,15 +1,10 @@
 package fpt.capstone.betatest.services;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import com.aylien.textapi.TextAPIClient;
-import com.aylien.textapi.parameters.EntityLevelSentimentParams;
 
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import fpt.capstone.betatest.entities.Comment;
@@ -74,30 +69,14 @@ public class CheckMeaningIncreasePostService extends BaseThread {
 							lastPostStandardComment.getLastMean());
 				}
 				try {
-					long startMillis = System.currentTimeMillis();
-					Date startDate = new Date(startMillis);
 					for (int i = 0; i < listPost.size(); i = i + 2) {
-						long currentMillis = System.currentTimeMillis();
-						Date currentDate = new Date(currentMillis);
-						long diffInMillies = Math.abs(currentDate.getTime() - startDate.getTime());
-						long diff = TimeUnit.MINUTES.convert(diffInMillies, TimeUnit.MILLISECONDS);
-						if (diff >= 1 && countHit != 0) {
-							startDate = currentDate;
-							countHit = 0;
-						}
-						if (countHit != 0 && totalCount - countHit < entity_sentiment_count) {
-							countHit = 0;
-							this.sleep(1000 * 60 * 1);
-						}
 						Post post = listPost.get(i);
 						Post nextPost = listPost.get(i + 1);
 						if (post.isNegative() == null) {
 							post = checkMeaningService.updateMeaningPost(post, pipeline, keyword);
-							countHit += entity_sentiment_count;
 						}
 						if (nextPost.isNegative() == null) {
 							nextPost = checkMeaningService.updateMeaningPost(nextPost, pipeline, keyword);
-							countHit += entity_sentiment_count;
 						}
 						if (post.isNegative() && nextPost.isNegative()) {
 							if ((post.getNumberOfReply() - nextPost.getNumberOfReply()) > comment_upper_limit

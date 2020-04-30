@@ -15,10 +15,6 @@ public abstract class BaseThread extends Thread {
 	public final String negative = "negative";
 	public final String postType = "post";
 	public final String commentType = "comment";
-	public int totalCount = 60;
-	public int entity_sentiment_count = 3;
-	public int sentiment_count = 1;
-	public int countHit = 0;
 	public StanfordCoreNLP pipeline;
 	public String keyword;
 	public List<Comment> listComment;

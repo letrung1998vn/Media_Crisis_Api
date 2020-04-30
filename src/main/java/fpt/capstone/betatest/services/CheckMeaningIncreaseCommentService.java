@@ -1,26 +1,15 @@
 package fpt.capstone.betatest.services;
 
-import java.util.Date;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import com.aylien.textapi.TextAPIClient;
-import com.aylien.textapi.parameters.EntityLevelSentimentParams;
-import com.aylien.textapi.parameters.SentimentParams;
-import com.aylien.textapi.responses.EntitiesSentiment;
-import com.aylien.textapi.responses.EntitiySentiments;
-import com.aylien.textapi.responses.Sentiment;
 
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import fpt.capstone.betatest.entities.Comment;
 import fpt.capstone.betatest.entities.Crisis;
 import fpt.capstone.betatest.entities.LastStandard;
 import fpt.capstone.betatest.model.BaseThread;
-import fpt.capstone.betatest.services.CrisisService;
-import fpt.capstone.betatest.services.LastStandardService;
 
 @Service
 public class CheckMeaningIncreaseCommentService extends BaseThread {
@@ -80,30 +69,14 @@ public class CheckMeaningIncreaseCommentService extends BaseThread {
 							lastCommentStandardComment.getLastStandard(), lastCommentStandardComment.getLastMean());
 				}
 				try {
-					long startMillis = System.currentTimeMillis();
-					Date startDate = new Date(startMillis);
 					for (int i = 0; i < listComment.size(); i += 2) {
-						long currentMillis = System.currentTimeMillis();
-						Date currentDate = new Date(currentMillis);
-						long diffInMillies = Math.abs(currentDate.getTime() - startDate.getTime());
-						long diff = TimeUnit.MINUTES.convert(diffInMillies, TimeUnit.MILLISECONDS);
-						if (diff >= 1 && countHit != 0) {
-							startDate = currentDate;
-							countHit = 0;
-						}
-						if (countHit != 0 && totalCount - countHit < entity_sentiment_count) {
-							countHit = 0;
-							this.sleep(1000 * 60 * 1);
-						}
 						Comment lastComment = listComment.get(i);
 						Comment newComment = listComment.get(i + 1);
 						if (lastComment.isNegative() == null) {
 							lastComment = checkMeaningService.updateMeaningComment(lastComment, pipeline, keyword);
-							countHit += entity_sentiment_count;
 						}
 						if (newComment.isNegative() == null) {
 							newComment = checkMeaningService.updateMeaningComment(newComment, pipeline, keyword);
-							countHit += entity_sentiment_count;
 						}
 						if (lastComment.isNegative() && newComment.isNegative()) {
 							if ((lastComment.getNumberOfReply() - newComment.getNumberOfReply()) > comment_upper_limit

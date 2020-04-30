@@ -8,11 +8,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.aylien.textapi.TextAPIClient;
-
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import fpt.capstone.betatest.services.CheckService;
-import fpt.capstone.betatest.services.UserService;
 
 @RestController
 @RequestMapping("/checkMeaning")

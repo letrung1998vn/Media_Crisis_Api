@@ -71,7 +71,7 @@ public class PostService {
 				Post post = listPost.get(i);
 				sameContentPost = checkMeaningService.getListSameContent(listPost, post);
 				sameContentPostSorted = checkMeaningService.sortByCrawlDate(sameContentPost);
-				if (!checkMeaningService.checkExist(resultList, sameContentPostSorted.get(0).getPostContent())
+				if (!checkMeaningService.checkExist(resultList, sameContentPostSorted.get(0).getPostId())
 						&& sameContentPostSorted.size() == 2) {
 					resultList.addAll(sameContentPostSorted);
 				}

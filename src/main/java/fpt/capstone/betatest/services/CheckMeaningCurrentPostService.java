@@ -8,11 +8,6 @@ import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.aylien.textapi.TextAPIClient;
-import com.aylien.textapi.parameters.EntityLevelSentimentParams;
-import com.aylien.textapi.responses.EntitiesSentiment;
-import com.aylien.textapi.responses.EntitiySentiments;
-
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import fpt.capstone.betatest.entities.Comment;
 import fpt.capstone.betatest.entities.Crisis;
@@ -20,11 +15,6 @@ import fpt.capstone.betatest.entities.LastStandard;
 import fpt.capstone.betatest.entities.NegativeRatio;
 import fpt.capstone.betatest.entities.Post;
 import fpt.capstone.betatest.model.BaseThread;
-import fpt.capstone.betatest.services.CommentService;
-import fpt.capstone.betatest.services.CrisisService;
-import fpt.capstone.betatest.services.LastStandardService;
-import fpt.capstone.betatest.services.NegativeRatioService;
-import fpt.capstone.betatest.services.NotificationService;
 
 @Service
 public class CheckMeaningCurrentPostService extends BaseThread {
@@ -82,25 +72,10 @@ public class CheckMeaningCurrentPostService extends BaseThread {
 			try {
 
 				List<Post> listPostNegative = new ArrayList<>();
-				long startMillis = System.currentTimeMillis();
-				Date startDate = new Date(startMillis);
 				for (int i = 0; i < listPost.size(); i++) {
-					long currentMillis = System.currentTimeMillis();
-					Date currentDate = new Date(currentMillis);
-					long diffInMillies = Math.abs(currentDate.getTime() - startDate.getTime());
-					long diff = TimeUnit.MINUTES.convert(diffInMillies, TimeUnit.MILLISECONDS);
-					if (diff >= 1 && countHit != 0) {
-						startDate = currentDate;
-						countHit = 0;
-					}
-					if (countHit != 0 && totalCount - countHit < entity_sentiment_count) {
-						countHit = 0;
-						this.sleep(1000 * 60 * 1);
-					}
 					Post post = listPost.get(i);
 					if (post.isNegative() == null) {
 						post = checkMeaningService.updateMeaningPost(post, pipeline, keyword);
-						countHit += entity_sentiment_count;
 					}
 					if (post.isNegative()) {
 						listPostNegative.add(post);
@@ -108,19 +83,18 @@ public class CheckMeaningCurrentPostService extends BaseThread {
 								|| post.getNumberOfReweet() > share_upper_limit
 								|| post.getNumberOfReact() > react_upper_limit) {
 							// Save crisis and check if already add or not
+							System.out.println("Crisis post: "+ post.getPostId());
 							listCrisis = crisisService.insertPostCrisis(post, keyword, postType, listCrisis);
 						}
 					}
 				}
 				double negativeRatio = negativeRatioService.calNegativeRatio(listPost.size(), listPostNegative.size());
-				System.out.println("Check post ratio:" + negativeRatio);
 				NegativeRatio lastNegativeRatio = negativeRatioService.getNegativeRatio(keyword, "post");
+				System.out.println("Check post ratio: "+ negativeRatio);
 				long millis = System.currentTimeMillis();
 				Date date = new Date(millis);
-				System.out.println("Curent date: " + date);
 				boolean isNegativeIncrease = false;
 				if (lastNegativeRatio != null) {
-					System.out.println("Db date: " + lastNegativeRatio.getUpdateDate());
 					if (lastNegativeRatio.getUpdateDate().before(date)) {
 						long diffInMillies = Math.abs(date.getTime() - lastNegativeRatio.getUpdateDate().getTime());
 						long diff = TimeUnit.HOURS.convert(diffInMillies, TimeUnit.MILLISECONDS);

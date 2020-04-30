@@ -14,8 +14,8 @@ import fpt.capstone.betatest.entities.Post;
 public interface PostRepository extends JpaRepository<Post, Integer> {
 	@Query(nativeQuery = true, value = "select p.uuid_post, p.post_id, p.post_content, p.create_date, p.link_detail, "
 			+ "p.number_of_react, p.number_of_retweet, p.number_of_reply, p.crawl_date, p.keyword, p.isNew, p.isNegative from Post p,"
-			+ " (select post_content, MAX(crawl_date) as date from Post GROUP BY post_content) w "
-			+ "where p.post_content = w.post_content and p.crawl_date = w.date and keyword = ?1")
+			+ " (select uuid_post, MAX(crawl_date) as date from Post GROUP BY uuid_post) w "
+			+ "where p.uuid_post = w.uuid_post and p.crawl_date = w.date and keyword = ?1")
 	List<Post> getEachPostContentWithLatestDate(String keyword);
 
 	@Query(nativeQuery = true, value = "select uuid_post, post_id, post_content, create_date, link_detail, "
