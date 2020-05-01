@@ -81,7 +81,7 @@ public class CheckMeaningService {
 			Post secondPost = listSencondPost.get(i);
 			List<Comment> listSecondCommentInDb = commentService.getCommentByPostId(secondPost.getId());
 			for (int y = 0; y < listSecondCommentInDb.size(); y++) {
-				Comment sencondCommentInDb = listSecondCommentInDb.get(i);
+				Comment sencondCommentInDb = listSecondCommentInDb.get(y);
 				listSencondComment.add(sencondCommentInDb);
 			}
 		}
