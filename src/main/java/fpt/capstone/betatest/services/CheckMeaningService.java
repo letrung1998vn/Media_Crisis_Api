@@ -710,7 +710,6 @@ public class CheckMeaningService {
 					}
 				}
 				if (flag) {
-					System.out.println("Found negative post:" + post.getPostId());
 					post.setNegative(true);
 					post = postService.save(post);
 				} else {
@@ -731,38 +730,35 @@ public class CheckMeaningService {
 	public Comment updateMeaningComment(Comment comment, StanfordCoreNLP pipeline, String keyword) {
 		boolean flag = false;
 		try {
-			if (comment.getCommentContent().toLowerCase().contains(keyword.toLowerCase())) {
-				Annotation annotation = pipeline.process(comment.getCommentContent());
-				List<CoreMap> listSentence = annotation.get(CoreAnnotations.SentencesAnnotation.class);
-				List<Double> sm = new ArrayList<>();
-				int totalSentiment = 0;
-				double totalNegativeConfidence = 0;
-				for (CoreMap sentence : annotation.get(CoreAnnotations.SentencesAnnotation.class)) {
-					Tree tree = sentence.get(SentimentCoreAnnotations.SentimentAnnotatedTree.class);
-					sm = RNNCoreAnnotations.getPredictionsAsStringList(tree);
-					totalSentiment += RNNCoreAnnotations.getPredictedClass(tree);
-					if (RNNCoreAnnotations.getPredictedClass(tree) <= 2) {
-						for (int i = 0; i < 2; i++) {
-							totalNegativeConfidence += sm.get(i);
-						}
+			Annotation annotation = pipeline.process(comment.getCommentContent());
+			List<CoreMap> listSentence = annotation.get(CoreAnnotations.SentencesAnnotation.class);
+			List<Double> sm = new ArrayList<>();
+			int totalSentiment = 0;
+			double totalNegativeConfidence = 0;
+			for (CoreMap sentence : annotation.get(CoreAnnotations.SentencesAnnotation.class)) {
+				Tree tree = sentence.get(SentimentCoreAnnotations.SentimentAnnotatedTree.class);
+				sm = RNNCoreAnnotations.getPredictionsAsStringList(tree);
+				totalSentiment += RNNCoreAnnotations.getPredictedClass(tree);
+				if (RNNCoreAnnotations.getPredictedClass(tree) <= 2) {
+					for (int i = 0; i < 2; i++) {
+						totalNegativeConfidence += sm.get(i);
 					}
 				}
-				double meanSentiment = (double) totalSentiment / (double) listSentence.size();
-				double confidence = 0;
-				if (meanSentiment <= 2.25) {
-					confidence = totalNegativeConfidence / (double) listSentence.size();
-					if (confidence >= 0.5) {
-						flag = true;
-					}
+			}
+			double meanSentiment = (double) totalSentiment / (double) listSentence.size();
+			double confidence = 0;
+			if (meanSentiment <= 2.25) {
+				confidence = totalNegativeConfidence / (double) listSentence.size();
+				if (confidence >= 0.5) {
+					flag = true;
 				}
-				if (flag) {
-					System.out.println("Found negative comment:" + comment.getCommentId());
-					comment.setNegative(true);
-					comment = commentService.save(comment);
-				} else {
-					comment.setNegative(false);
-					comment = commentService.save(comment);
-				}
+			}
+			if (flag) {
+				comment.setNegative(true);
+				comment = commentService.save(comment);
+			} else {
+				comment.setNegative(false);
+				comment = commentService.save(comment);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -791,6 +787,7 @@ public class CheckMeaningService {
 		}
 		return confidence;
 	}
+
 	@Transactional
 	public double checkNegativeConfidenceComment(Comment comment, StanfordCoreNLP pipeline) {
 		double confidence = 0;

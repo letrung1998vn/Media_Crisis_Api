@@ -77,7 +77,7 @@ public class CheckMeaningCurrentCommentService extends BaseThread {
 						listCommentNegative.add(comment);
 						if (comment.getNumberOfReply() > comment_upper_limit
 								|| comment.getNumberOfReact() > react_upper_limit) {
-							System.out.println("Crisis post: " + comment.getCommentId());
+							System.out.println("Crisis comment: " + comment.getCommentId());
 							listCrisis = crisisService.insertCommentCrisis(comment, keyword, listCrisis, commentType);
 						}
 					}
