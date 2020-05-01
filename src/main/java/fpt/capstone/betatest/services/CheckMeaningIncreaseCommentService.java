@@ -48,7 +48,6 @@ public class CheckMeaningIncreaseCommentService extends BaseThread {
 			LastStandard lastCommentStandardComment = lastStandardService.getLastStandard(keyword, "increaseComment",
 					"comment");
 			if (lastCommentStandardReact != null && lastCommentStandardComment != null) {
-				int size = 0;
 				double reactArray[] = new double[listComment.size() / 2];
 				double commentArray[] = new double[listComment.size() / 2];
 				double react_upper_limit = 0, comment_upper_limit = 0;
@@ -89,7 +88,6 @@ public class CheckMeaningIncreaseCommentService extends BaseThread {
 							}
 						}
 					}
-					this.sleep(1000 * 60 * 1);
 					this.interrupt();
 				} catch (Exception e) {
 					e.printStackTrace();

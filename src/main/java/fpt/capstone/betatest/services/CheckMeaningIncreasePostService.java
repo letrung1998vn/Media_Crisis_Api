@@ -88,7 +88,6 @@ public class CheckMeaningIncreasePostService extends BaseThread {
 							}
 						}
 					}
-					this.sleep(100 * 60 * 1);
 					List<Comment> lastPostComment = new ArrayList<>();
 					List<Comment> newPostComment = new ArrayList<>();
 					List<Comment> listComment = new ArrayList<>();

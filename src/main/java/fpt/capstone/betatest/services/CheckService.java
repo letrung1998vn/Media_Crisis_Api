@@ -3,19 +3,12 @@ package fpt.capstone.betatest.services;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.transaction.Transactional;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import com.aylien.textapi.TextAPIClient;
 
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import fpt.capstone.betatest.entities.Crisis;
 import fpt.capstone.betatest.entities.Keyword_Crawler;
-import fpt.capstone.betatest.services.CheckMeaningService;
-import fpt.capstone.betatest.services.KeywordCrawlerService;
-import fpt.capstone.betatest.services.NotificationService;
 
 @Service
 public class CheckService extends Thread {

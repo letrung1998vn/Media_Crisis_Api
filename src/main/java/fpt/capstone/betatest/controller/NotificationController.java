@@ -1,14 +1,11 @@
 package fpt.capstone.betatest.controller;
 
-import java.util.Properties;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import fpt.capstone.betatest.model.EmailContentModel;
 import fpt.capstone.betatest.services.CommentService;
 import fpt.capstone.betatest.services.CrisisService;

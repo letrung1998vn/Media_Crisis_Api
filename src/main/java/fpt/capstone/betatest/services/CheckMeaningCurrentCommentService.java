@@ -122,7 +122,6 @@ public class CheckMeaningCurrentCommentService extends BaseThread {
 				if (isNegativeIncrease) {
 					notificationService.sendListCommentNotification(listCommentNegative, keyword);
 				}
-				this.sleep(1000 * 60 * 1);
 				List<Post> listPost = postService.getIncreasePost(keyword);
 				CheckMeaningIncreasePostThread.setData(pipeline, keyword, listPost, listCrisis);
 				CheckMeaningIncreasePostThread.start();

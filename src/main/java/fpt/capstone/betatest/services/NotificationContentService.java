@@ -1,15 +1,17 @@
 package fpt.capstone.betatest.services;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
 import javax.transaction.Transactional;
 
+import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import fpt.capstone.betatest.entities.Comment;
 import fpt.capstone.betatest.entities.Crisis;
 import fpt.capstone.betatest.entities.Notification_Content;
@@ -254,14 +256,14 @@ public class NotificationContentService {
 	}
 
 	@Transactional
-	public String createEmailLink(String keyword, List<Crisis> listCrisis) {
+	public String createEmailLink(String keyword, List<Crisis> listCrisis) throws Exception {
 		String emailContent;
 		emailContent = "Here are crisis report for your keyword: <b>" + keyword + "</b>.<br/>";
 		emailContent += "Click the link below to see the detail.<br/>";
 		emailContent += "<h3>";
 		emailContent += "http://localhost:8084/MediaCrisis_Demo/WebLinkContent";
 		emailContent += "?keyword=";
-		emailContent += keyword;
+		emailContent += URLEncoder.encode(keyword, StandardCharsets.UTF_8.name());
 		emailContent += "&id=";
 		for (int i = 0; i < listCrisis.size(); i++) {
 			emailContent += listCrisis.get(i).getId();
@@ -274,14 +276,14 @@ public class NotificationContentService {
 	}
 
 	@Transactional
-	public String createEmailLinkListPost(String keyword, List<Post> listPost) {
+	public String createEmailLinkListPost(String keyword, List<Post> listPost) throws Exception {
 		String emailContent;
 		emailContent = "Here are list of negative post we found for your keyword: <b>" + keyword + "</b>.<br/>";
 		emailContent += "Click the link below to see the detail.<br/>";
 		emailContent += "<h3>";
 		emailContent += "http://localhost:8084/MediaCrisis_Demo/WebLinkContentListPost";
 		emailContent += "?keyword=";
-		emailContent += keyword;
+		emailContent += URLEncoder.encode(keyword, StandardCharsets.UTF_8.name());
 		emailContent += "&post_id=";
 		for (int i = 0; i < listPost.size(); i++) {
 			emailContent += listPost.get(i).getId();
@@ -294,14 +296,14 @@ public class NotificationContentService {
 	}
 
 	@Transactional
-	public String createEmailLinkListComment(String keyword, List<Comment> listComment) {
+	public String createEmailLinkListComment(String keyword, List<Comment> listComment) throws Exception{
 		String emailContent;
 		emailContent = "Here are list of negative comment we found for your keyword: <b>" + keyword + "</b>.<br/>";
 		emailContent += "Click the link below to see the detail.<br/>";
 		emailContent += "<h3>";
 		emailContent += "http://localhost:8084/MediaCrisis_Demo/WebLinkContentListComment";
 		emailContent += "?keyword=";
-		emailContent += keyword;
+		emailContent += URLEncoder.encode(keyword, StandardCharsets.UTF_8.name());
 		emailContent += "&comment_id=";
 		for (int i = 0; i < listComment.size(); i++) {
 			emailContent += listComment.get(i).getId();

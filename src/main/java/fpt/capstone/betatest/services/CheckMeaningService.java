@@ -3,25 +3,22 @@ package fpt.capstone.betatest.services;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import fpt.capstone.betatest.entities.Comment;
-import fpt.capstone.betatest.entities.Crisis;
-import fpt.capstone.betatest.entities.LastStandard;
-import fpt.capstone.betatest.entities.Post;
 
 import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.neural.rnn.RNNCoreAnnotations;
 import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.sentiment.SentimentCoreAnnotations;
-import edu.stanford.nlp.simple.SentimentClass;
 import edu.stanford.nlp.trees.Tree;
 import edu.stanford.nlp.util.CoreMap;
+import fpt.capstone.betatest.entities.Comment;
+import fpt.capstone.betatest.entities.Crisis;
+import fpt.capstone.betatest.entities.LastStandard;
+import fpt.capstone.betatest.entities.Post;
 
 @Service
 public class CheckMeaningService {

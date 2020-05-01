@@ -2,8 +2,6 @@ package fpt.capstone.betatest.model;
 
 import java.util.List;
 
-import com.aylien.textapi.TextAPIClient;
-
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import fpt.capstone.betatest.entities.Comment;
 import fpt.capstone.betatest.entities.Crisis;
