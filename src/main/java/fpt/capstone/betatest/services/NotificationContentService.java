@@ -9,11 +9,13 @@ import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import fpt.capstone.betatest.entities.Comment;
 import fpt.capstone.betatest.entities.Crisis;
 import fpt.capstone.betatest.entities.Notification_Content;
 import fpt.capstone.betatest.entities.Post;
 import fpt.capstone.betatest.model.EmailContentModel;
+import fpt.capstone.betatest.model.LinkDetailModel;
 import fpt.capstone.betatest.repositories.NotificationContentRepository;
 
 @Service
@@ -29,6 +31,9 @@ public class NotificationContentService {
 
 	@Autowired
 	private CrisisService crisisService;
+
+	@Autowired
+	private CheckMeaningService checkMeaningService;
 
 	@Transactional
 	public void getLinkDetailPost(List<Post> listPost, List<String> listLinkDetail) {
@@ -73,6 +78,7 @@ public class NotificationContentService {
 		String id;
 		List<Post> listPost = new ArrayList<>();
 		List<String> listLinkDetail = new ArrayList<>();
+		List<LinkDetailModel> listLinkDetailModel = new ArrayList<>();
 		while (stk.hasMoreTokens()) {
 			id = stk.nextToken();
 			listPost.add(postService.getPostById(id));
@@ -80,12 +86,19 @@ public class NotificationContentService {
 		if (listPost.size() > 0) {
 			for (int i = 0; i < listPost.size(); i++) {
 				Post post = listPost.get(i);
-				String linkDetail = post.getLinkDetail();
-				linkDetail = linkDetail.replace("', '", "");
-				linkDetail = linkDetail.replace("', ", "");
-				linkDetail = linkDetail.replace("'", "");
-				linkDetail = linkDetail.replace("(", "");
-				linkDetail = linkDetail.replace(")", "");
+				LinkDetailModel ldm = new LinkDetailModel();
+				ldm.setContent(post.getPostContent());
+				ldm.setLink(post.getLinkDetail());
+				ldm.setReason(getReasonPost(post));
+				listLinkDetailModel.add(ldm);
+			}
+			for (int i = 0; i < listLinkDetailModel.size(); i++) {
+				LinkDetailModel ldm = listLinkDetailModel.get(i);
+				String linkDetail = ldm.getContent();
+				linkDetail += "and||and";
+				linkDetail += formatLinkDetail(ldm.getLink());
+				linkDetail += "and||and";
+				linkDetail += ldm.getReason();
 				listLinkDetail.add(linkDetail);
 			}
 		}
@@ -101,6 +114,7 @@ public class NotificationContentService {
 		String id;
 		List<Comment> listComment = new ArrayList<>();
 		List<String> listLinkDetail = new ArrayList<>();
+		List<LinkDetailModel> listLinkDetailModel = new ArrayList<>();
 		while (stk.hasMoreTokens()) {
 			id = stk.nextToken();
 			listComment.add(commentService.getCommentById(id));
@@ -108,12 +122,19 @@ public class NotificationContentService {
 		if (listComment.size() > 0) {
 			for (int i = 0; i < listComment.size(); i++) {
 				Comment comment = listComment.get(i);
-				String linkDetail = comment.getLinkDetail();
-				linkDetail = linkDetail.replace("', '", "");
-				linkDetail = linkDetail.replace("', ", "");
-				linkDetail = linkDetail.replace("'", "");
-				linkDetail = linkDetail.replace("(", "");
-				linkDetail = linkDetail.replace(")", "");
+				LinkDetailModel ldm = new LinkDetailModel();
+				ldm.setContent(comment.getCommentContent());
+				ldm.setLink(comment.getLinkDetail());
+				ldm.setReason(getReasonComment(comment));
+				listLinkDetailModel.add(ldm);
+			}
+			for (int i = 0; i < listLinkDetailModel.size(); i++) {
+				LinkDetailModel ldm = listLinkDetailModel.get(i);
+				String linkDetail = ldm.getContent();
+				linkDetail += "and||and";
+				linkDetail += formatLinkDetail(ldm.getLink());
+				linkDetail += "and||and";
+				linkDetail += ldm.getReason();
 				listLinkDetail.add(linkDetail);
 			}
 		}
@@ -132,6 +153,7 @@ public class NotificationContentService {
 		List<Comment> listComment = new ArrayList<>();
 		List<Post> listPost = new ArrayList<>();
 		List<String> listLinkDetail = new ArrayList<>();
+		List<LinkDetailModel> listLinkDetailModel = new ArrayList<>();
 		while (stk.hasMoreTokens()) {
 			id = stk.nextToken();
 			listCrisis.add(crisisService.getCrisisById(Integer.parseInt(id)));
@@ -155,24 +177,38 @@ public class NotificationContentService {
 			if (listPost.size() > 0) {
 				for (int i = 0; i < listPost.size(); i++) {
 					Post post = listPost.get(i);
-					String linkDetail = post.getLinkDetail();
-					linkDetail = linkDetail.replace("', '", "");
-					linkDetail = linkDetail.replace("', ", "");
-					linkDetail = linkDetail.replace("'", "");
-					linkDetail = linkDetail.replace("(", "");
-					linkDetail = linkDetail.replace(")", "");
+					LinkDetailModel ldm = new LinkDetailModel();
+					ldm.setContent(post.getPostContent());
+					ldm.setLink(post.getLinkDetail());
+					ldm.setReason(getReasonPost(post));
+					listLinkDetailModel.add(ldm);
+				}
+				for (int i = 0; i < listLinkDetailModel.size(); i++) {
+					LinkDetailModel ldm = listLinkDetailModel.get(i);
+					String linkDetail = ldm.getContent();
+					linkDetail += " and||and ";
+					linkDetail += formatLinkDetail(ldm.getLink());
+					linkDetail += " and||and ";
+					linkDetail += ldm.getReason();
 					listLinkDetail.add(linkDetail);
 				}
 			}
 			if (listComment.size() > 0) {
 				for (int i = 0; i < listComment.size(); i++) {
 					Comment comment = listComment.get(i);
-					String linkDetail = comment.getLinkDetail();
-					linkDetail = linkDetail.replace("', '", "");
-					linkDetail = linkDetail.replace("', ", "");
-					linkDetail = linkDetail.replace("'", "");
-					linkDetail = linkDetail.replace("(", "");
-					linkDetail = linkDetail.replace(")", "");
+					LinkDetailModel ldm = new LinkDetailModel();
+					ldm.setContent(comment.getCommentContent());
+					ldm.setLink(comment.getLinkDetail());
+					ldm.setReason(getReasonComment(comment));
+					listLinkDetailModel.add(ldm);
+				}
+				for (int i = 0; i < listLinkDetailModel.size(); i++) {
+					LinkDetailModel ldm = listLinkDetailModel.get(i);
+					String linkDetail = ldm.getContent();
+					linkDetail += " and||and ";
+					linkDetail += formatLinkDetail(ldm.getLink());
+					linkDetail += " and||and ";
+					linkDetail += ldm.getReason();
 					listLinkDetail.add(linkDetail);
 				}
 			}
@@ -181,11 +217,47 @@ public class NotificationContentService {
 		return emailContent;
 	}
 
+	private String getReasonPost(Post post) {
+		String reason = "";
+		float number_of_React = post.getNumberOfReact();
+		float number_of_Retweet = post.getNumberOfReweet();
+		float number_of_Reply = post.getNumberOfReply();
+		if (number_of_React > number_of_Retweet && number_of_React > number_of_Reply) {
+			reason = "Reach " + (int) number_of_React + " likes";
+		} else if (number_of_Retweet > number_of_React && number_of_Retweet > number_of_Reply) {
+			reason = "Reach " + (int) number_of_Retweet + " retweets";
+		} else if (number_of_Reply > number_of_Retweet && number_of_Reply > number_of_React) {
+			reason = "Reach " + (int) number_of_Reply + " replies";
+		}
+		return reason;
+	}
+
+	private String getReasonComment(Comment comment) {
+		String reason = "";
+		float number_of_React = comment.getNumberOfReact();
+		float number_of_Reply = comment.getNumberOfReply();
+		if (number_of_React > number_of_Reply) {
+			reason = "Reach " + (int) number_of_React + " likes";
+		} else if (number_of_Reply > number_of_React) {
+			reason = "Reach " + (int) number_of_Reply + " replies";
+		}
+		return reason;
+	}
+
+	private String formatLinkDetail(String link) {
+		link = link.replace("', '", "");
+		link = link.replace("', ", "");
+		link = link.replace("'", "");
+		link = link.replace("(", "");
+		link = link.replace(")", "");
+		return link;
+	}
+
 	@Transactional
 	public String createEmailLink(String keyword, List<Crisis> listCrisis) {
 		String emailContent;
-		emailContent = "Here are crisis's link detail.<br/>";
-		emailContent += "Click to see more.<br/>";
+		emailContent = "Here are crisis report for your keyword: <b>" + keyword + "</b>.<br/>";
+		emailContent += "Click the link below to see the detail.<br/>";
 		emailContent += "<h3>";
 		emailContent += "http://localhost:8084/MediaCrisis_Demo/WebLinkContent";
 		emailContent += "?keyword=";
@@ -204,8 +276,8 @@ public class NotificationContentService {
 	@Transactional
 	public String createEmailLinkListPost(String keyword, List<Post> listPost) {
 		String emailContent;
-		emailContent = "Here are crisis's link detail.<br/>";
-		emailContent += "Click to see more.<br/>";
+		emailContent = "Here are list of negative post we found for your keyword: <b>" + keyword + "</b>.<br/>";
+		emailContent += "Click the link below to see the detail.<br/>";
 		emailContent += "<h3>";
 		emailContent += "http://localhost:8084/MediaCrisis_Demo/WebLinkContentListPost";
 		emailContent += "?keyword=";
@@ -224,8 +296,8 @@ public class NotificationContentService {
 	@Transactional
 	public String createEmailLinkListComment(String keyword, List<Comment> listComment) {
 		String emailContent;
-		emailContent = "Here are crisis's link detail.<br/>";
-		emailContent += "Click to see more.<br/>";
+		emailContent = "Here are list of negative comment we found for your keyword: <b>" + keyword + "</b>.<br/>";
+		emailContent += "Click the link below to see the detail.<br/>";
 		emailContent += "<h3>";
 		emailContent += "http://localhost:8084/MediaCrisis_Demo/WebLinkContentListComment";
 		emailContent += "?keyword=";

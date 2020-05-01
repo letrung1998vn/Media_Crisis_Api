@@ -769,4 +769,47 @@ public class CheckMeaningService {
 		}
 		return comment;
 	}
+
+	@Transactional
+	public double checkNegativeConfidencePost(Post post, StanfordCoreNLP pipeline) {
+		double confidence = 0;
+		try {
+			Annotation annotation = pipeline.process(post.getPostContent());
+			List<Double> sm = new ArrayList<>();
+			double totalNegativeConfidence = 0;
+			List<CoreMap> listSentence = annotation.get(CoreAnnotations.SentencesAnnotation.class);
+			for (CoreMap sentence : annotation.get(CoreAnnotations.SentencesAnnotation.class)) {
+				Tree tree = sentence.get(SentimentCoreAnnotations.SentimentAnnotatedTree.class);
+				sm = RNNCoreAnnotations.getPredictionsAsStringList(tree);
+				for (int i = 0; i < 2; i++) {
+					totalNegativeConfidence += sm.get(i);
+				}
+			}
+			confidence = totalNegativeConfidence / (double) listSentence.size();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return confidence;
+	}
+	@Transactional
+	public double checkNegativeConfidenceComment(Comment comment, StanfordCoreNLP pipeline) {
+		double confidence = 0;
+		try {
+			Annotation annotation = pipeline.process(comment.getCommentContent());
+			List<Double> sm = new ArrayList<>();
+			double totalNegativeConfidence = 0;
+			List<CoreMap> listSentence = annotation.get(CoreAnnotations.SentencesAnnotation.class);
+			for (CoreMap sentence : annotation.get(CoreAnnotations.SentencesAnnotation.class)) {
+				Tree tree = sentence.get(SentimentCoreAnnotations.SentimentAnnotatedTree.class);
+				sm = RNNCoreAnnotations.getPredictionsAsStringList(tree);
+				for (int i = 0; i < 2; i++) {
+					totalNegativeConfidence += sm.get(i);
+				}
+			}
+			confidence = totalNegativeConfidence / (double) listSentence.size();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return confidence;
+	}
 }
