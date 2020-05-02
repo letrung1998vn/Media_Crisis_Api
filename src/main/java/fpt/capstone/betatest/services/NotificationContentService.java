@@ -230,6 +230,8 @@ public class NotificationContentService {
 			reason = "Reach " + (int) number_of_Retweet + " retweets";
 		} else if (number_of_Reply > number_of_Retweet && number_of_Reply > number_of_React) {
 			reason = "Reach " + (int) number_of_Reply + " replies";
+		} else {
+			reason = "Reach " + (int) number_of_React + " likes";
 		}
 		return reason;
 	}
@@ -242,6 +244,8 @@ public class NotificationContentService {
 			reason = "Reach " + (int) number_of_React + " likes";
 		} else if (number_of_Reply > number_of_React) {
 			reason = "Reach " + (int) number_of_Reply + " replies";
+		} else {
+			reason = "Reach " + (int) number_of_React + " likes";
 		}
 		return reason;
 	}
