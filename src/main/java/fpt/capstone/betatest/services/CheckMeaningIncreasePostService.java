@@ -79,12 +79,19 @@ public class CheckMeaningIncreasePostService extends BaseThread {
 							nextPost = checkMeaningService.updateMeaningPost(nextPost, pipeline, keyword);
 						}
 						if (post.isNegative() && nextPost.isNegative()) {
-							if ((post.getNumberOfReply() - nextPost.getNumberOfReply()) > comment_upper_limit
-									|| (post.getNumberOfReweet() - nextPost.getNumberOfReweet()) > share_upper_limit
-									|| (post.getNumberOfReact() - nextPost.getNumberOfReact()) > react_upper_limit) {
+							if ((post.getNumberOfReply() - nextPost.getNumberOfReply()) > comment_upper_limit) {
 								// Add Crisis To Db
-								System.out.println("Crisis post increase: "+ nextPost.getPostId());
-								listCrisis = crisisService.insertPostCrisis(nextPost, keyword, postType, listCrisis);
+								System.out.println("Crisis post increase: " + nextPost.getPostId());
+								listCrisis = crisisService.insertPostCrisis(nextPost, keyword, postType, listCrisis,
+										detectTypeIncreaseReact);
+							} else if ((post.getNumberOfReweet() - nextPost.getNumberOfReweet()) > share_upper_limit) {
+								System.out.println("Crisis post increase: " + nextPost.getPostId());
+								listCrisis = crisisService.insertPostCrisis(nextPost, keyword, postType, listCrisis,
+										detectTypeIncreaseShare);
+							} else if ((post.getNumberOfReact() - nextPost.getNumberOfReact()) > react_upper_limit) {
+								System.out.println("Crisis post increase: " + nextPost.getPostId());
+								listCrisis = crisisService.insertPostCrisis(nextPost, keyword, postType, listCrisis,
+										detectTypeIncreaseReact);
 							}
 						}
 					}

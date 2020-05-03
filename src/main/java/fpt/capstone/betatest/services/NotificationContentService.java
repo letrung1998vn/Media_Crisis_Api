@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import fpt.capstone.betatest.entities.Comment;
 import fpt.capstone.betatest.entities.Crisis;
+import fpt.capstone.betatest.entities.LastStandard;
 import fpt.capstone.betatest.entities.Notification_Content;
 import fpt.capstone.betatest.entities.Post;
 import fpt.capstone.betatest.model.EmailContentModel;
@@ -35,7 +36,17 @@ public class NotificationContentService {
 	private CrisisService crisisService;
 
 	@Autowired
+	private LastStandardService lastStandardService;
+
+	@Autowired
 	private CheckMeaningService checkMeaningService;
+
+	public final String detectTypeReact = "react";
+	public final String detectTypeShare = "retweet";
+	public final String detectTypeComment = "reply";
+	public final String detectTypeIncreaseReact = "increaseReact";
+	public final String detectTypeIncreaseShare = "increaseRetweet";
+	public final String detectTypeIncreasComment = "increaseReply";
 
 	@Transactional
 	public void getLinkDetailPost(List<Post> listPost, List<String> listLinkDetail) {
@@ -91,7 +102,7 @@ public class NotificationContentService {
 				LinkDetailModel ldm = new LinkDetailModel();
 				ldm.setContent(post.getPostContent());
 				ldm.setLink(post.getLinkDetail());
-				ldm.setReason(getReasonPost(post));
+				// ldm.setReason(getReasonPost(post));
 				listLinkDetailModel.add(ldm);
 			}
 			for (int i = 0; i < listLinkDetailModel.size(); i++) {
@@ -100,7 +111,7 @@ public class NotificationContentService {
 				linkDetail += "and||and";
 				linkDetail += formatLinkDetail(ldm.getLink());
 				linkDetail += "and||and";
-				linkDetail += ldm.getReason();
+				// linkDetail += ldm.getReason();
 				listLinkDetail.add(linkDetail);
 			}
 		}
@@ -127,7 +138,7 @@ public class NotificationContentService {
 				LinkDetailModel ldm = new LinkDetailModel();
 				ldm.setContent(comment.getCommentContent());
 				ldm.setLink(comment.getLinkDetail());
-				ldm.setReason(getReasonComment(comment));
+				// ldm.setReason(getReasonComment(comment));
 				listLinkDetailModel.add(ldm);
 			}
 			for (int i = 0; i < listLinkDetailModel.size(); i++) {
@@ -136,7 +147,7 @@ public class NotificationContentService {
 				linkDetail += "and||and";
 				linkDetail += formatLinkDetail(ldm.getLink());
 				linkDetail += "and||and";
-				linkDetail += ldm.getReason();
+				// linkDetail += ldm.getReason();
 				listLinkDetail.add(linkDetail);
 			}
 		}
@@ -147,13 +158,81 @@ public class NotificationContentService {
 
 	@Transactional
 	public EmailContentModel getEmailContentList(String keyword, String Id) {
+		LastStandard lastPostStandardReact = lastStandardService.getLastStandard(keyword, "post", "react");
+		LastStandard lastPostStandardShare = lastStandardService.getLastStandard(keyword, "post", "share");
+		LastStandard lastPostStandardComment = lastStandardService.getLastStandard(keyword, "post", "comment");
+		double post_react_upper_limit = 0;
+		if (lastPostStandardReact != null) {
+			post_react_upper_limit = lastStandardService.calUpperLimit(lastPostStandardReact.getLastStandard(),
+					lastPostStandardReact.getLastMean());
+		}
+		double post_share_upper_limit = 0;
+		if (lastPostStandardShare != null) {
+			post_share_upper_limit = lastStandardService.calUpperLimit(lastPostStandardShare.getLastStandard(),
+					lastPostStandardShare.getLastMean());
+		}
+		double post_comment_upper_limit = 0;
+		if (lastPostStandardComment != null) {
+			post_comment_upper_limit = lastStandardService.calUpperLimit(lastPostStandardComment.getLastStandard(),
+					lastPostStandardComment.getLastMean());
+		}
+
+		LastStandard lastCommentStandardReact = lastStandardService.getLastStandard(keyword, "comment", "react");
+		LastStandard lastCommentStandardComment = lastStandardService.getLastStandard(keyword, "comment", "comment");
+		double comment_react_upper_limit = 0;
+		if (lastCommentStandardReact != null) {
+			comment_react_upper_limit = lastStandardService.calUpperLimit(lastCommentStandardReact.getLastStandard(),
+					lastCommentStandardReact.getLastMean());
+		}
+		double comment_comment_upper_limit = 0;
+		if (lastCommentStandardComment != null) {
+			comment_comment_upper_limit = lastStandardService.calUpperLimit(
+					lastCommentStandardComment.getLastStandard(), lastCommentStandardComment.getLastMean());
+		}
+
+		LastStandard lastIncreasePostStandardReact = lastStandardService.getLastStandard(keyword, "increasePost",
+				"react");
+		LastStandard lastIncreasePostStandardShare = lastStandardService.getLastStandard(keyword, "increasePost",
+				"share");
+		LastStandard lastIncreasePostStandardComment = lastStandardService.getLastStandard(keyword, "increasePost",
+				"comment");
+		
+		double Increase_post_react_upper_limit = 0;
+		if (lastIncreasePostStandardReact != null) {
+			Increase_post_react_upper_limit = lastStandardService.calUpperLimit(
+					lastIncreasePostStandardReact.getLastStandard(), lastIncreasePostStandardReact.getLastMean());
+		}
+		double Increase_post_share_upper_limit = 0;
+		if (lastIncreasePostStandardShare != null) {
+			Increase_post_share_upper_limit = lastStandardService.calUpperLimit(
+					lastIncreasePostStandardShare.getLastStandard(), lastIncreasePostStandardShare.getLastMean());
+		}
+		double Increase_post_comment_upper_limit = 0;
+		if (lastIncreasePostStandardComment != null) {
+			Increase_post_comment_upper_limit = lastStandardService.calUpperLimit(
+					lastIncreasePostStandardComment.getLastStandard(), lastIncreasePostStandardComment.getLastMean());
+		}
+
+		LastStandard lastIncreaseCommentStandardReact = lastStandardService.getLastStandard(keyword, "increaseComment",
+				detectTypeReact);
+		LastStandard lastIncreaseCommentStandardComment = lastStandardService.getLastStandard(keyword,
+				"increaseComment", detectTypeComment);
+		double Increase_comment_react_upper_limit = 0;
+		if (lastIncreaseCommentStandardReact != null) {
+			Increase_comment_react_upper_limit = lastStandardService.calUpperLimit(
+					lastIncreaseCommentStandardReact.getLastStandard(), lastIncreaseCommentStandardReact.getLastMean());
+		}
+		double Increase_comment_comment_upper_limit = 0;
+		if (lastIncreaseCommentStandardComment != null) {
+			Increase_comment_comment_upper_limit = lastStandardService.calUpperLimit(
+					lastIncreaseCommentStandardComment.getLastStandard(), lastIncreaseCommentStandardComment.getLastMean());
+		}
+
 		EmailContentModel emailContent = new EmailContentModel();
 		emailContent.setKeyword(keyword);
 		StringTokenizer stk = new StringTokenizer(Id, ",");
 		String id;
 		List<Crisis> listCrisis = new ArrayList<>();
-		List<Comment> listComment = new ArrayList<>();
-		List<Post> listPost = new ArrayList<>();
 		List<String> listLinkDetail = new ArrayList<>();
 		List<LinkDetailModel> listLinkDetailModel = new ArrayList<>();
 		while (stk.hasMoreTokens()) {
@@ -166,88 +245,102 @@ public class NotificationContentService {
 				if (crisis.getType().trim().equals("post")) {
 					List<Post> result = postService.getPostByPostId(crisis.getContentId());
 					if (result.size() > 0) {
-						listPost.add(result.get(0));
+						LinkDetailModel ldm = new LinkDetailModel();
+						Post post = result.get(0);
+						ldm.setContent(post.getPostContent());
+						ldm.setLink(post.getLinkDetail());
+						ldm.setType(crisis.getDetectType());
+						if (crisis.getDetectType().equals(detectTypeReact)) {
+							ldm.setStd(post_react_upper_limit);
+							ldm.setNumber(post.getNumberOfReact());
+						} else if (crisis.getDetectType().equals(detectTypeComment)) {
+							ldm.setStd(post_comment_upper_limit);
+							ldm.setNumber(post.getNumberOfReply());
+						} else if (crisis.getDetectType().equals(detectTypeShare)) {
+							ldm.setStd(post_share_upper_limit);
+							ldm.setNumber(post.getNumberOfReweet());
+						} else if (crisis.getDetectType().equals(detectTypeIncreaseReact)) {
+							List<Post> postSorted = checkMeaningService.sortByCrawlDate(result);
+							Post firstpost = postSorted.get(0);
+							Post secondPost = postSorted.get(1);
+							ldm.setContent(post.getPostContent());
+							ldm.setLink(post.getLinkDetail());
+							ldm.setType(crisis.getDetectType());
+							ldm.setStd(Increase_post_react_upper_limit);
+							ldm.setNumber(firstpost.getNumberOfReact() - secondPost.getNumberOfReact());
+						} else if (crisis.getDetectType().equals(detectTypeIncreasComment)) {
+							List<Post> postSorted = checkMeaningService.sortByCrawlDate(result);
+							Post firstpost = postSorted.get(0);
+							Post secondPost = postSorted.get(1);
+							ldm.setContent(post.getPostContent());
+							ldm.setLink(post.getLinkDetail());
+							ldm.setType(crisis.getDetectType());
+							ldm.setStd(Increase_post_comment_upper_limit);
+							ldm.setNumber(firstpost.getNumberOfReply() - secondPost.getNumberOfReply());
+						} else if (crisis.getDetectType().equals(detectTypeIncreaseShare)) {
+							List<Post> postSorted = checkMeaningService.sortByCrawlDate(result);
+							Post firstpost = postSorted.get(0);
+							Post secondPost = postSorted.get(1);
+							ldm.setContent(post.getPostContent());
+							ldm.setLink(post.getLinkDetail());
+							ldm.setType(crisis.getDetectType());
+							ldm.setStd(Increase_post_share_upper_limit);
+							ldm.setNumber(firstpost.getNumberOfReweet() - secondPost.getNumberOfReweet());
+						}
+						listLinkDetailModel.add(ldm);
 					}
 				}
 				if (crisis.getType().trim().equals("comment")) {
 					List<Comment> result = commentService.getCommentByCommentId(crisis.getContentId());
 					if (result.size() > 0) {
-						listComment.add(result.get(0));
+						Comment comment = result.get(0);
+						LinkDetailModel ldm = new LinkDetailModel();
+						ldm.setContent(comment.getCommentContent());
+						ldm.setLink(comment.getLinkDetail());
+						ldm.setType(crisis.getDetectType());
+						if (crisis.getDetectType().equals(detectTypeReact)) {
+							ldm.setStd(comment_react_upper_limit);
+							ldm.setNumber(comment.getNumberOfReact());
+						} else if (crisis.getDetectType().equals(detectTypeComment)) {
+							ldm.setStd(comment_comment_upper_limit);
+							ldm.setNumber(comment.getNumberOfReply());
+						} else if (crisis.getDetectType().equals(detectTypeIncreaseReact)) {
+							ldm.setStd(Increase_comment_react_upper_limit);
+							List<Comment> ListComment = commentService
+									.getCommentByCommentIdSortCrawlDate(comment.getCommentId());
+							Comment firstComment = ListComment.get(0);
+							Comment secondComment = ListComment.get(1);
+							ldm.setNumber(firstComment.getNumberOfReact() - secondComment.getNumberOfReact());
+						} else if (crisis.getDetectType().equals(detectTypeIncreasComment)) {
+							ldm.setStd(Increase_comment_comment_upper_limit);
+							List<Comment> ListComment = commentService
+									.getCommentByCommentIdSortCrawlDate(comment.getCommentId());
+							Comment firstComment = ListComment.get(0);
+							Comment secondComment = ListComment.get(1);
+							ldm.setNumber(firstComment.getNumberOfReply() - secondComment.getNumberOfReply());
+						}
+						listLinkDetailModel.add(ldm);
 					}
 				}
 			}
-			if (listPost.size() > 0) {
-				for (int i = 0; i < listPost.size(); i++) {
-					Post post = listPost.get(i);
-					LinkDetailModel ldm = new LinkDetailModel();
-					ldm.setContent(post.getPostContent());
-					ldm.setLink(post.getLinkDetail());
-					ldm.setReason(getReasonPost(post));
-					listLinkDetailModel.add(ldm);
-				}
+			if (listLinkDetailModel.size() > 0) {
 				for (int i = 0; i < listLinkDetailModel.size(); i++) {
 					LinkDetailModel ldm = listLinkDetailModel.get(i);
 					String linkDetail = ldm.getContent();
 					linkDetail += " and||and ";
 					linkDetail += formatLinkDetail(ldm.getLink());
 					linkDetail += " and||and ";
-					linkDetail += ldm.getReason();
-					listLinkDetail.add(linkDetail);
-				}
-			}
-			if (listComment.size() > 0) {
-				for (int i = 0; i < listComment.size(); i++) {
-					Comment comment = listComment.get(i);
-					LinkDetailModel ldm = new LinkDetailModel();
-					ldm.setContent(comment.getCommentContent());
-					ldm.setLink(comment.getLinkDetail());
-					ldm.setReason(getReasonComment(comment));
-					listLinkDetailModel.add(ldm);
-				}
-				for (int i = 0; i < listLinkDetailModel.size(); i++) {
-					LinkDetailModel ldm = listLinkDetailModel.get(i);
-					String linkDetail = ldm.getContent();
+					linkDetail += ldm.getType();
 					linkDetail += " and||and ";
-					linkDetail += formatLinkDetail(ldm.getLink());
+					linkDetail += ldm.getStd();
 					linkDetail += " and||and ";
-					linkDetail += ldm.getReason();
+					linkDetail += ldm.getNumber();
 					listLinkDetail.add(linkDetail);
 				}
 			}
 		}
 		emailContent.setListLinkDetail(listLinkDetail);
 		return emailContent;
-	}
-
-	private String getReasonPost(Post post) {
-		String reason = "";
-		float number_of_React = post.getNumberOfReact();
-		float number_of_Retweet = post.getNumberOfReweet();
-		float number_of_Reply = post.getNumberOfReply();
-		if (number_of_React > number_of_Retweet && number_of_React > number_of_Reply) {
-			reason = "Reach " + (int) number_of_React + " likes";
-		} else if (number_of_Retweet > number_of_React && number_of_Retweet > number_of_Reply) {
-			reason = "Reach " + (int) number_of_Retweet + " retweets";
-		} else if (number_of_Reply > number_of_Retweet && number_of_Reply > number_of_React) {
-			reason = "Reach " + (int) number_of_Reply + " replies";
-		} else {
-			reason = "Reach " + (int) number_of_React + " likes";
-		}
-		return reason;
-	}
-
-	private String getReasonComment(Comment comment) {
-		String reason = "";
-		float number_of_React = comment.getNumberOfReact();
-		float number_of_Reply = comment.getNumberOfReply();
-		if (number_of_React > number_of_Reply) {
-			reason = "Reach " + (int) number_of_React + " likes";
-		} else if (number_of_Reply > number_of_React) {
-			reason = "Reach " + (int) number_of_Reply + " replies";
-		} else {
-			reason = "Reach " + (int) number_of_React + " likes";
-		}
-		return reason;
 	}
 
 	private String formatLinkDetail(String link) {
@@ -300,7 +393,7 @@ public class NotificationContentService {
 	}
 
 	@Transactional
-	public String createEmailLinkListComment(String keyword, List<Comment> listComment) throws Exception{
+	public String createEmailLinkListComment(String keyword, List<Comment> listComment) throws Exception {
 		String emailContent;
 		emailContent = "Here are list of negative comment we found for your keyword: <b>" + keyword + "</b>.<br/>";
 		emailContent += "Click the link below to see the detail.<br/>";

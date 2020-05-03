@@ -32,6 +32,6 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
 	@Query(nativeQuery = true, value = "select TOP 1 uuid_post, post_id, post_content, "
 			+ "create_date, link_detail, number_of_react, number_of_retweet, number_of_reply, "
 			+ "crawl_date, keyword, isNew, isNegative from Post where crawl_date < ?1 "
-			+ "and post_id= ?2 order by crawl_date desc")
+			+ "and post_id = ?2 order by crawl_date asc")
 	Post getSecondLastNewPost(Date crawlDate, BigInteger postId);
 }

@@ -44,9 +44,9 @@ public class CheckMeaningIncreaseCommentService extends BaseThread {
 		}
 		if (!interruptFlag) {
 			LastStandard lastCommentStandardReact = lastStandardService.getLastStandard(keyword, "increaseComment",
-					"react");
+					detectTypeReact);
 			LastStandard lastCommentStandardComment = lastStandardService.getLastStandard(keyword, "increaseComment",
-					"comment");
+					detectTypeComment);
 			if (lastCommentStandardReact != null && lastCommentStandardComment != null) {
 				double reactArray[] = new double[listComment.size() / 2];
 				double commentArray[] = new double[listComment.size() / 2];
@@ -78,13 +78,16 @@ public class CheckMeaningIncreaseCommentService extends BaseThread {
 							newComment = checkMeaningService.updateMeaningComment(newComment, pipeline, keyword);
 						}
 						if (lastComment.isNegative() && newComment.isNegative()) {
-							if ((lastComment.getNumberOfReply() - newComment.getNumberOfReply()) > comment_upper_limit
-									|| (lastComment.getNumberOfReact()
-											- newComment.getNumberOfReact()) > react_upper_limit) {
+							if ((lastComment.getNumberOfReply() - newComment.getNumberOfReply()) > comment_upper_limit) {
 								// Add Crisis to Db
 								System.out.println("Crisis comment increase: "+ newComment.getCommentId());
 								listCrisis = crisisService.insertCommentCrisis(newComment, keyword, listCrisis,
-										commentType);
+										commentType,detectTypeIncreaseReact);
+							} else if((lastComment.getNumberOfReact()
+											- newComment.getNumberOfReact()) > react_upper_limit) {
+								System.out.println("Crisis comment increase: "+ newComment.getCommentId());
+								listCrisis = crisisService.insertCommentCrisis(newComment, keyword, listCrisis,
+										commentType,detectTypeIncreasComment);
 							}
 						}
 					}

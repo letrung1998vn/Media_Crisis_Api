@@ -3,7 +3,9 @@ package fpt.capstone.betatest.model;
 public class LinkDetailModel {
 	private String content;
 	private String link;
-	private String reason;
+	private String type;
+	private double std;
+	private double number;
 	public String getContent() {
 		return content;
 	}
@@ -16,12 +18,23 @@ public class LinkDetailModel {
 	public void setLink(String link) {
 		this.link = link;
 	}
-	public String getReason() {
-		return reason;
+	public String getType() {
+		return type;
 	}
-	public void setReason(String reason) {
-		this.reason = reason;
+	public void setType(String type) {
+		this.type = type;
 	}
-	
+	public double getStd() {
+		return std;
+	}
+	public void setStd(double std) {
+		this.std = std;
+	}
+	public double getNumber() {
+		return number;
+	}
+	public void setNumber(double number) {
+		this.number = number;
+	}
 	
 }

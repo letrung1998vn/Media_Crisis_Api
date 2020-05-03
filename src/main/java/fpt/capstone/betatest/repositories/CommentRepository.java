@@ -13,5 +13,6 @@ public interface CommentRepository extends JpaRepository<Comment, Integer> {
 	List<Comment> findByPostId(String postId);
 	
 	List<Comment> findByCommentId(BigInteger id);
+	List<Comment> findByCommentIdOrderByCrawlDateDesc(BigInteger id);
 	Comment findById(String id);
 }

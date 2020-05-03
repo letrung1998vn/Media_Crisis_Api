@@ -75,13 +75,14 @@ public class CrisisService {
 	}
 
 	@Transactional
-	public List<Crisis> insertPostCrisis(Post post, String keyword, String type, List<Crisis> listCrisis) {
+	public List<Crisis> insertPostCrisis(Post post, String keyword, String type, List<Crisis> listCrisis, String detectType) {
 		Crisis result = this.findCrisis(post.getPostId(), "post", keyword);
 		if (result == null) {
 			Crisis crisis = new Crisis();
 			crisis.setContentId(post.getPostId());
 			crisis.setType(type);
 			crisis.setKeyword(keyword);
+			crisis.setDetectType(detectType);
 			if (!containCrisis(listCrisis, crisis)) {
 				listCrisis.add(crisis);
 			}
@@ -96,13 +97,14 @@ public class CrisisService {
 	}
 
 	@Transactional
-	public List<Crisis> insertCommentCrisis(Comment comment, String keyword, List<Crisis> listCrisis, String type) {
+	public List<Crisis> insertCommentCrisis(Comment comment, String keyword, List<Crisis> listCrisis, String type, String detectType) {
 		Crisis result = this.findCrisis(comment.getCommentId(), "comment", keyword);
 		if (result == null) {
 			Crisis crisis = new Crisis();
 			crisis.setContentId(comment.getCommentId());
 			crisis.setType(type);
 			crisis.setKeyword(keyword);
+			crisis.setDetectType(detectType);
 			if (!containCrisis(listCrisis, crisis)) {
 				listCrisis.add(crisis);
 			}

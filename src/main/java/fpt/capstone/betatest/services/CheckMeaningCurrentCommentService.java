@@ -61,12 +61,17 @@ public class CheckMeaningCurrentCommentService extends BaseThread {
 			LastStandard lastCommentStandardReact = lastStandardService.getLastStandard(keyword, "comment", "react");
 			LastStandard lastCommentStandardComment = lastStandardService.getLastStandard(keyword, "comment",
 					"comment");
+			double react_upper_limit = 0;
+			if (lastCommentStandardReact != null) {
+				react_upper_limit = lastStandardService.calUpperLimit(lastCommentStandardReact.getLastStandard(),
+						lastCommentStandardReact.getLastMean());
+			}
+			double comment_upper_limit = 0;
+			if (lastCommentStandardComment != null) {
+				comment_upper_limit = lastStandardService.calUpperLimit(lastCommentStandardComment.getLastStandard(),
+						lastCommentStandardComment.getLastMean());
+			}
 
-			double react_upper_limit = lastStandardService.calUpperLimit(lastCommentStandardReact.getLastStandard(),
-					lastCommentStandardReact.getLastMean());
-
-			double comment_upper_limit = lastStandardService.calUpperLimit(lastCommentStandardComment.getLastStandard(),
-					lastCommentStandardComment.getLastMean());
 			try {
 				for (int i = 0; i < listComment.size(); i++) {
 					Comment comment = listComment.get(i);
@@ -75,10 +80,14 @@ public class CheckMeaningCurrentCommentService extends BaseThread {
 					}
 					if (comment.isNegative()) {
 						listCommentNegative.add(comment);
-						if (comment.getNumberOfReply() > comment_upper_limit
-								|| comment.getNumberOfReact() > react_upper_limit) {
-							System.out.println("Crisis comment: " + comment.getCommentId());
-							listCrisis = crisisService.insertCommentCrisis(comment, keyword, listCrisis, commentType);
+						if (comment.getNumberOfReply() > comment_upper_limit) {
+							System.out.println("Crisis increase comment: " + comment.getCommentId());
+							listCrisis = crisisService.insertCommentCrisis(comment, keyword, listCrisis, commentType,
+									detectTypeComment);
+						} else if (comment.getNumberOfReact() > react_upper_limit) {
+							System.out.println("Crisis increase comment: " + comment.getCommentId());
+							listCrisis = crisisService.insertCommentCrisis(comment, keyword, listCrisis, commentType,
+									detectTypeReact);
 						}
 					}
 				}

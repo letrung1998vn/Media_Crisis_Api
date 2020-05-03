@@ -26,6 +26,9 @@ public class Crisis {
 	@Column(name = "keyword")
 	private String keyword;
 	
+	@Column(name = "detect_type")
+	private String DetectType;
+	
 	public int getId() {
 		return id;
 	}
@@ -56,6 +59,14 @@ public class Crisis {
 
 	public void setKeyword(String keyword) {
 		this.keyword = keyword;
+	}
+
+	public String getDetectType() {
+		return DetectType;
+	}
+
+	public void setDetectType(String detectType) {
+		DetectType = detectType;
 	}
 	
 }

@@ -86,11 +86,11 @@ public class CheckMeaningService {
 			calIncreasePostStandard(keyword, listFirstPost, listSencondPost);
 			calIncreaseCommentStandard(keyword, listFirstComment, listSencondComment);
 		}
-		for (int i = 0; i < listPost.size(); i++) {
-			Post post = listPost.get(i);
-			post.setNew(false);
-			postService.save(post);
-		}
+		 for (int i = 0; i < listPost.size(); i++) {
+		 Post post = listPost.get(i);
+		 post.setNew(false);
+		 postService.save(post);
+		 }
 	}
 
 	@Transactional
@@ -554,13 +554,10 @@ public class CheckMeaningService {
 				}
 				double reactStandard = calculateSD(reactArray);
 				double reactMean = mean(reactArray);
-
 				double shareStandard = calculateSD(shareArray);
 				double shareMean = mean(shareArray);
-
 				double commentStandard = calculateSD(commentArray);
 				double commentMean = mean(commentArray);
-
 				lastPostStandardReact.setKeyword(keyword);
 				lastPostStandardShare.setKeyword(keyword);
 				lastPostStandardComment.setKeyword(keyword);

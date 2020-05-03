@@ -23,7 +23,10 @@ public class CommentService {
 	public List<Comment> getCommentByCommentId(BigInteger id) {
 		return commentRepository.findByCommentId(id);
 	}
-	
+	@Transactional
+	public List<Comment> getCommentByCommentIdSortCrawlDate(BigInteger id) {
+		return commentRepository.findByCommentIdOrderByCrawlDateDesc(id);
+	}
 	@Transactional
 	public Comment getCommentById(String id) {
 		return commentRepository.findById(id);

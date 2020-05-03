@@ -60,15 +60,21 @@ public class CheckMeaningCurrentPostService extends BaseThread {
 			LastStandard lastPostStandardReact = lastStandardService.getLastStandard(keyword, "post", "react");
 			LastStandard lastPostStandardShare = lastStandardService.getLastStandard(keyword, "post", "share");
 			LastStandard lastPostStandardComment = lastStandardService.getLastStandard(keyword, "post", "comment");
-
-			double react_upper_limit = lastStandardService.calUpperLimit(lastPostStandardReact.getLastStandard(),
-					lastPostStandardReact.getLastMean());
-
-			double share_upper_limit = lastStandardService.calUpperLimit(lastPostStandardShare.getLastStandard(),
-					lastPostStandardShare.getLastMean());
-
-			double comment_upper_limit = lastStandardService.calUpperLimit(lastPostStandardComment.getLastStandard(),
-					lastPostStandardComment.getLastMean());
+			double react_upper_limit = 0;
+			if (lastPostStandardReact != null) {
+				react_upper_limit = lastStandardService.calUpperLimit(lastPostStandardReact.getLastStandard(),
+						lastPostStandardReact.getLastMean());
+			}
+			double share_upper_limit = 0;
+			if (lastPostStandardShare != null) {
+				share_upper_limit = lastStandardService.calUpperLimit(lastPostStandardShare.getLastStandard(),
+						lastPostStandardShare.getLastMean());
+			}
+			double comment_upper_limit = 0;
+			if (lastPostStandardComment != null) {
+				comment_upper_limit = lastStandardService.calUpperLimit(lastPostStandardComment.getLastStandard(),
+						lastPostStandardComment.getLastMean());
+			}
 			try {
 
 				List<Post> listPostNegative = new ArrayList<>();
@@ -79,18 +85,25 @@ public class CheckMeaningCurrentPostService extends BaseThread {
 					}
 					if (post.isNegative()) {
 						listPostNegative.add(post);
-						if (post.getNumberOfReply() > comment_upper_limit
-								|| post.getNumberOfReweet() > share_upper_limit
-								|| post.getNumberOfReact() > react_upper_limit) {
+						if (post.getNumberOfReply() > comment_upper_limit) {
 							// Save crisis and check if already add or not
-							System.out.println("Crisis post: "+ post.getPostId());
-							listCrisis = crisisService.insertPostCrisis(post, keyword, postType, listCrisis);
+							System.out.println("Crisis post: " + post.getPostId());
+							listCrisis = crisisService.insertPostCrisis(post, keyword, postType, listCrisis,
+									detectTypeComment);
+						} else if (post.getNumberOfReweet() > share_upper_limit) {
+							System.out.println("Crisis post: " + post.getPostId());
+							listCrisis = crisisService.insertPostCrisis(post, keyword, postType, listCrisis,
+									detectTypeShare);
+						} else if (post.getNumberOfReact() > react_upper_limit) {
+							System.out.println("Crisis post: " + post.getPostId());
+							listCrisis = crisisService.insertPostCrisis(post, keyword, postType, listCrisis,
+									detectTypeReact);
 						}
 					}
 				}
 				double negativeRatio = negativeRatioService.calNegativeRatio(listPost.size(), listPostNegative.size());
 				NegativeRatio lastNegativeRatio = negativeRatioService.getNegativeRatio(keyword, "post");
-				System.out.println("Check post ratio: "+ negativeRatio);
+				System.out.println("Check post ratio: " + negativeRatio);
 				long millis = System.currentTimeMillis();
 				Date date = new Date(millis);
 				boolean isNegativeIncrease = false;
