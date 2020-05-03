@@ -1,5 +1,7 @@
 package fpt.capstone.betatest.services;
 
+import java.util.List;
+
 import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,8 +16,8 @@ public class NegativeRatioService {
 	private NegativeRatioRepository negativeRatioRepository;
 
 	@Transactional
-	public NegativeRatio getNegativeRatio(String keyword, String type) {
-		return negativeRatioRepository.findByKeywordAndType(keyword, type);
+	public List<NegativeRatio> getNegativeRatio(String keyword, String type) {
+		return negativeRatioRepository.findByKeywordAndTypeOrderByUpdateDateDesc(keyword, type);
 	}
 
 	@Transactional

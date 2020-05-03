@@ -102,41 +102,44 @@ public class CheckMeaningCurrentPostService extends BaseThread {
 					}
 				}
 				double negativeRatio = negativeRatioService.calNegativeRatio(listPost.size(), listPostNegative.size());
-				NegativeRatio lastNegativeRatio = negativeRatioService.getNegativeRatio(keyword, "post");
+				List<NegativeRatio> lastNegativeRatio = negativeRatioService.getNegativeRatio(keyword, postType);
 				System.out.println("Check post ratio: " + negativeRatio);
 				long millis = System.currentTimeMillis();
 				Date date = new Date(millis);
 				boolean isNegativeIncrease = false;
-				if (lastNegativeRatio != null) {
-					if (lastNegativeRatio.getUpdateDate().before(date)) {
-						long diffInMillies = Math.abs(date.getTime() - lastNegativeRatio.getUpdateDate().getTime());
-						long diff = TimeUnit.HOURS.convert(diffInMillies, TimeUnit.MILLISECONDS);
-						if (diff > differenceHour) {
-							if (lastNegativeRatio.getRatio() < negativeRatio) {
-								if (negativeRatio - lastNegativeRatio.getRatio() > ratioLimit) {
-									lastNegativeRatio.setRatio(negativeRatio);
-									lastNegativeRatio.setUpdateDate(date);
-									negativeRatioService.save(lastNegativeRatio);
-									isNegativeIncrease = true;
-								} else {
-									lastNegativeRatio.setRatio(negativeRatio);
-									lastNegativeRatio.setUpdateDate(date);
-									negativeRatioService.save(lastNegativeRatio);
-								}
-							} else {
-								lastNegativeRatio.setRatio(negativeRatio);
-								lastNegativeRatio.setUpdateDate(date);
-								negativeRatioService.save(lastNegativeRatio);
+				if (lastNegativeRatio != null && lastNegativeRatio.size() > 0) {
+					if (lastNegativeRatio.get(0).getUpdateDate().before(date)) {
+						// long diffInMillies = Math.abs(date.getTime() -
+						// lastNegativeRatio.get(0).getUpdateDate().getTime());
+						// long diff = TimeUnit.HOURS.convert(diffInMillies, TimeUnit.MILLISECONDS);
+						// if (diff > differenceHour) {
+						if (lastNegativeRatio.get(0).getRatio() < negativeRatio) {
+							NegativeRatio newNegativeRatio = new NegativeRatio();
+							newNegativeRatio.setKeyword(keyword);
+							newNegativeRatio.setType(postType);
+							newNegativeRatio.setRatio(negativeRatio);
+							newNegativeRatio.setUpdateDate(date);
+							negativeRatioService.save(newNegativeRatio);
+							if (negativeRatio - lastNegativeRatio.get(0).getRatio() > ratioLimit) {
+								isNegativeIncrease = true;
 							}
+						} else {
+							NegativeRatio newNegativeRatio = new NegativeRatio();
+							newNegativeRatio.setKeyword(keyword);
+							newNegativeRatio.setType(postType);
+							newNegativeRatio.setRatio(negativeRatio);
+							newNegativeRatio.setUpdateDate(date);
+							negativeRatioService.save(newNegativeRatio);
+							// }
 						}
 					}
 				} else {
-					lastNegativeRatio = new NegativeRatio();
-					lastNegativeRatio.setKeyword(keyword);
-					lastNegativeRatio.setType("post");
-					lastNegativeRatio.setUpdateDate(date);
-					lastNegativeRatio.setRatio(negativeRatio);
-					negativeRatioService.save(lastNegativeRatio);
+					NegativeRatio newNegativeRatio = new NegativeRatio();
+					newNegativeRatio.setKeyword(keyword);
+					newNegativeRatio.setType(postType);
+					newNegativeRatio.setRatio(negativeRatio);
+					newNegativeRatio.setUpdateDate(date);
+					negativeRatioService.save(newNegativeRatio);
 				}
 				if (isNegativeIncrease) {
 					notificationService.sendListPostNotification(listPostNegative, keyword);

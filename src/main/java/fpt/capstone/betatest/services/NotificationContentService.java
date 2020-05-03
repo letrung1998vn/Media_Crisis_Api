@@ -15,9 +15,11 @@ import org.springframework.stereotype.Service;
 import fpt.capstone.betatest.entities.Comment;
 import fpt.capstone.betatest.entities.Crisis;
 import fpt.capstone.betatest.entities.LastStandard;
+import fpt.capstone.betatest.entities.NegativeRatio;
 import fpt.capstone.betatest.entities.Notification_Content;
 import fpt.capstone.betatest.entities.Post;
 import fpt.capstone.betatest.model.EmailContentModel;
+import fpt.capstone.betatest.model.EmailListContent;
 import fpt.capstone.betatest.model.LinkDetailModel;
 import fpt.capstone.betatest.repositories.NotificationContentRepository;
 
@@ -41,12 +43,17 @@ public class NotificationContentService {
 	@Autowired
 	private CheckMeaningService checkMeaningService;
 
+	@Autowired
+	private NegativeRatioService negativeRatioService;
+
 	public final String detectTypeReact = "react";
 	public final String detectTypeShare = "retweet";
 	public final String detectTypeComment = "reply";
 	public final String detectTypeIncreaseReact = "increaseReact";
 	public final String detectTypeIncreaseShare = "increaseRetweet";
 	public final String detectTypeIncreasComment = "increaseReply";
+	public final String postType = "post";
+	public final String commentType = "comment";
 
 	@Transactional
 	public void getLinkDetailPost(List<Post> listPost, List<String> listLinkDetail) {
@@ -84,13 +91,15 @@ public class NotificationContentService {
 	}
 
 	@Transactional
-	public EmailContentModel getEmailContentListPost(String keyword, String postId) {
-		EmailContentModel emailContent = new EmailContentModel();
+	public EmailListContent getEmailContentListPost(String keyword, String postId) {
+		EmailListContent emailContent = new EmailListContent();
+		List<NegativeRatio> lastNegativeRatio = negativeRatioService.getNegativeRatio(keyword, postType);
 		emailContent.setKeyword(keyword);
 		StringTokenizer stk = new StringTokenizer(postId, ",");
 		String id;
 		List<Post> listPost = new ArrayList<>();
 		List<String> listLinkDetail = new ArrayList<>();
+		List<String> listRatio = new ArrayList<>();
 		List<LinkDetailModel> listLinkDetailModel = new ArrayList<>();
 		while (stk.hasMoreTokens()) {
 			id = stk.nextToken();
@@ -102,7 +111,6 @@ public class NotificationContentService {
 				LinkDetailModel ldm = new LinkDetailModel();
 				ldm.setContent(post.getPostContent());
 				ldm.setLink(post.getLinkDetail());
-				// ldm.setReason(getReasonPost(post));
 				listLinkDetailModel.add(ldm);
 			}
 			for (int i = 0; i < listLinkDetailModel.size(); i++) {
@@ -111,22 +119,31 @@ public class NotificationContentService {
 				linkDetail += "and||and";
 				linkDetail += formatLinkDetail(ldm.getLink());
 				linkDetail += "and||and";
-				// linkDetail += ldm.getReason();
 				listLinkDetail.add(linkDetail);
 			}
 		}
-		emailContent.setListLinkDetail(listLinkDetail);
+		emailContent.setListContentAndLink(listLinkDetail);
+		if (lastNegativeRatio.size() > 0) {
+			for (int i = 0; i < lastNegativeRatio.size(); i++) {
+				NegativeRatio lnr = lastNegativeRatio.get(i);
+				String ratio = lnr.getRatio() + "and||and" + lnr.getUpdateDate();
+				listRatio.add(ratio);
+			}
+		}
+		emailContent.setListRatio(listRatio);
 		return emailContent;
 	}
 
 	@Transactional
-	public EmailContentModel getEmailContentListComment(String keyword, String commentId) {
-		EmailContentModel emailContent = new EmailContentModel();
+	public EmailListContent getEmailContentListComment(String keyword, String commentId) {
+		EmailListContent emailContent = new EmailListContent();
+		List<NegativeRatio> lastNegativeRatio = negativeRatioService.getNegativeRatio(keyword, commentType);
 		emailContent.setKeyword(keyword);
 		StringTokenizer stk = new StringTokenizer(commentId, ",");
 		String id;
 		List<Comment> listComment = new ArrayList<>();
 		List<String> listLinkDetail = new ArrayList<>();
+		List<String> listRatio = new ArrayList<>();
 		List<LinkDetailModel> listLinkDetailModel = new ArrayList<>();
 		while (stk.hasMoreTokens()) {
 			id = stk.nextToken();
@@ -138,7 +155,6 @@ public class NotificationContentService {
 				LinkDetailModel ldm = new LinkDetailModel();
 				ldm.setContent(comment.getCommentContent());
 				ldm.setLink(comment.getLinkDetail());
-				// ldm.setReason(getReasonComment(comment));
 				listLinkDetailModel.add(ldm);
 			}
 			for (int i = 0; i < listLinkDetailModel.size(); i++) {
@@ -147,11 +163,18 @@ public class NotificationContentService {
 				linkDetail += "and||and";
 				linkDetail += formatLinkDetail(ldm.getLink());
 				linkDetail += "and||and";
-				// linkDetail += ldm.getReason();
 				listLinkDetail.add(linkDetail);
 			}
 		}
-		emailContent.setListLinkDetail(listLinkDetail);
+		emailContent.setListContentAndLink(listLinkDetail);
+		if (lastNegativeRatio.size() > 0) {
+			for (int i = 0; i < lastNegativeRatio.size(); i++) {
+				NegativeRatio lnr = lastNegativeRatio.get(i);
+				String ratio = lnr.getRatio() + "and||and" + lnr.getUpdateDate();
+				listRatio.add(ratio);
+			}
+		}
+		emailContent.setListRatio(listRatio);
 		return emailContent;
 
 	}
@@ -196,7 +219,7 @@ public class NotificationContentService {
 				"share");
 		LastStandard lastIncreasePostStandardComment = lastStandardService.getLastStandard(keyword, "increasePost",
 				"comment");
-		
+
 		double Increase_post_react_upper_limit = 0;
 		if (lastIncreasePostStandardReact != null) {
 			Increase_post_react_upper_limit = lastStandardService.calUpperLimit(
@@ -225,7 +248,8 @@ public class NotificationContentService {
 		double Increase_comment_comment_upper_limit = 0;
 		if (lastIncreaseCommentStandardComment != null) {
 			Increase_comment_comment_upper_limit = lastStandardService.calUpperLimit(
-					lastIncreaseCommentStandardComment.getLastStandard(), lastIncreaseCommentStandardComment.getLastMean());
+					lastIncreaseCommentStandardComment.getLastStandard(),
+					lastIncreaseCommentStandardComment.getLastMean());
 		}
 
 		EmailContentModel emailContent = new EmailContentModel();
@@ -291,7 +315,7 @@ public class NotificationContentService {
 					}
 				}
 				if (crisis.getType().trim().equals("comment")) {
-					List<Comment> result = commentService.getCommentByCommentId(crisis.getContentId());
+					List<Comment> result = commentService.getCommentByCommentIdSortCrawlDate(crisis.getContentId());
 					if (result.size() > 0) {
 						Comment comment = result.get(0);
 						LinkDetailModel ldm = new LinkDetailModel();

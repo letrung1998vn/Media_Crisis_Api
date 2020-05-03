@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import fpt.capstone.betatest.model.EmailContentModel;
+import fpt.capstone.betatest.model.EmailListContent;
 import fpt.capstone.betatest.services.CommentService;
 import fpt.capstone.betatest.services.CrisisService;
 import fpt.capstone.betatest.services.KeywordService;
@@ -40,13 +41,13 @@ public class NotificationController {
 	NotificationTokenService notificationTokenService;
 
 	@PostMapping("emailContentListPost")
-	public EmailContentModel getEmailContentListPost(@RequestParam(name = "keyword") String keyword,
+	public EmailListContent getEmailContentListPost(@RequestParam(name = "keyword") String keyword,
 			@RequestParam(name = "post_id") String postId) {
 		return notificationContentService.getEmailContentListPost(keyword, postId);
 	}
 
 	@PostMapping("emailContentListComment")
-	public EmailContentModel getEmailContentListComment(@RequestParam(name = "keyword") String keyword,
+	public EmailListContent getEmailContentListComment(@RequestParam(name = "keyword") String keyword,
 			@RequestParam(name = "comment_id") String commentId) {
 		return notificationContentService.getEmailContentListComment(keyword, commentId);
 	}
