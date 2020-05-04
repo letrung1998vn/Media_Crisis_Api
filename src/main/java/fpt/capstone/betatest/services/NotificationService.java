@@ -56,7 +56,7 @@ public class NotificationService {
 	
 	private static String host = "smtp.gmail.com";
 	private static String username = "passmon2020@gmail.com";
-	private static String password = "Vutiendat";
+	private static String password = "Vutiendat123!!!";
 	private static String port = "587";
 
 	

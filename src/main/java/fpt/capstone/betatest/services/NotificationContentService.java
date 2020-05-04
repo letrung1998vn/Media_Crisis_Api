@@ -2,7 +2,11 @@ package fpt.capstone.betatest.services;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -91,9 +95,10 @@ public class NotificationContentService {
 	}
 
 	@Transactional
-	public EmailListContent getEmailContentListPost(String keyword, String postId) {
+	public EmailListContent getEmailContentListPost(String keyword, String postId, String time) throws Exception {
+		Date date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(time);
 		EmailListContent emailContent = new EmailListContent();
-		List<NegativeRatio> lastNegativeRatio = negativeRatioService.getNegativeRatio(keyword, postType);
+		List<NegativeRatio> lastNegativeRatio = negativeRatioService.getNegativeRatioByDateAsc(keyword, postType, date);
 		emailContent.setKeyword(keyword);
 		StringTokenizer stk = new StringTokenizer(postId, ",");
 		String id;
@@ -135,9 +140,11 @@ public class NotificationContentService {
 	}
 
 	@Transactional
-	public EmailListContent getEmailContentListComment(String keyword, String commentId) {
+	public EmailListContent getEmailContentListComment(String keyword, String commentId, String time) throws Exception {
+		Date date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(time);
 		EmailListContent emailContent = new EmailListContent();
-		List<NegativeRatio> lastNegativeRatio = negativeRatioService.getNegativeRatio(keyword, commentType);
+		List<NegativeRatio> lastNegativeRatio = negativeRatioService.getNegativeRatioByDateAsc(keyword, commentType,
+				date);
 		emailContent.setKeyword(keyword);
 		StringTokenizer stk = new StringTokenizer(commentId, ",");
 		String id;
@@ -412,6 +419,9 @@ public class NotificationContentService {
 				emailContent += ",";
 			}
 		}
+		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+		LocalDateTime now = LocalDateTime.now().plusMinutes(10);
+		emailContent += "&time=" + URLEncoder.encode(dtf.format(now), StandardCharsets.UTF_8.name());
 		emailContent += "</h3>";
 		return emailContent;
 	}
@@ -432,6 +442,9 @@ public class NotificationContentService {
 				emailContent += ",";
 			}
 		}
+		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+		LocalDateTime now = LocalDateTime.now().plusMinutes(10);
+		emailContent += "&time=" + URLEncoder.encode(dtf.format(now), StandardCharsets.UTF_8.name());
 		emailContent += "</h3>";
 		return emailContent;
 	}
