@@ -99,10 +99,10 @@ public class CheckMeaningCurrentCommentService extends BaseThread {
 				boolean isNegativeIncrease = false;
 				if (lastNegativeRatio != null&& lastNegativeRatio.size()>0) {
 					if (lastNegativeRatio.get(0).getUpdateDate().before(date)) {
-						// long diffInMillies = Math.abs(date.getTime() -
-						// lastNegativeRatio.get(0).getUpdateDate().getTime());
-						// long diff = TimeUnit.HOURS.convert(diffInMillies, TimeUnit.MILLISECONDS);
-						// if (diff > differenceHour) {
+						 long diffInMillies = Math.abs(date.getTime() -
+						 lastNegativeRatio.get(0).getUpdateDate().getTime());
+						 long diff = TimeUnit.HOURS.convert(diffInMillies, TimeUnit.MILLISECONDS);
+						 if (diff >= differenceHour) {
 						NegativeRatio newNegativeRatio = new NegativeRatio();
 						newNegativeRatio.setKeyword(keyword);
 						newNegativeRatio.setType(commentType);
@@ -112,7 +112,7 @@ public class CheckMeaningCurrentCommentService extends BaseThread {
 						if (lastNegativeRatio.get(0).getRatio() < negativeRatio) {
 							if (negativeRatio - lastNegativeRatio.get(0).getRatio() > ratioLimit) {
 								isNegativeIncrease = true;
-								// }
+								 }
 							}
 						}
 					}

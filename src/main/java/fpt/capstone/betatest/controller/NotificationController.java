@@ -42,14 +42,14 @@ public class NotificationController {
 
 	@PostMapping("emailContentListPost")
 	public EmailListContent getEmailContentListPost(@RequestParam(name = "keyword") String keyword,
-			@RequestParam(name = "post_id") String postId) {
-		return notificationContentService.getEmailContentListPost(keyword, postId);
+			@RequestParam(name = "post_id") String postId, @RequestParam(name = "time") String time) throws Exception {
+		return notificationContentService.getEmailContentListPost(keyword, postId, time);
 	}
 
 	@PostMapping("emailContentListComment")
 	public EmailListContent getEmailContentListComment(@RequestParam(name = "keyword") String keyword,
-			@RequestParam(name = "comment_id") String commentId) {
-		return notificationContentService.getEmailContentListComment(keyword, commentId);
+			@RequestParam(name = "comment_id") String commentId, @RequestParam(name = "time") String time) throws Exception {
+		return notificationContentService.getEmailContentListComment(keyword, commentId, time);
 	}
 
 	@PostMapping("emailContentList")

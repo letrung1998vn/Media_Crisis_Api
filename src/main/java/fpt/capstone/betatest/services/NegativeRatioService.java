@@ -1,5 +1,6 @@
 package fpt.capstone.betatest.services;
 
+import java.util.Date;
 import java.util.List;
 
 import javax.transaction.Transactional;
@@ -19,7 +20,10 @@ public class NegativeRatioService {
 	public List<NegativeRatio> getNegativeRatio(String keyword, String type) {
 		return negativeRatioRepository.findByKeywordAndTypeOrderByUpdateDateDesc(keyword, type);
 	}
-
+	@Transactional
+	public List<NegativeRatio> getNegativeRatioByDateAsc(String keyword, String type, Date date) {
+		return negativeRatioRepository.findByKeywordAndTypeAndUpdateDateLessThanEqualOrderByUpdateDateAsc(keyword, type, date);
+	}
 	@Transactional
 	public void save(NegativeRatio negativeRatio) {
 		negativeRatioRepository.save(negativeRatio);
