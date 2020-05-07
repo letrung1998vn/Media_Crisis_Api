@@ -46,7 +46,6 @@ public class KeywordController {
 		Keyword kw = new Keyword();
 		User user = userService.getUserByUsername(userId);
 		double crisisRate = Double.parseDouble(crisisRateString);
-		System.out.println(crisisRate);
 		return keywordService.createKeyword(user, kw, keyword, crisisRate);
 	}
 
@@ -57,7 +56,6 @@ public class KeywordController {
 		Keyword kw = keywordService.getKeywordById(keywordId);
 		User user = userService.getUserByUsername(author);
 		double crisisRate = Double.parseDouble(crisisRateString);
-		System.out.println(crisisRate);
 		return keywordService.updateKeyword(user, kw, keyword, log_version, keywordId, crisisRate);
 	}
 
