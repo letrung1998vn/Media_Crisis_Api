@@ -38,7 +38,7 @@ public class Keyword implements Serializable {
 	private int version;
 	
 	@Column(name = "percent_of_crisis")
-	private float percent_of_crisis;
+	private double percent_of_crisis;
 //	//bi-directional many-to-one association to Post
 //	@OneToMany(mappedBy="keywordBean")
 //	private List<Post> posts;
@@ -105,15 +105,15 @@ public class Keyword implements Serializable {
 		this.version = version;
 	}
 
-	public float getPercent_of_crisis() {
+	public double getPercent_of_crisis() {
 		return percent_of_crisis;
 	}
 
-	public void setPercent_of_crisis(float percent_of_crisis) {
+	public void setPercent_of_crisis(double percent_of_crisis) {
 		this.percent_of_crisis = percent_of_crisis;
 	}
 
-	public Keyword(int id, String keyword, User user, boolean available, int version, float percent_of_crisis) {
+	public Keyword(int id, String keyword, User user, boolean available, int version, double percent_of_crisis) {
 		super();
 		this.id = id;
 		this.keyword = keyword;
