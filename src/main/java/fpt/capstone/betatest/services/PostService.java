@@ -9,6 +9,9 @@ import java.util.concurrent.TimeUnit;
 import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import fpt.capstone.betatest.entities.Post;
@@ -48,7 +51,19 @@ public class PostService {
 	public List<Post> getNewPost(String keyword, Boolean isNew) {
 		return postRepository.findByKeywordAndIsNew(keyword, isNew);
 	}
+	
+	@Transactional
+	public Page<Post> getAllNewPost(Boolean isNew, int Page) {
+		Pageable page = PageRequest.of((Page - 1), 20);
+		return postRepository.findByIsNewOrderByCrawlDateDesc(isNew, page);
+	}
 
+	@Transactional
+	public Page<Post> getAllNegativePost(Boolean isNegative, int Page) {
+		Pageable page = PageRequest.of((Page - 1), 20);
+		return postRepository.findByIsNegativeOrderByCrawlDateDesc(isNegative, page);
+	}
+	
 	@Transactional
 	public Post save(Post post) {
 		return postRepository.save(post);

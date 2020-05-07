@@ -4,10 +4,13 @@ import java.math.BigInteger;
 import java.util.Date;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import fpt.capstone.betatest.entities.Keyword;
 import fpt.capstone.betatest.entities.Post;
 
 @Repository("postRepository")
@@ -34,4 +37,6 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
 			+ "crawl_date, keyword, isNew, isNegative from Post where crawl_date < ?1 "
 			+ "and post_id = ?2 order by crawl_date asc")
 	Post getSecondLastNewPost(Date crawlDate, BigInteger postId);
+	Page<Post> findByIsNewOrderByCrawlDateDesc(boolean isNew, Pageable pageable);
+	Page<Post> findByIsNegativeOrderByCrawlDateDesc(boolean isNegative, Pageable pageable);
 }
