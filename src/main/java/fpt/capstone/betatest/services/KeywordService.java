@@ -59,7 +59,7 @@ public class KeywordService {
 	}
 
 	@Transactional
-	public MessageOutputModel createKeyword(User user, Keyword kw, String keyword) {
+	public MessageOutputModel createKeyword(User user, Keyword kw, String keyword, float crisisRate) {
 		boolean havePermissionToCreate = false;
 		MessageOutputModel mod = new MessageOutputModel();
 		if (!(user.getRole().equals("user") && !user.isAvailable())) {
@@ -98,6 +98,7 @@ public class KeywordService {
 			kw.setUser(user);
 			kw.setAvailable(true);
 			kw.setVersion(1);
+			kw.setPercent_of_crisis(crisisRate);
 			kw = this.saveKeyword(kw);
 			mod.setStatusCode(2);
 			mod.setStatusMessage("Created successfully!");
@@ -106,7 +107,7 @@ public class KeywordService {
 	}
 
 	@Transactional
-	public MessageOutputModel updateKeyword(User user, Keyword kw, String keyword, int log_version, int keywordId) {
+	public MessageOutputModel updateKeyword(User user, Keyword kw, String keyword, int log_version, int keywordId, float crisisRate) {
 		boolean havePermissionToUpdate = false;
 		MessageOutputModel mod = new MessageOutputModel();
 		if ((user.getUserName().equals(kw.getUser().getUserName())) || user.getRole().equals("admin")) {
@@ -145,6 +146,7 @@ public class KeywordService {
 			}
 			kw.setKeyword(keyword);
 			kw.setVersion(kw.getVersion() + 1);
+			kw.setPercent_of_crisis(crisisRate);
 			this.saveKeyword(kw);
 			mod.setStatusCode(2);
 			mod.setStatusMessage("Update successfully!");
