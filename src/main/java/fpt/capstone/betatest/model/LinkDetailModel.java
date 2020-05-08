@@ -5,7 +5,6 @@ public class LinkDetailModel {
 	private String link;
 	private String type;
 	private double std;
-	private double number;
 	public String getContent() {
 		return content;
 	}
@@ -29,12 +28,6 @@ public class LinkDetailModel {
 	}
 	public void setStd(double std) {
 		this.std = std;
-	}
-	public double getNumber() {
-		return number;
-	}
-	public void setNumber(double number) {
-		this.number = number;
 	}
 	
 }

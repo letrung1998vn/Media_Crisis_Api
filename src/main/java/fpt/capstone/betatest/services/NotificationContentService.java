@@ -210,43 +210,7 @@ public class NotificationContentService {
 						ldm.setContent(post.getPostContent());
 						ldm.setLink(post.getLinkDetail());
 						ldm.setType(crisis.getDetectType());
-						if (crisis.getDetectType().equals(detectTypeReact)) {
-//							ldm.setStd(post_react_upper_limit);
-							ldm.setNumber(post.getNumberOfReact());
-						} else if (crisis.getDetectType().equals(detectTypeComment)) {
-//							ldm.setStd(post_comment_upper_limit);
-							ldm.setNumber(post.getNumberOfReply());
-						} else if (crisis.getDetectType().equals(detectTypeShare)) {
-//							ldm.setStd(post_share_upper_limit);
-							ldm.setNumber(post.getNumberOfReweet());
-						} else if (crisis.getDetectType().equals(detectTypeIncreaseReact)) {
-							List<Post> postSorted = checkMeaningService.sortByCrawlDate(result);
-							Post firstpost = postSorted.get(0);
-							Post secondPost = postSorted.get(1);
-							ldm.setContent(post.getPostContent());
-							ldm.setLink(post.getLinkDetail());
-							ldm.setType(crisis.getDetectType());
-//							ldm.setStd(Increase_post_react_upper_limit);
-							ldm.setNumber(firstpost.getNumberOfReact() - secondPost.getNumberOfReact());
-						} else if (crisis.getDetectType().equals(detectTypeIncreasComment)) {
-							List<Post> postSorted = checkMeaningService.sortByCrawlDate(result);
-							Post firstpost = postSorted.get(0);
-							Post secondPost = postSorted.get(1);
-							ldm.setContent(post.getPostContent());
-							ldm.setLink(post.getLinkDetail());
-							ldm.setType(crisis.getDetectType());
-//							ldm.setStd(Increase_post_comment_upper_limit);
-							ldm.setNumber(firstpost.getNumberOfReply() - secondPost.getNumberOfReply());
-						} else if (crisis.getDetectType().equals(detectTypeIncreaseShare)) {
-							List<Post> postSorted = checkMeaningService.sortByCrawlDate(result);
-							Post firstpost = postSorted.get(0);
-							Post secondPost = postSorted.get(1);
-							ldm.setContent(post.getPostContent());
-							ldm.setLink(post.getLinkDetail());
-							ldm.setType(crisis.getDetectType());
-//							ldm.setStd(Increase_post_share_upper_limit);
-							ldm.setNumber(firstpost.getNumberOfReweet() - secondPost.getNumberOfReweet());
-						}
+						ldm.setStd(crisisService.getStandardTimes(crisis.getPercentage()));
 						listLinkDetailModel.add(ldm);
 					}
 				}
@@ -258,27 +222,7 @@ public class NotificationContentService {
 						ldm.setContent(comment.getCommentContent());
 						ldm.setLink(comment.getLinkDetail());
 						ldm.setType(crisis.getDetectType());
-						if (crisis.getDetectType().equals(detectTypeReact)) {
-//							ldm.setStd(comment_react_upper_limit);
-							ldm.setNumber(comment.getNumberOfReact());
-						} else if (crisis.getDetectType().equals(detectTypeComment)) {
-//							ldm.setStd(comment_comment_upper_limit);
-							ldm.setNumber(comment.getNumberOfReply());
-						} else if (crisis.getDetectType().equals(detectTypeIncreaseReact)) {
-//							ldm.setStd(Increase_comment_react_upper_limit);
-							List<Comment> ListComment = commentService
-									.getCommentByCommentIdSortCrawlDate(comment.getCommentId());
-							Comment firstComment = ListComment.get(0);
-							Comment secondComment = ListComment.get(1);
-							ldm.setNumber(firstComment.getNumberOfReact() - secondComment.getNumberOfReact());
-						} else if (crisis.getDetectType().equals(detectTypeIncreasComment)) {
-//							ldm.setStd(Increase_comment_comment_upper_limit);
-							List<Comment> ListComment = commentService
-									.getCommentByCommentIdSortCrawlDate(comment.getCommentId());
-							Comment firstComment = ListComment.get(0);
-							Comment secondComment = ListComment.get(1);
-							ldm.setNumber(firstComment.getNumberOfReply() - secondComment.getNumberOfReply());
-						}
+						ldm.setStd(crisisService.getStandardTimes(crisis.getPercentage()));
 						listLinkDetailModel.add(ldm);
 					}
 				}
@@ -293,8 +237,6 @@ public class NotificationContentService {
 					linkDetail += ldm.getType();
 					linkDetail += " and||and ";
 					linkDetail += ldm.getStd();
-					linkDetail += " and||and ";
-					linkDetail += ldm.getNumber();
 					listLinkDetail.add(linkDetail);
 				}
 			}
