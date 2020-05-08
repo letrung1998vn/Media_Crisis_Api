@@ -53,13 +53,13 @@ public class PostService {
 	}
 	
 	@Transactional
-	public Page<Post> getAllNewPost(Boolean isNew, int Page) {
+	public Page<Post> getAllNewPost(boolean isNew, int Page) {
 		Pageable page = PageRequest.of((Page - 1), 20);
 		return postRepository.findByIsNewOrderByCrawlDateDesc(isNew, page);
 	}
 
 	@Transactional
-	public Page<Post> getAllNegativePost(Boolean isNegative, int Page) {
+	public Page<Post> getAllNegativePost(boolean isNegative, int Page) {
 		Pageable page = PageRequest.of((Page - 1), 20);
 		return postRepository.findByIsNegativeOrderByCrawlDateDesc(isNegative, page);
 	}
