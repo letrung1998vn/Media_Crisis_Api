@@ -27,7 +27,10 @@ public class Crisis {
 	private String keyword;
 	
 	@Column(name = "detect_type")
-	private String DetectType;
+	private String detectType;
+	
+	@Column(name = "percentage")
+	private double percentage;
 	
 	public int getId() {
 		return id;
@@ -62,11 +65,19 @@ public class Crisis {
 	}
 
 	public String getDetectType() {
-		return DetectType;
+		return detectType;
 	}
 
 	public void setDetectType(String detectType) {
-		DetectType = detectType;
+		this.detectType = detectType;
+	}
+
+	public double getPercentage() {
+		return percentage;
+	}
+
+	public void setPercentage(double percentage) {
+		this.percentage = percentage;
 	}
 	
 }

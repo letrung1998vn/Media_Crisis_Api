@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import fpt.capstone.betatest.entities.Comment;
 import fpt.capstone.betatest.entities.Crisis;
+import fpt.capstone.betatest.entities.Keyword;
 import fpt.capstone.betatest.entities.LastStandard;
 import fpt.capstone.betatest.entities.NegativeRatio;
 import fpt.capstone.betatest.entities.Post;
@@ -40,6 +41,9 @@ public class CheckMeaningCurrentCommentService extends BaseThread {
 	@Autowired
 	private CheckMeaningService checkMeaningService;
 
+	@Autowired
+	KeywordService keywordService;
+
 	public void setData(StanfordCoreNLP pipeline, String keyword, List<Comment> listComment, List<Crisis> listCrisis) {
 		this.pipeline = pipeline;
 		this.keyword = keyword;
@@ -57,22 +61,14 @@ public class CheckMeaningCurrentCommentService extends BaseThread {
 			}
 		}
 		if (!interruptFlag) {
-			List<Comment> listCommentNegative = new ArrayList<>();
-			LastStandard lastCommentStandardReact = lastStandardService.getLastStandard(keyword, "comment", "react");
-			LastStandard lastCommentStandardComment = lastStandardService.getLastStandard(keyword, "comment",
-					"comment");
-			double react_upper_limit = 0;
-			if (lastCommentStandardReact != null) {
-				react_upper_limit = lastStandardService.calUpperLimit(lastCommentStandardReact.getLastStandard(),
-						lastCommentStandardReact.getLastMean());
-			}
-			double comment_upper_limit = 0;
-			if (lastCommentStandardComment != null) {
-				comment_upper_limit = lastStandardService.calUpperLimit(lastCommentStandardComment.getLastStandard(),
-						lastCommentStandardComment.getLastMean());
-			}
-
 			try {
+				List<Comment> listCommentNegative = new ArrayList<>();
+				LastStandard lastCommentStandardReact = lastStandardService.getLastStandard(keyword, "comment",
+						"react");
+				LastStandard lastCommentStandardComment = lastStandardService.getLastStandard(keyword, "comment",
+						"comment");
+				List<Keyword> listKey = keywordService.getUserByKeyword(keyword);
+
 				for (int i = 0; i < listComment.size(); i++) {
 					Comment comment = listComment.get(i);
 					if (comment.isNegative() == null) {
@@ -80,14 +76,31 @@ public class CheckMeaningCurrentCommentService extends BaseThread {
 					}
 					if (comment.isNegative()) {
 						listCommentNegative.add(comment);
-						if (comment.getNumberOfReply() > comment_upper_limit) {
-							System.out.println("Crisis increase comment: " + comment.getCommentId());
-							listCrisis = crisisService.insertCommentCrisis(comment, keyword, listCrisis, commentType,
-									detectTypeComment);
-						} else if (comment.getNumberOfReact() > react_upper_limit) {
-							System.out.println("Crisis increase comment: " + comment.getCommentId());
-							listCrisis = crisisService.insertCommentCrisis(comment, keyword, listCrisis, commentType,
-									detectTypeReact);
+						for (int x = 0; x < listKey.size(); x++) {
+							Keyword keywordObj = listKey.get(x);
+							double std = crisisService.getStandardTimes(keywordObj.getPercent_of_crisis());
+							double react_upper_limit = 0;
+							if (lastCommentStandardReact != null) {
+								react_upper_limit = lastStandardService.calUpperLimit(
+										lastCommentStandardReact.getLastStandard(),
+										lastCommentStandardReact.getLastMean(), std);
+							}
+							double comment_upper_limit = 0;
+							if (lastCommentStandardComment != null) {
+								comment_upper_limit = lastStandardService.calUpperLimit(
+										lastCommentStandardComment.getLastStandard(),
+										lastCommentStandardComment.getLastMean(), std);
+							}
+							double percentage = crisisService.getPercentage(std);
+							if (comment.getNumberOfReply() > comment_upper_limit) {
+								System.out.println("Crisis comment: " + comment.getCommentId());
+								listCrisis = crisisService.insertCommentCrisis(comment, keyword, listCrisis,
+										commentType, detectTypeComment, percentage);
+							} else if (comment.getNumberOfReact() > react_upper_limit) {
+								System.out.println("Crisis comment: " + comment.getCommentId());
+								listCrisis = crisisService.insertCommentCrisis(comment, keyword, listCrisis,
+										commentType, detectTypeReact, percentage);
+							}
 						}
 					}
 				}
@@ -97,22 +110,22 @@ public class CheckMeaningCurrentCommentService extends BaseThread {
 				long millis = System.currentTimeMillis();
 				Date date = new Date(millis);
 				boolean isNegativeIncrease = false;
-				if (lastNegativeRatio != null&& lastNegativeRatio.size()>0) {
+				if (lastNegativeRatio != null && lastNegativeRatio.size() > 0) {
 					if (lastNegativeRatio.get(0).getUpdateDate().before(date)) {
-						 long diffInMillies = Math.abs(date.getTime() -
-						 lastNegativeRatio.get(0).getUpdateDate().getTime());
-						 long diff = TimeUnit.HOURS.convert(diffInMillies, TimeUnit.MILLISECONDS);
-						 if (diff >= differenceHour) {
-						NegativeRatio newNegativeRatio = new NegativeRatio();
-						newNegativeRatio.setKeyword(keyword);
-						newNegativeRatio.setType(commentType);
-						newNegativeRatio.setRatio(negativeRatio);
-						newNegativeRatio.setUpdateDate(date);
-						negativeRatioService.save(newNegativeRatio);
-						if (lastNegativeRatio.get(0).getRatio() < negativeRatio) {
-							if (negativeRatio - lastNegativeRatio.get(0).getRatio() > ratioLimit) {
-								isNegativeIncrease = true;
-								 }
+						long diffInMillies = Math
+								.abs(date.getTime() - lastNegativeRatio.get(0).getUpdateDate().getTime());
+						long diff = TimeUnit.HOURS.convert(diffInMillies, TimeUnit.MILLISECONDS);
+						if (diff >= differenceHour) {
+							NegativeRatio newNegativeRatio = new NegativeRatio();
+							newNegativeRatio.setKeyword(keyword);
+							newNegativeRatio.setType(commentType);
+							newNegativeRatio.setRatio(negativeRatio);
+							newNegativeRatio.setUpdateDate(date);
+							negativeRatioService.save(newNegativeRatio);
+							if (lastNegativeRatio.get(0).getRatio() < negativeRatio) {
+								if (negativeRatio - lastNegativeRatio.get(0).getRatio() > ratioLimit) {
+									isNegativeIncrease = true;
+								}
 							}
 						}
 					}

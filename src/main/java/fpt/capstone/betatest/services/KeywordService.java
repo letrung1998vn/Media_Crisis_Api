@@ -107,7 +107,8 @@ public class KeywordService {
 	}
 
 	@Transactional
-	public MessageOutputModel updateKeyword(User user, Keyword kw, String keyword, int log_version, int keywordId, double crisisRate) {
+	public MessageOutputModel updateKeyword(User user, Keyword kw, String keyword, int log_version, int keywordId,
+			double crisisRate) {
 		boolean havePermissionToUpdate = false;
 		MessageOutputModel mod = new MessageOutputModel();
 		if ((user.getUserName().equals(kw.getUser().getUserName())) || user.getRole().equals("admin")) {
@@ -240,5 +241,4 @@ public class KeywordService {
 	public List<Keyword> getUserByKeyword(String keyword) {
 		return keywordsRepository.findByKeyword(keyword);
 	}
-
 }

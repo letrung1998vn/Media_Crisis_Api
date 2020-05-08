@@ -10,7 +10,7 @@ import fpt.capstone.betatest.entities.Crisis;
 
 @Repository("crisisRepository")
 public interface CrisisRepository extends JpaRepository<Crisis, Integer> {
-	Crisis findByContentIdAndTypeAndKeyword(BigInteger ContentId, String Type, String keyword);
+	Crisis findByContentIdAndTypeAndKeywordAndDetectType(BigInteger ContentId, String Type, String keyword, String detectType);
 
 	List<Crisis> findByKeyword(String keyword);
 	

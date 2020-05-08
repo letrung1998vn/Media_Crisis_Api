@@ -1,6 +1,8 @@
 package fpt.capstone.betatest.services;
 
 import java.sql.Date;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -35,47 +37,45 @@ import fpt.capstone.betatest.repositories.NotificationRepository;
 public class NotificationService {
 	@Autowired
 	private NotificationRepository notificationRepository;
-	
+
 	@Autowired
 	private NotificationContentService notificationContentService;
-	
+
 	@Autowired
 	private UserInfoService userInfoService;
-	
+
 	@Autowired
 	private UserService userService;
-	
+
 	@Autowired
 	private CrisisService crisisService;
-	
+
 	@Autowired
 	private KeywordService keywordService;
-	
+
 	@Autowired
 	private NotificationTokenService notificationTokenService;
-	
+
 	private static String host = "smtp.gmail.com";
 	private static String username = "passmon2020@gmail.com";
 	private static String password = "Vutiendat123!!!";
 	private static String port = "587";
 
-	
-	
 	@Transactional
 	public Notification save(Notification notification) {
 		return notificationRepository.save(notification);
 	}
-	
+
 	@Transactional
 	public int getId(User userName, boolean email, boolean webhook, Date date) {
 		return notificationRepository.findByUserAndEmailAndWebhookAndDate(userName, email, webhook, date);
 	}
-	
+
 	@Transactional
 	public List<Notification> getListNotification(User userName) {
 		return notificationRepository.findByUser(userName);
 	}
-	
+
 	@Transactional
 	public void sendListPostNotification(List<Post> listPost, String keyword) {
 		List<User> listUser = new ArrayList<User>();
@@ -108,7 +108,7 @@ public class NotificationService {
 			}
 		}
 	}
-	
+
 	@Transactional
 	public String sendEmailListPost(String userName, String keyword, List<Post> listPost) {
 		// String message;
@@ -327,6 +327,9 @@ public class NotificationService {
 				json += ",";
 			}
 		}
+		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+		LocalDateTime now = LocalDateTime.now().plusMinutes(10);
+		json += "&time=" + dtf.format(now);
 		json += "\"\n   },\n" + "  \"to\": \"" + notiToken + "\"\n" + "}";
 		return json;
 	}
@@ -344,6 +347,9 @@ public class NotificationService {
 				json += ",";
 			}
 		}
+		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+		LocalDateTime now = LocalDateTime.now().plusMinutes(10);
+		json += "&time=" + dtf.format(now);
 		json += "\"\n   },\n" + "  \"to\": \"" + notiToken + "\"\n" + "}";
 		return json;
 	}
@@ -398,7 +404,7 @@ public class NotificationService {
 			}
 		}
 	}
-	
+
 	@Transactional
 	public Notification createEmailNotification(User user) {
 		long millis = System.currentTimeMillis();
@@ -407,7 +413,7 @@ public class NotificationService {
 		Notification noti = this.save(notificationDTO);
 		return noti;
 	}
-	
+
 	@Transactional
 	public void sendListCommentNotification(List<Comment> listComment, String keyword) {
 		List<User> listUser = new ArrayList<User>();
@@ -444,20 +450,18 @@ public class NotificationService {
 	@Transactional
 	public void sendNotification(List<Crisis> listcrisis, String keyword) {
 		// get list user by keyword
-		List<User> listUser = new ArrayList<User>();
 		List<Keyword> listKeyWord = keywordService.getUserByKeyword(keyword);
 		for (int i = 0; i < listKeyWord.size(); i++) {
 			Keyword keyword1 = listKeyWord.get(i);
+			double percentage_user = keyword1.getPercent_of_crisis();
 			// get list user id
-			listUser.add(userService.getUserByUsername(keyword1.getUser().getUserName()));
-		}
-		for (int i = 0; i < listUser.size(); i++) {
+			User user = userService.getUserByUsername(keyword1.getUser().getUserName());
 			List<Post> listPost = new ArrayList<Post>();
 			List<Comment> listComment = new ArrayList<Comment>();
 			List<String> listLinkDetail = new ArrayList<>();
 			List<Crisis> sendCrisis = new ArrayList<>();
-			sendCrisis.addAll(listcrisis);
-			User user = listUser.get(i);
+			List<Crisis> allCrisis = new ArrayList<>();
+			allCrisis.addAll(listcrisis);
 			if (user.getRole().equals("user")) {
 				List<Notification> listNoti = this.getListNotification(user);
 				for (int x = 0; x < listNoti.size(); x++) {
@@ -465,10 +469,16 @@ public class NotificationService {
 							.getNotificationContent(listNoti.get(x).getId());
 					for (int y = 0; y < listNotiContent.size(); y++) {
 						Notification_Content notiContent = listNotiContent.get(y);
-						int result = checkCrisisIsSend(sendCrisis, notiContent);
+						int result = checkCrisisIsSend(allCrisis, notiContent);
 						if (result != -1) {
-							sendCrisis.remove(result);
+							allCrisis.remove(result);
 						}
+					}
+				}
+				for (int a = 0; a < allCrisis.size(); a++) {
+					Crisis crisisObj = allCrisis.get(a);
+					if (crisisObj.getPercentage() >= percentage_user) {
+						sendCrisis.add(crisisObj);
 					}
 				}
 				if (sendCrisis.size() > 0) {
@@ -524,6 +534,5 @@ public class NotificationService {
 		}
 		return -1;
 	}
-	
-	
+
 }

@@ -188,77 +188,6 @@ public class NotificationContentService {
 
 	@Transactional
 	public EmailContentModel getEmailContentList(String keyword, String Id) {
-		LastStandard lastPostStandardReact = lastStandardService.getLastStandard(keyword, "post", "react");
-		LastStandard lastPostStandardShare = lastStandardService.getLastStandard(keyword, "post", "share");
-		LastStandard lastPostStandardComment = lastStandardService.getLastStandard(keyword, "post", "comment");
-		double post_react_upper_limit = 0;
-		if (lastPostStandardReact != null) {
-			post_react_upper_limit = lastStandardService.calUpperLimit(lastPostStandardReact.getLastStandard(),
-					lastPostStandardReact.getLastMean());
-		}
-		double post_share_upper_limit = 0;
-		if (lastPostStandardShare != null) {
-			post_share_upper_limit = lastStandardService.calUpperLimit(lastPostStandardShare.getLastStandard(),
-					lastPostStandardShare.getLastMean());
-		}
-		double post_comment_upper_limit = 0;
-		if (lastPostStandardComment != null) {
-			post_comment_upper_limit = lastStandardService.calUpperLimit(lastPostStandardComment.getLastStandard(),
-					lastPostStandardComment.getLastMean());
-		}
-
-		LastStandard lastCommentStandardReact = lastStandardService.getLastStandard(keyword, "comment", "react");
-		LastStandard lastCommentStandardComment = lastStandardService.getLastStandard(keyword, "comment", "comment");
-		double comment_react_upper_limit = 0;
-		if (lastCommentStandardReact != null) {
-			comment_react_upper_limit = lastStandardService.calUpperLimit(lastCommentStandardReact.getLastStandard(),
-					lastCommentStandardReact.getLastMean());
-		}
-		double comment_comment_upper_limit = 0;
-		if (lastCommentStandardComment != null) {
-			comment_comment_upper_limit = lastStandardService.calUpperLimit(
-					lastCommentStandardComment.getLastStandard(), lastCommentStandardComment.getLastMean());
-		}
-
-		LastStandard lastIncreasePostStandardReact = lastStandardService.getLastStandard(keyword, "increasePost",
-				"react");
-		LastStandard lastIncreasePostStandardShare = lastStandardService.getLastStandard(keyword, "increasePost",
-				"share");
-		LastStandard lastIncreasePostStandardComment = lastStandardService.getLastStandard(keyword, "increasePost",
-				"comment");
-
-		double Increase_post_react_upper_limit = 0;
-		if (lastIncreasePostStandardReact != null) {
-			Increase_post_react_upper_limit = lastStandardService.calUpperLimit(
-					lastIncreasePostStandardReact.getLastStandard(), lastIncreasePostStandardReact.getLastMean());
-		}
-		double Increase_post_share_upper_limit = 0;
-		if (lastIncreasePostStandardShare != null) {
-			Increase_post_share_upper_limit = lastStandardService.calUpperLimit(
-					lastIncreasePostStandardShare.getLastStandard(), lastIncreasePostStandardShare.getLastMean());
-		}
-		double Increase_post_comment_upper_limit = 0;
-		if (lastIncreasePostStandardComment != null) {
-			Increase_post_comment_upper_limit = lastStandardService.calUpperLimit(
-					lastIncreasePostStandardComment.getLastStandard(), lastIncreasePostStandardComment.getLastMean());
-		}
-
-		LastStandard lastIncreaseCommentStandardReact = lastStandardService.getLastStandard(keyword, "increaseComment",
-				detectTypeReact);
-		LastStandard lastIncreaseCommentStandardComment = lastStandardService.getLastStandard(keyword,
-				"increaseComment", detectTypeComment);
-		double Increase_comment_react_upper_limit = 0;
-		if (lastIncreaseCommentStandardReact != null) {
-			Increase_comment_react_upper_limit = lastStandardService.calUpperLimit(
-					lastIncreaseCommentStandardReact.getLastStandard(), lastIncreaseCommentStandardReact.getLastMean());
-		}
-		double Increase_comment_comment_upper_limit = 0;
-		if (lastIncreaseCommentStandardComment != null) {
-			Increase_comment_comment_upper_limit = lastStandardService.calUpperLimit(
-					lastIncreaseCommentStandardComment.getLastStandard(),
-					lastIncreaseCommentStandardComment.getLastMean());
-		}
-
 		EmailContentModel emailContent = new EmailContentModel();
 		emailContent.setKeyword(keyword);
 		StringTokenizer stk = new StringTokenizer(Id, ",");
@@ -282,13 +211,13 @@ public class NotificationContentService {
 						ldm.setLink(post.getLinkDetail());
 						ldm.setType(crisis.getDetectType());
 						if (crisis.getDetectType().equals(detectTypeReact)) {
-							ldm.setStd(post_react_upper_limit);
+//							ldm.setStd(post_react_upper_limit);
 							ldm.setNumber(post.getNumberOfReact());
 						} else if (crisis.getDetectType().equals(detectTypeComment)) {
-							ldm.setStd(post_comment_upper_limit);
+//							ldm.setStd(post_comment_upper_limit);
 							ldm.setNumber(post.getNumberOfReply());
 						} else if (crisis.getDetectType().equals(detectTypeShare)) {
-							ldm.setStd(post_share_upper_limit);
+//							ldm.setStd(post_share_upper_limit);
 							ldm.setNumber(post.getNumberOfReweet());
 						} else if (crisis.getDetectType().equals(detectTypeIncreaseReact)) {
 							List<Post> postSorted = checkMeaningService.sortByCrawlDate(result);
@@ -297,7 +226,7 @@ public class NotificationContentService {
 							ldm.setContent(post.getPostContent());
 							ldm.setLink(post.getLinkDetail());
 							ldm.setType(crisis.getDetectType());
-							ldm.setStd(Increase_post_react_upper_limit);
+//							ldm.setStd(Increase_post_react_upper_limit);
 							ldm.setNumber(firstpost.getNumberOfReact() - secondPost.getNumberOfReact());
 						} else if (crisis.getDetectType().equals(detectTypeIncreasComment)) {
 							List<Post> postSorted = checkMeaningService.sortByCrawlDate(result);
@@ -306,7 +235,7 @@ public class NotificationContentService {
 							ldm.setContent(post.getPostContent());
 							ldm.setLink(post.getLinkDetail());
 							ldm.setType(crisis.getDetectType());
-							ldm.setStd(Increase_post_comment_upper_limit);
+//							ldm.setStd(Increase_post_comment_upper_limit);
 							ldm.setNumber(firstpost.getNumberOfReply() - secondPost.getNumberOfReply());
 						} else if (crisis.getDetectType().equals(detectTypeIncreaseShare)) {
 							List<Post> postSorted = checkMeaningService.sortByCrawlDate(result);
@@ -315,7 +244,7 @@ public class NotificationContentService {
 							ldm.setContent(post.getPostContent());
 							ldm.setLink(post.getLinkDetail());
 							ldm.setType(crisis.getDetectType());
-							ldm.setStd(Increase_post_share_upper_limit);
+//							ldm.setStd(Increase_post_share_upper_limit);
 							ldm.setNumber(firstpost.getNumberOfReweet() - secondPost.getNumberOfReweet());
 						}
 						listLinkDetailModel.add(ldm);
@@ -330,20 +259,20 @@ public class NotificationContentService {
 						ldm.setLink(comment.getLinkDetail());
 						ldm.setType(crisis.getDetectType());
 						if (crisis.getDetectType().equals(detectTypeReact)) {
-							ldm.setStd(comment_react_upper_limit);
+//							ldm.setStd(comment_react_upper_limit);
 							ldm.setNumber(comment.getNumberOfReact());
 						} else if (crisis.getDetectType().equals(detectTypeComment)) {
-							ldm.setStd(comment_comment_upper_limit);
+//							ldm.setStd(comment_comment_upper_limit);
 							ldm.setNumber(comment.getNumberOfReply());
 						} else if (crisis.getDetectType().equals(detectTypeIncreaseReact)) {
-							ldm.setStd(Increase_comment_react_upper_limit);
+//							ldm.setStd(Increase_comment_react_upper_limit);
 							List<Comment> ListComment = commentService
 									.getCommentByCommentIdSortCrawlDate(comment.getCommentId());
 							Comment firstComment = ListComment.get(0);
 							Comment secondComment = ListComment.get(1);
 							ldm.setNumber(firstComment.getNumberOfReact() - secondComment.getNumberOfReact());
 						} else if (crisis.getDetectType().equals(detectTypeIncreasComment)) {
-							ldm.setStd(Increase_comment_comment_upper_limit);
+//							ldm.setStd(Increase_comment_comment_upper_limit);
 							List<Comment> ListComment = commentService
 									.getCommentByCommentIdSortCrawlDate(comment.getCommentId());
 							Comment firstComment = ListComment.get(0);

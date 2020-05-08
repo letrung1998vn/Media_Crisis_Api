@@ -1,6 +1,7 @@
 package fpt.capstone.betatest.services;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.transaction.Transactional;
@@ -25,13 +26,13 @@ public class CrisisService {
 	private CommentService commentService;
 
 	@Transactional
-	public void saveCrisis(Crisis crisis) {
-		crisisRepository.save(crisis);
+	public Crisis saveCrisis(Crisis crisis) {
+		return crisisRepository.save(crisis);
 	}
 
 	@Transactional
-	public Crisis findCrisis(BigInteger ContentId, String Type, String keyword) {
-		return crisisRepository.findByContentIdAndTypeAndKeyword(ContentId, Type, keyword);
+	public Crisis findCrisis(BigInteger ContentId, String Type, String keyword, String detectType) {
+		return crisisRepository.findByContentIdAndTypeAndKeywordAndDetectType(ContentId, Type, keyword, detectType);
 	}
 
 	@Transactional
@@ -66,7 +67,8 @@ public class CrisisService {
 			Crisis crisisInList = listCrisis.get(i);
 			if (crisisInList.getContentId() == crisis.getContentId()
 					&& crisisInList.getKeyword().equals(crisis.getKeyword())
-					&& crisisInList.getType().equals(crisis.getType())) {
+					&& crisisInList.getType().equals(crisis.getType())
+					&& crisisInList.getDetectType().equals(crisis.getDetectType())) {
 				result = true;
 				break;
 			}
@@ -75,43 +77,74 @@ public class CrisisService {
 	}
 
 	@Transactional
-	public List<Crisis> insertPostCrisis(Post post, String keyword, String type, List<Crisis> listCrisis, String detectType) {
-		Crisis result = this.findCrisis(post.getPostId(), "post", keyword);
-		if (result == null) {
-			Crisis crisis = new Crisis();
-			crisis.setContentId(post.getPostId());
-			crisis.setType(type);
-			crisis.setKeyword(keyword);
-			crisis.setDetectType(detectType);
-			if (!containCrisis(listCrisis, crisis)) {
-				listCrisis.add(crisis);
-			}
-			this.saveCrisis(crisis);
-			// send crisis to notification
-		} else {
-			if (!containCrisis(listCrisis, result)) {
-				listCrisis.add(result);
+	public List<Crisis> updateCrisisPercentage(List<Crisis> listCrisis, Crisis crisis) {
+		for (int i = 0; i < listCrisis.size(); i++) {
+			Crisis crisisInList = listCrisis.get(i);
+			if (crisisInList.getContentId() == crisis.getContentId()
+					&& crisisInList.getKeyword().equals(crisis.getKeyword())
+					&& crisisInList.getType().equals(crisis.getType())
+					&& crisisInList.getDetectType().equals(crisis.getDetectType())) {
+				if (crisisInList.getPercentage() < crisis.getPercentage()) {
+					crisisInList.setPercentage(crisis.getPercentage());
+				}
 			}
 		}
 		return listCrisis;
 	}
 
 	@Transactional
-	public List<Crisis> insertCommentCrisis(Comment comment, String keyword, List<Crisis> listCrisis, String type, String detectType) {
-		Crisis result = this.findCrisis(comment.getCommentId(), "comment", keyword);
+	public List<Crisis> insertPostCrisis(Post post, String keyword, String type, List<Crisis> listCrisis,
+			String detectType, double percentage) {
+		Crisis result = this.findCrisis(post.getPostId(), "post", keyword, detectType);
+		if (result == null) {
+			Crisis crisis = new Crisis();
+			crisis.setContentId(post.getPostId());
+			crisis.setType(type);
+			crisis.setKeyword(keyword);
+			crisis.setDetectType(detectType);
+			crisis.setPercentage(percentage);
+			if (!containCrisis(listCrisis, crisis)) {
+				listCrisis.add(crisis);
+			}
+			this.saveCrisis(crisis);
+		} else {
+			if (result.getPercentage() < percentage) {
+				result.setPercentage(percentage);
+				result = this.saveCrisis(result);
+			}
+			if (!containCrisis(listCrisis, result)) {
+				listCrisis.add(result);
+			} else {
+				listCrisis = this.updateCrisisPercentage(listCrisis, result);
+			}
+		}
+		return listCrisis;
+	}
+
+	@Transactional
+	public List<Crisis> insertCommentCrisis(Comment comment, String keyword, List<Crisis> listCrisis, String type,
+			String detectType, double percentage) {
+		Crisis result = this.findCrisis(comment.getCommentId(), "comment", keyword, detectType);
 		if (result == null) {
 			Crisis crisis = new Crisis();
 			crisis.setContentId(comment.getCommentId());
 			crisis.setType(type);
 			crisis.setKeyword(keyword);
 			crisis.setDetectType(detectType);
+			crisis.setPercentage(percentage);
 			if (!containCrisis(listCrisis, crisis)) {
 				listCrisis.add(crisis);
 			}
 			this.saveCrisis(crisis);
 		} else {
+			if (result.getPercentage() < percentage) {
+				result.setPercentage(percentage);
+				result = this.saveCrisis(result);
+			}
 			if (!containCrisis(listCrisis, result)) {
 				listCrisis.add(result);
+			} else {
+				listCrisis = this.updateCrisisPercentage(listCrisis, result);
 			}
 		}
 		return listCrisis;
@@ -132,4 +165,33 @@ public class CrisisService {
 		}
 	}
 
+	@Transactional
+	public double getStandardTimes(double percentage_of_crisis) {
+		double result = 0;
+		if (percentage_of_crisis <= 93.3) {
+			result = 1.5;
+		} else if (percentage_of_crisis <= 97.7) {
+			result = 2;
+		} else if (percentage_of_crisis <= 99.4) {
+			result = 2.5;
+		} else if (percentage_of_crisis <= 99.9) {
+			result = 3;
+		}
+		return result;
+	}
+
+	@Transactional
+	public double getPercentage(double std) {
+		double result = 0;
+		if (std <= 1.5) {
+			result = 93.3;
+		} else if (std <= 2) {
+			result = 97.7;
+		} else if (std <= 2.5) {
+			result = 99.4;
+		} else if (std <= 3) {
+			result = 99.9;
+		}
+		return result;
+	}
 }
