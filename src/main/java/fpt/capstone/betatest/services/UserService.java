@@ -1,5 +1,6 @@
 package fpt.capstone.betatest.services;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.transaction.Transactional;
@@ -10,10 +11,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import fpt.capstone.betatest.entities.Crisis;
 import fpt.capstone.betatest.entities.Keyword;
 import fpt.capstone.betatest.entities.User;
 import fpt.capstone.betatest.entities.UserInfo;
+import fpt.capstone.betatest.model.CrisisModel;
 import fpt.capstone.betatest.model.MessageOutputModel;
+import fpt.capstone.betatest.model.UserCrisis;
+import fpt.capstone.betatest.repositories.CrisisRepository;
 import fpt.capstone.betatest.repositories.UserRepository;
 
 @Service
@@ -21,9 +26,17 @@ public class UserService {
 	@Autowired
 	private UserRepository usersRepository;
 	@Autowired
+	private CrisisRepository crisisRepository;
+	@Autowired
+	private PostService postService;
+	@Autowired
+	private CommentService commentService;
+	@Autowired
 	KeywordService keywordService;
 	@Autowired
 	UserInfoService userInfoService;
+	@Autowired
+	CrisisService crisisService;
 	
 	@Transactional
 	public User checkLogin(String username, String password) {
@@ -250,4 +263,36 @@ public class UserService {
 		}
 		return mod;
 	}
+	
+	public List<UserCrisis> getAllUserCrisis(User user) {
+		List<UserCrisis> output = new ArrayList<UserCrisis>();
+		UserCrisis uc = new UserCrisis();
+		CrisisModel cm = new CrisisModel();
+		List<Keyword> userKeywordList = keywordService.getAll(user);
+		List<CrisisModel> crisisOutputModel = new ArrayList<CrisisModel>();
+		for (int i = 0; i < userKeywordList.size(); i++) {
+			uc = new UserCrisis();
+			crisisOutputModel = new ArrayList<CrisisModel>();
+			uc.setKeyword(userKeywordList.get(i).getKeyword());
+			List<Crisis> listCrisis = crisisRepository.findByKeyword(userKeywordList.get(i).getKeyword());
+			for (Crisis crisis : listCrisis) {
+				cm = new CrisisModel();
+				cm.setId(crisis.getId());
+				cm.setDetectType(crisis.getDetectType());
+				cm.setPercentage(crisis.getPercentage());
+				if(crisis.getType().trim().equals("post")) {
+					cm.setType("post");
+					//System.out.println(crisis.getContentId()+"");
+					//System.out.println(postService.findPostById(crisis.getContentId()+""));
+					cm.setContent(postService.findPostById(crisis.getContentId()).get(0).getPostContent());
+				} else {
+					cm.setType("comment");
+					cm.setContent(commentService.getCommentByCommentId(crisis.getContentId()).get(0).getCommentContent());
+				}
+				crisisOutputModel.add(cm);
+			}
+			uc.setCrisisList(crisisOutputModel);
+			output.add(uc);
+		}
+		return output;}
 }

@@ -10,7 +10,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import fpt.capstone.betatest.entities.User;
+import fpt.capstone.betatest.model.CrisisModel;
 import fpt.capstone.betatest.model.MessageOutputModel;
+import fpt.capstone.betatest.model.UserCrisis;
 import fpt.capstone.betatest.services.KeywordService;
 import fpt.capstone.betatest.services.NotificationTokenService;
 import fpt.capstone.betatest.services.UserInfoService;
@@ -99,5 +101,11 @@ public class UserController {
 	public MessageOutputModel disableWebhook(@RequestParam(value = "userName") String username) {
 		User user = userService.getUserByUsername(username);
 		return userService.disableWebhook(user);
+	}
+	
+	@PostMapping("getAllUserCrisis")
+	public List<UserCrisis> getAllUserCrisis(@RequestParam(value = "userName") String username) {
+		User user = userService.getUserByUsername(username);
+		return userService.getAllUserCrisis(user);
 	}
 }

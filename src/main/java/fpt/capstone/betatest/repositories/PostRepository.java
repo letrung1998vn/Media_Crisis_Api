@@ -29,7 +29,9 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
 	List<Post> getByPostId(BigInteger id);
 
 	Post getById(String id);
-
+	
+	List<Post> findByPostId(BigInteger postId);
+	
 	List<Post> findByKeywordAndIsNew(String keyword, Boolean isNew);
 
 	@Query(nativeQuery = true, value = "select TOP 1 uuid_post, post_id, post_content, "

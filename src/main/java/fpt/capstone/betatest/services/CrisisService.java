@@ -11,7 +11,11 @@ import org.springframework.stereotype.Service;
 
 import fpt.capstone.betatest.entities.Comment;
 import fpt.capstone.betatest.entities.Crisis;
+import fpt.capstone.betatest.entities.Keyword;
 import fpt.capstone.betatest.entities.Post;
+import fpt.capstone.betatest.entities.User;
+import fpt.capstone.betatest.model.CrisisModel;
+import fpt.capstone.betatest.model.UserCrisis;
 import fpt.capstone.betatest.repositories.CrisisRepository;
 
 @Service
@@ -25,6 +29,12 @@ public class CrisisService {
 	@Autowired
 	private CommentService commentService;
 
+	@Autowired
+	private CrisisService crisisService;
+
+	@Autowired
+	private KeywordService keywordService;
+	
 	@Transactional
 	public Crisis saveCrisis(Crisis crisis) {
 		return crisisRepository.save(crisis);
@@ -194,4 +204,5 @@ public class CrisisService {
 		}
 		return result;
 	}
+	
 }

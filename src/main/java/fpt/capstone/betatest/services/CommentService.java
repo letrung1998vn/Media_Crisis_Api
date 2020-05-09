@@ -28,6 +28,10 @@ public class CommentService {
 		return commentRepository.findByCommentId(id);
 	}
 	@Transactional
+	public Comment findCommentByCommentId(String id) {
+		return commentRepository.findByCommentId(id);
+	}
+	@Transactional
 	public List<Comment> getCommentByCommentIdSortCrawlDate(BigInteger id) {
 		return commentRepository.findByCommentIdOrderByCrawlDateDesc(id);
 	}

@@ -17,6 +17,7 @@ public interface CommentRepository extends JpaRepository<Comment, Integer> {
 	List<Comment> findByCommentId(BigInteger id);
 	List<Comment> findByCommentIdOrderByCrawlDateDesc(BigInteger id);
 	Comment findById(String id);
+	Comment findByCommentId(String commentId);
 	Page<Comment> findAllByOrderByCrawlDateDesc(Pageable pageable);
 	Page<Comment> findByIsNegativeOrderByCrawlDateDesc(boolean isNegative, Pageable pageable);
 }
