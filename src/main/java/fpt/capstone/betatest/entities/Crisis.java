@@ -1,6 +1,7 @@
 package fpt.capstone.betatest.entities;
 
 import java.math.BigInteger;
+import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -31,6 +32,9 @@ public class Crisis {
 	
 	@Column(name = "percentage")
 	private double percentage;
+	
+	@Column(name = "detect_date")
+	private Date detectDate;
 	
 	public int getId() {
 		return id;
@@ -78,6 +82,14 @@ public class Crisis {
 
 	public void setPercentage(double percentage) {
 		this.percentage = percentage;
+	}
+
+	public Date getDetectDate() {
+		return detectDate;
+	}
+
+	public void setDetectDate(Date detectDate) {
+		this.detectDate = detectDate;
 	}
 	
 }

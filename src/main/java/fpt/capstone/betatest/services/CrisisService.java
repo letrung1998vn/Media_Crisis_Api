@@ -2,6 +2,7 @@ package fpt.capstone.betatest.services;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.transaction.Transactional;
@@ -34,7 +35,7 @@ public class CrisisService {
 
 	@Autowired
 	private KeywordService keywordService;
-	
+
 	@Transactional
 	public Crisis saveCrisis(Crisis crisis) {
 		return crisisRepository.save(crisis);
@@ -106,6 +107,8 @@ public class CrisisService {
 	public List<Crisis> insertPostCrisis(Post post, String keyword, String type, List<Crisis> listCrisis,
 			String detectType, double percentage) {
 		Crisis result = this.findCrisis(post.getPostId(), "post", keyword, detectType);
+		long millis = System.currentTimeMillis();
+		Date date = new Date(millis);
 		if (result == null) {
 			Crisis crisis = new Crisis();
 			crisis.setContentId(post.getPostId());
@@ -113,6 +116,7 @@ public class CrisisService {
 			crisis.setKeyword(keyword);
 			crisis.setDetectType(detectType);
 			crisis.setPercentage(percentage);
+			crisis.setDetectDate(date);
 			if (!containCrisis(listCrisis, crisis)) {
 				listCrisis.add(crisis);
 			}
@@ -120,6 +124,7 @@ public class CrisisService {
 		} else {
 			if (result.getPercentage() < percentage) {
 				result.setPercentage(percentage);
+				result.setDetectDate(date);
 				result = this.saveCrisis(result);
 			}
 			if (!containCrisis(listCrisis, result)) {
@@ -135,6 +140,8 @@ public class CrisisService {
 	public List<Crisis> insertCommentCrisis(Comment comment, String keyword, List<Crisis> listCrisis, String type,
 			String detectType, double percentage) {
 		Crisis result = this.findCrisis(comment.getCommentId(), "comment", keyword, detectType);
+		long millis = System.currentTimeMillis();
+		Date date = new Date(millis);
 		if (result == null) {
 			Crisis crisis = new Crisis();
 			crisis.setContentId(comment.getCommentId());
@@ -142,6 +149,7 @@ public class CrisisService {
 			crisis.setKeyword(keyword);
 			crisis.setDetectType(detectType);
 			crisis.setPercentage(percentage);
+			crisis.setDetectDate(date);
 			if (!containCrisis(listCrisis, crisis)) {
 				listCrisis.add(crisis);
 			}
@@ -149,6 +157,7 @@ public class CrisisService {
 		} else {
 			if (result.getPercentage() < percentage) {
 				result.setPercentage(percentage);
+				result.setDetectDate(date);
 				result = this.saveCrisis(result);
 			}
 			if (!containCrisis(listCrisis, result)) {
@@ -204,5 +213,5 @@ public class CrisisService {
 		}
 		return result;
 	}
-	
+
 }
