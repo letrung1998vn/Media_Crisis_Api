@@ -16,6 +16,7 @@ import fpt.capstone.betatest.entities.Keyword;
 import fpt.capstone.betatest.entities.User;
 import fpt.capstone.betatest.entities.UserInfo;
 import fpt.capstone.betatest.model.CrisisModel;
+import fpt.capstone.betatest.model.CustomComparator;
 import fpt.capstone.betatest.model.MessageOutputModel;
 import fpt.capstone.betatest.model.UserCrisis;
 import fpt.capstone.betatest.repositories.CrisisRepository;
@@ -289,5 +290,9 @@ public class UserService {
 				crisisOutputModel.add(cm);
 			}
 		}
-		return crisisOutputModel;}
+		crisisOutputModel.sort(new CustomComparator());
+		return crisisOutputModel;
+	}
 }
+
+
