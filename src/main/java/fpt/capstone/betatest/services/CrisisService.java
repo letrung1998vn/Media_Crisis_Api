@@ -50,6 +50,11 @@ public class CrisisService {
 	public List<Crisis> getCrisisByKeyword(String keyword) {
 		return crisisRepository.findByKeyword(keyword);
 	}
+	
+	@Transactional
+	public List<Crisis> getCrisisByKeywordOrdDes(String keyword) {
+		return crisisRepository.findByKeywordOrderByDetectDateDesc(keyword);
+	}
 
 	@Transactional
 	public Crisis getCrisisById(int id) {

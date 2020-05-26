@@ -104,7 +104,7 @@ public class UserController {
 	}
 	
 	@PostMapping("getAllUserCrisis")
-	public List<UserCrisis> getAllUserCrisis(@RequestParam(value = "userName") String username) {
+	public List<CrisisModel> getAllUserCrisis(@RequestParam(value = "userName") String username) {
 		User user = userService.getUserByUsername(username);
 		return userService.getAllUserCrisis(user);
 	}

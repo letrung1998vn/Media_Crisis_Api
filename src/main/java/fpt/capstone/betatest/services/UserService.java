@@ -264,22 +264,19 @@ public class UserService {
 		return mod;
 	}
 	
-	public List<UserCrisis> getAllUserCrisis(User user) {
-		List<UserCrisis> output = new ArrayList<UserCrisis>();
-		UserCrisis uc = new UserCrisis();
+	public List<CrisisModel> getAllUserCrisis(User user) {
 		CrisisModel cm = new CrisisModel();
 		List<Keyword> userKeywordList = keywordService.getAll(user);
 		List<CrisisModel> crisisOutputModel = new ArrayList<CrisisModel>();
 		for (int i = 0; i < userKeywordList.size(); i++) {
-			uc = new UserCrisis();
-			crisisOutputModel = new ArrayList<CrisisModel>();
-			uc.setKeyword(userKeywordList.get(i).getKeyword());
-			List<Crisis> listCrisis = crisisRepository.findByKeyword(userKeywordList.get(i).getKeyword());
+			List<Crisis> listCrisis = crisisRepository.findByKeywordOrderByDetectDateDesc(userKeywordList.get(i).getKeyword());
 			for (Crisis crisis : listCrisis) {
 				cm = new CrisisModel();
 				cm.setId(crisis.getId());
 				cm.setDetectType(crisis.getDetectType());
 				cm.setPercentage(crisis.getPercentage());
+				cm.setKeyword(crisis.getKeyword());
+				cm.setDetectDate(crisis.getDetectDate());
 				if(crisis.getType().trim().equals("post")) {
 					cm.setType("post");
 					//System.out.println(crisis.getContentId()+"");
@@ -291,8 +288,6 @@ public class UserService {
 				}
 				crisisOutputModel.add(cm);
 			}
-			uc.setCrisisList(crisisOutputModel);
-			output.add(uc);
 		}
-		return output;}
+		return crisisOutputModel;}
 }

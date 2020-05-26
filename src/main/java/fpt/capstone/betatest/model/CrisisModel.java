@@ -1,12 +1,16 @@
 package fpt.capstone.betatest.model;
 
+import java.util.Date;
+
 public class CrisisModel {
 	private int id;
     private String type;
     private String DetectType;
     private String Content;
     private Double percentage;
-
+    private String keyword;
+    private Date detectDate;
+    
     public CrisisModel() {
     }
 
@@ -50,8 +54,21 @@ public class CrisisModel {
         Content = content;
     }
 
-    @Override
-    public String toString() {
-        return "Crisis{" + "id=" + id + ", type=" + type + ", DetectType=" + DetectType + ", Content=" + Content + ", percentage=" + percentage + '}';
-    }
+	public String getKeyword() {
+		return keyword;
+	}
+
+	public void setKeyword(String keyword) {
+		this.keyword = keyword;
+	}
+
+	public Date getDetectDate() {
+		return detectDate;
+	}
+
+	public void setDetectDate(Date detectDate) {
+		this.detectDate = detectDate;
+	}
+
+    
 }

@@ -14,5 +14,9 @@ public interface CrisisRepository extends JpaRepository<Crisis, Integer> {
 
 	List<Crisis> findByKeyword(String keyword);
 	
+	List<Crisis> findByKeywordOrderByDetectDateDesc(String keyword);
+	
 	Crisis findById(int id);
+	
+	
 }
