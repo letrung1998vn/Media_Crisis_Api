@@ -44,8 +44,10 @@ public class CheckMeaningCurrentPostService extends BaseThread {
 	@Autowired
 	private KeywordService keywordService;
 
-	public void setData(StanfordCoreNLP pipeline, String keyword, List<Post> listPost, List<Crisis> listCrisis) {
-		this.pipeline = pipeline;
+	public void setData(StanfordCoreNLP engSC, StanfordCoreNLP viSC, String keyword, List<Post> listPost,
+			List<Crisis> listCrisis) {
+		this.engSC = engSC;
+		this.viSC = viSC;
 		this.keyword = keyword;
 		this.listPost = listPost;
 		this.listCrisis = listCrisis;
@@ -71,7 +73,12 @@ public class CheckMeaningCurrentPostService extends BaseThread {
 				for (int i = 0; i < listPost.size(); i++) {
 					Post post = listPost.get(i);
 					if (post.isNegative() == null) {
-						post = checkMeaningService.updateMeaningPost(post, pipeline, keyword);
+						if (post.getLanguage().equals("en")) {
+							post = checkMeaningService.updateMeaningPost(post, engSC, keyword);
+						} else {
+							post = checkMeaningService.updateMeaningPost(post, viSC, keyword);
+						}
+
 					}
 					if (post.isNegative()) {
 						listPostNegative.add(post);
@@ -164,7 +171,7 @@ public class CheckMeaningCurrentPostService extends BaseThread {
 					Post post = listPost.get(i);
 					listComment.addAll(commentService.getCommentByPostId(post.getId()));
 				}
-				CheckMeaningCurrentCommentThread.setData(pipeline, keyword, listComment, listCrisis);
+				CheckMeaningCurrentCommentThread.setData(engSC, viSC, keyword, listComment, listCrisis);
 				CheckMeaningCurrentCommentThread.start();
 				this.interrupt();
 			} catch (Exception e) {

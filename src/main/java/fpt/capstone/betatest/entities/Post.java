@@ -49,6 +49,9 @@ public class Post implements Serializable {
 	@Column(name = "isNegative")
 	private Boolean isNegative;
 	
+	@Column(name = "language")
+	private String language;
+	
 	public String getId() {
 		return id;
 	}
@@ -143,6 +146,22 @@ public class Post implements Serializable {
 
 	public void setNegative(Boolean isNegative) {
 		this.isNegative = isNegative;
+	}
+
+	public Boolean getIsNegative() {
+		return isNegative;
+	}
+
+	public void setIsNegative(Boolean isNegative) {
+		this.isNegative = isNegative;
+	}
+
+	public String getLanguage() {
+		return language;
+	}
+
+	public void setLanguage(String language) {
+		this.language = language;
 	}
 
 }

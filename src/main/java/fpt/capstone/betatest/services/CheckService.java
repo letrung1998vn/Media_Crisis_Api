@@ -21,10 +21,14 @@ public class CheckService extends Thread {
 
 	@Autowired
 	private KeywordCrawlerService keywordCrawlerService;
-	StanfordCoreNLP pipeline;
 
-	public void setData(StanfordCoreNLP pipeline) {
-		this.pipeline = pipeline;
+	StanfordCoreNLP engSC;
+
+	StanfordCoreNLP viSC;
+
+	public void setData(StanfordCoreNLP engSC, StanfordCoreNLP viSC) {
+		this.engSC = engSC;
+		this.viSC = viSC;
 	}
 
 	@Override
@@ -40,10 +44,11 @@ public class CheckService extends Thread {
 						Keyword_Crawler keyword = listKeyword.get(i);
 						checkMeaningService.calStandard(keyword.getKeyword());
 						listCrisis = new ArrayList<>();
-						checkMeaningService.detectCrisisInCurrent(listKeyword.get(i).getKeyword(), pipeline, listCrisis);
+						checkMeaningService.detectCrisisInCurrent(listKeyword.get(i).getKeyword(), engSC, viSC,
+								listCrisis);
 						if (listCrisis.size() > 0) {
 							notificationService.sendNotification(listCrisis, listKeyword.get(i).getKeyword());
-						} 
+						}
 					} catch (Exception e) {
 						e.printStackTrace();
 					}

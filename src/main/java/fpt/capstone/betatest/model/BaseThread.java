@@ -12,7 +12,8 @@ public abstract class BaseThread extends Thread {
 	public final String negative = "negative";
 	public final String postType = "post";
 	public final String commentType = "comment";
-	public StanfordCoreNLP pipeline;
+	public StanfordCoreNLP engSC;
+	public StanfordCoreNLP viSC;
 	public String keyword;
 	public List<Comment> listComment;
 	public List<Crisis> listCrisis;

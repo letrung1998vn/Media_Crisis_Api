@@ -86,11 +86,11 @@ public class CheckMeaningService {
 			calIncreasePostStandard(keyword, listFirstPost, listSencondPost);
 			calIncreaseCommentStandard(keyword, listFirstComment, listSencondComment);
 		}
-		 for (int i = 0; i < listPost.size(); i++) {
-		 Post post = listPost.get(i);
-		 post.setNew(false);
-		 postService.save(post);
-		 }
+		for (int i = 0; i < listPost.size(); i++) {
+			Post post = listPost.get(i);
+			post.setNew(false);
+			postService.save(post);
+		}
 	}
 
 	@Transactional
@@ -617,11 +617,11 @@ public class CheckMeaningService {
 	}
 
 	@Transactional
-	public void detectCrisisInCurrent(String keyword, StanfordCoreNLP pipeline, List<Crisis> listCrisis)
-			throws Exception {
+	public void detectCrisisInCurrent(String keyword, StanfordCoreNLP engSC, StanfordCoreNLP viSC,
+			List<Crisis> listCrisis) throws Exception {
 		List<Post> listPost = postService.getRecentPost(keyword);
 		if (listPost.size() > 0) {
-			CheckMeaningCurrentPostThread.setData(pipeline, keyword, listPost, listCrisis);
+			CheckMeaningCurrentPostThread.setData(engSC, viSC, keyword, listPost, listCrisis);
 			CheckMeaningCurrentPostThread.start();
 		}
 	}

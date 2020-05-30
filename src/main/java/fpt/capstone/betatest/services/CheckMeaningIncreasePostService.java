@@ -37,8 +37,9 @@ public class CheckMeaningIncreasePostService extends BaseThread {
 	@Autowired
 	private KeywordService keywordService;
 
-	public void setData(StanfordCoreNLP pipeline, String keyword, List<Post> listPost, List<Crisis> listCrisis) {
-		this.pipeline = pipeline;
+	public void setData(StanfordCoreNLP engSC, StanfordCoreNLP viSC, String keyword, List<Post> listPost, List<Crisis> listCrisis) {
+		this.engSC = engSC;
+		this.viSC = viSC;
 		this.keyword = keyword;
 		this.listPost = listPost;
 		this.listCrisis = listCrisis;
@@ -66,10 +67,20 @@ public class CheckMeaningIncreasePostService extends BaseThread {
 					Post post = listPost.get(i);
 					Post nextPost = listPost.get(i + 1);
 					if (post.isNegative() == null) {
-						post = checkMeaningService.updateMeaningPost(post, pipeline, keyword);
+						if (post.getLanguage().equals("en")) {
+							post = checkMeaningService.updateMeaningPost(post, engSC, keyword);
+						} else {
+							post = checkMeaningService.updateMeaningPost(post, viSC, keyword);
+						}
+
 					}
 					if (nextPost.isNegative() == null) {
-						nextPost = checkMeaningService.updateMeaningPost(nextPost, pipeline, keyword);
+						if (nextPost.getLanguage().equals("en")) {
+							nextPost = checkMeaningService.updateMeaningPost(nextPost, engSC, keyword);
+						} else {
+							nextPost = checkMeaningService.updateMeaningPost(nextPost, viSC, keyword);
+						}
+
 					}
 					if (post.isNegative() && nextPost.isNegative()) {
 						for (int x = 0; x < listKey.size(); x++) {
@@ -131,7 +142,7 @@ public class CheckMeaningIncreasePostService extends BaseThread {
 						listComment.add(newPostComment.get(result));
 					}
 				}
-				CheckMeaningIncreaseCommentThread.setData(pipeline, keyword, listComment, listCrisis);
+				CheckMeaningIncreaseCommentThread.setData(engSC, viSC, keyword, listComment, listCrisis);
 				CheckMeaningIncreaseCommentThread.start();
 				this.interrupt();
 			} catch (Exception e) {

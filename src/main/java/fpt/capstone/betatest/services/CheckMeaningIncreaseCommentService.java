@@ -30,8 +30,9 @@ public class CheckMeaningIncreaseCommentService extends BaseThread {
 	@Autowired
 	private KeywordService keywordService;
 
-	public void setData(StanfordCoreNLP pipeline, String keyword, List<Comment> listComment, List<Crisis> listCrisis) {
-		this.pipeline = pipeline;
+	public void setData(StanfordCoreNLP engSC, StanfordCoreNLP viSC, String keyword, List<Comment> listComment, List<Crisis> listCrisis) {
+		this.engSC = engSC;
+		this.viSC = viSC;
 		this.keyword = keyword;
 		this.listComment = listComment;
 		this.listCrisis = listCrisis;
@@ -58,10 +59,18 @@ public class CheckMeaningIncreaseCommentService extends BaseThread {
 					Comment lastComment = listComment.get(i);
 					Comment newComment = listComment.get(i + 1);
 					if (lastComment.isNegative() == null) {
-						lastComment = checkMeaningService.updateMeaningComment(lastComment, pipeline, keyword);
+						if(lastComment.getLanguage().equals("en")) {
+							checkMeaningService.updateMeaningComment(lastComment, engSC, keyword);
+						} else {
+							checkMeaningService.updateMeaningComment(lastComment, viSC, keyword);
+						}
 					}
 					if (newComment.isNegative() == null) {
-						newComment = checkMeaningService.updateMeaningComment(newComment, pipeline, keyword);
+						if(newComment.getLanguage().equals("en")) {
+							checkMeaningService.updateMeaningComment(newComment, engSC, keyword);
+						} else {
+							checkMeaningService.updateMeaningComment(newComment, viSC, keyword);
+						}
 					}
 					if (lastComment.isNegative() && newComment.isNegative()) {
 						for (int x = 0; x < listKey.size(); x++) {

@@ -22,8 +22,10 @@ public class CheckMeaningController {
 	public void checkMeaning() throws Exception {
 		Properties props = new Properties();
 		props.setProperty("annotators", "tokenize, ssplit, pos, lemma, parse, ner, sentiment");
-		StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
-		check.setData(pipeline);
+		StanfordCoreNLP engSC = new StanfordCoreNLP(props);
+		props.put("sentiment.model", "src/main/resources/my.model.ser.gz");
+		StanfordCoreNLP viSC = new StanfordCoreNLP(props);
+		check.setData(engSC, viSC);
 		check.start();
 	}
 
