@@ -164,4 +164,13 @@ public class Post implements Serializable {
 		this.language = language;
 	}
 
+	@Override
+	public String toString() {
+		return "Post [id=" + id + ", postId=" + postId + ", postContent=" + postContent + ", createDate=" + createDate
+				+ ", linkDetail=" + linkDetail + ", numberOfReact=" + numberOfReact + ", numberOfReweet="
+				+ numberOfReweet + ", numberOfReply=" + numberOfReply + ", crawlDate=" + crawlDate + ", keyword="
+				+ keyword + ", isNew=" + isNew + ", isNegative=" + isNegative + ", language=" + language + "]";
+	}
+
+	
 }
