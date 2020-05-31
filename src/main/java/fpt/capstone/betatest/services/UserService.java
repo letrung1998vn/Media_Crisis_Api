@@ -270,7 +270,7 @@ public class UserService {
 		List<Keyword> userKeywordList = keywordService.getAll(user);
 		List<CrisisModel> crisisOutputModel = new ArrayList<CrisisModel>();
 		for (int i = 0; i < userKeywordList.size(); i++) {
-			List<Crisis> listCrisis = crisisRepository.findByKeywordOrderByDetectDateDesc(userKeywordList.get(i).getKeyword());
+			List<Crisis> listCrisis = crisisService.getCrisisByKeywordOrdDes(userKeywordList.get(i).getKeyword());
 			for (Crisis crisis : listCrisis) {
 				cm = new CrisisModel();
 				cm.setId(crisis.getId());
