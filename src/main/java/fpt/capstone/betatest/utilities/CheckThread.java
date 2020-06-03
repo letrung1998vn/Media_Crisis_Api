@@ -36,13 +36,16 @@ public class CheckThread extends Thread {
 	@Override
 	public synchronized void start() {
 		List<Keyword_Crawler> listKeyword = keywordCrawlerService.getAllKeyword();
-		List<Crisis> listCrisis  = new ArrayList<>();
+		List<Crisis> listCrisis = new ArrayList<>();
 		for (int i = 0; i < listKeyword.size(); i++) {
 			try {
 				Keyword_Crawler keyword = listKeyword.get(i);
 				checkMeaningService.calStandard(keyword.getKeyword());
+				listCrisis = new ArrayList<>();
 				checkMeaningService.detectCrisisInCurrent(listKeyword.get(i).getKeyword(), client, listCrisis);
-				
+				if (listCrisis.size() > 0) {
+				notificationService.sendNotification(listCrisis, listKeyword.get(i).getKeyword());
+				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
