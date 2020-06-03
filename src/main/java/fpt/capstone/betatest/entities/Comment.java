@@ -39,7 +39,13 @@ public class Comment implements Serializable {
 	
 	@Column(name = "crawl_date")
 	private Date crawlDate;
-
+	
+	@Column(name = "isNegative")
+	private Boolean isNegative;
+	
+	@Column(name = "language")
+	private String language;
+	
 	public String getId() {
 		return id;
 	}
@@ -110,5 +116,29 @@ public class Comment implements Serializable {
 
 	public void setCrawlDate(Date crawlDate) {
 		this.crawlDate = crawlDate;
+	}
+
+	public Boolean isNegative() {
+		return isNegative;
+	}
+
+	public void setNegative(Boolean isNegative) {
+		this.isNegative = isNegative;
+	}
+
+	public Boolean getIsNegative() {
+		return isNegative;
+	}
+
+	public void setIsNegative(Boolean isNegative) {
+		this.isNegative = isNegative;
+	}
+
+	public String getLanguage() {
+		return language;
+	}
+
+	public void setLanguage(String language) {
+		this.language = language;
 	}
 }

@@ -1,5 +1,8 @@
 package fpt.capstone.betatest.services;
 
+import java.util.Date;
+import java.util.List;
+
 import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,23 +10,27 @@ import org.springframework.stereotype.Service;
 
 import fpt.capstone.betatest.entities.NegativeRatio;
 import fpt.capstone.betatest.repositories.NegativeRatioRepository;
+
 @Service
 public class NegativeRatioService {
 	@Autowired
 	private NegativeRatioRepository negativeRatioRepository;
-	
-	
+
 	@Transactional
-	public NegativeRatio getNegativeRatio(String keyword, String type) {
-		return negativeRatioRepository.findByKeywordAndType(keyword, type);
+	public List<NegativeRatio> getNegativeRatio(String keyword, String type) {
+		return negativeRatioRepository.findByKeywordAndTypeOrderByUpdateDateDesc(keyword, type);
+	}
+	@Transactional
+	public List<NegativeRatio> getNegativeRatioByDateAsc(String keyword, String type, Date date) {
+		return negativeRatioRepository.findByKeywordAndTypeAndUpdateDateLessThanEqualOrderByUpdateDateAsc(keyword, type, date);
 	}
 	@Transactional
 	public void save(NegativeRatio negativeRatio) {
 		negativeRatioRepository.save(negativeRatio);
 	}
-	
+
 	@Transactional
-	public double calNegativeRatio(int listPost , int listPostNegative) {
-		return (listPost/listPostNegative);
+	public double calNegativeRatio(int listPost, int listPostNegative) {
+		return ((double) listPostNegative / (double) listPost);
 	}
 }

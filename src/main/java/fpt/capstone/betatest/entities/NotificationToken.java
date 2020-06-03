@@ -1,5 +1,7 @@
 package fpt.capstone.betatest.entities;
 
+import java.util.Date;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -23,6 +25,9 @@ public class NotificationToken {
 	
 	@Column(name = "available")
 	private boolean available;
+	
+	@Column(name = "activeTime")
+	private Date activeTime;
 	
 	public int getId() {
 		return id;
@@ -55,5 +60,20 @@ public class NotificationToken {
 	public void setAvailable(boolean available) {
 		this.available = available;
 	}
+
+	public Date getActiveTime() {
+		return activeTime;
+	}
+
+	public void setActiveTime(Date activeTime) {
+		this.activeTime = activeTime;
+	}
+
+	@Override
+	public String toString() {
+		return "NotificationToken [id=" + id + ", notiToken=" + notiToken + ", userName=" + userName + ", available="
+				+ available + ", activeTime=" + activeTime + "]";
+	}
+	
 	
 }

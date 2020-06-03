@@ -46,6 +46,12 @@ public class Post implements Serializable {
 	@Column(name = "isNew")
 	private boolean isNew;
 
+	@Column(name = "isNegative")
+	private Boolean isNegative;
+	
+	@Column(name = "language")
+	private String language;
+	
 	public String getId() {
 		return id;
 	}
@@ -134,4 +140,37 @@ public class Post implements Serializable {
 		this.isNew = isNew;
 	}
 
+	public Boolean isNegative() {
+		return isNegative;
+	}
+
+	public void setNegative(Boolean isNegative) {
+		this.isNegative = isNegative;
+	}
+
+	public Boolean getIsNegative() {
+		return isNegative;
+	}
+
+	public void setIsNegative(Boolean isNegative) {
+		this.isNegative = isNegative;
+	}
+
+	public String getLanguage() {
+		return language;
+	}
+
+	public void setLanguage(String language) {
+		this.language = language;
+	}
+
+	@Override
+	public String toString() {
+		return "Post [id=" + id + ", postId=" + postId + ", postContent=" + postContent + ", createDate=" + createDate
+				+ ", linkDetail=" + linkDetail + ", numberOfReact=" + numberOfReact + ", numberOfReweet="
+				+ numberOfReweet + ", numberOfReply=" + numberOfReply + ", crawlDate=" + crawlDate + ", keyword="
+				+ keyword + ", isNew=" + isNew + ", isNegative=" + isNegative + ", language=" + language + "]";
+	}
+
+	
 }

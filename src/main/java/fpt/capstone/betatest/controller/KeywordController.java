@@ -42,19 +42,21 @@ public class KeywordController {
 
 	@PostMapping("createKeyword")
 	public MessageOutputModel createKeyword(@RequestParam(value = "keyword") String keyword,
-			@RequestParam(value = "userId") String userId) {
+			@RequestParam(value = "userId") String userId, @RequestParam(value = "crisis_rate") String crisisRateString) {
 		Keyword kw = new Keyword();
 		User user = userService.getUserByUsername(userId);
-		return keywordService.createKeyword(user, kw, keyword);
+		double crisisRate = Double.parseDouble(crisisRateString);
+		return keywordService.createKeyword(user, kw, keyword, crisisRate);
 	}
 
 	@PostMapping("updateKeyword")
 	public MessageOutputModel updateKeyword(@RequestParam(value = "keyword") String keyword,
 			@RequestParam(value = "keywordId") int keywordId, @RequestParam(value = "logVersion") int log_version,
-			@RequestParam(value = "author") String author) {
+			@RequestParam(value = "author") String author, @RequestParam(value = "crisis_rate") String crisisRateString) {
 		Keyword kw = keywordService.getKeywordById(keywordId);
 		User user = userService.getUserByUsername(author);
-		return keywordService.updateKeyword(user, kw, keyword, log_version, keywordId);
+		double crisisRate = Double.parseDouble(crisisRateString);
+		return keywordService.updateKeyword(user, kw, keyword, log_version, keywordId, crisisRate);
 	}
 
 	@PostMapping("deleteKeyword")

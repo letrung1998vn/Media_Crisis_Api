@@ -1,6 +1,7 @@
 package fpt.capstone.betatest.entities;
 
 import java.math.BigInteger;
+import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -25,6 +26,15 @@ public class Crisis {
 	
 	@Column(name = "keyword")
 	private String keyword;
+	
+	@Column(name = "detect_type")
+	private String detectType;
+	
+	@Column(name = "percentage")
+	private double percentage;
+	
+	@Column(name = "detect_date")
+	private Date detectDate;
 	
 	public int getId() {
 		return id;
@@ -56,6 +66,30 @@ public class Crisis {
 
 	public void setKeyword(String keyword) {
 		this.keyword = keyword;
+	}
+
+	public String getDetectType() {
+		return detectType;
+	}
+
+	public void setDetectType(String detectType) {
+		this.detectType = detectType;
+	}
+
+	public double getPercentage() {
+		return percentage;
+	}
+
+	public void setPercentage(double percentage) {
+		this.percentage = percentage;
+	}
+
+	public Date getDetectDate() {
+		return detectDate;
+	}
+
+	public void setDetectDate(Date detectDate) {
+		this.detectDate = detectDate;
 	}
 	
 }

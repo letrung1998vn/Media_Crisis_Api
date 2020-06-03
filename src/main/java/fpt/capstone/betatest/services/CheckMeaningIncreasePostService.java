@@ -1,0 +1,153 @@
+package fpt.capstone.betatest.services;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import edu.stanford.nlp.pipeline.StanfordCoreNLP;
+import fpt.capstone.betatest.entities.Comment;
+import fpt.capstone.betatest.entities.Crisis;
+import fpt.capstone.betatest.entities.Keyword;
+import fpt.capstone.betatest.entities.LastStandard;
+import fpt.capstone.betatest.entities.Post;
+import fpt.capstone.betatest.model.BaseThread;
+
+@Service
+public class CheckMeaningIncreasePostService extends BaseThread {
+	@Autowired
+	private NotificationService notificationService;
+
+	@Autowired
+	private LastStandardService lastStandardService;
+
+	@Autowired
+	private CrisisService crisisService;
+
+	@Autowired
+	private CommentService commentService;
+
+	@Autowired
+	private CheckMeaningIncreaseCommentService CheckMeaningIncreaseCommentThread;
+
+	@Autowired
+	private CheckMeaningService checkMeaningService;
+
+	@Autowired
+	private KeywordService keywordService;
+
+	public void setData(StanfordCoreNLP engSC, StanfordCoreNLP viSC, String keyword, List<Post> listPost, List<Crisis> listCrisis) {
+		this.engSC = engSC;
+		this.viSC = viSC;
+		this.keyword = keyword;
+		this.listPost = listPost;
+		this.listCrisis = listCrisis;
+	}
+
+	@Override
+	public synchronized void start() {
+		boolean interruptFlag = false;
+		if (listPost.size() < 2) {
+			interruptFlag = true;
+			if (listCrisis.size() > 0) {
+				notificationService.sendNotification(listCrisis, keyword);
+			}
+		}
+		if (!interruptFlag) {
+			try {
+				LastStandard lastPostStandardReact = lastStandardService.getLastStandard(keyword, "increasePost",
+						"react");
+				LastStandard lastPostStandardShare = lastStandardService.getLastStandard(keyword, "increasePost",
+						"share");
+				LastStandard lastPostStandardComment = lastStandardService.getLastStandard(keyword, "increasePost",
+						"comment");
+				List<Keyword> listKey = keywordService.getUserByKeyword(keyword);
+				for (int i = 0; i < listPost.size(); i = i + 2) {
+					Post post = listPost.get(i);
+					Post nextPost = listPost.get(i + 1);
+					if (post.isNegative() == null) {
+						if (post.getLanguage().equals("en")) {
+							post = checkMeaningService.updateMeaningPost(post, engSC, keyword);
+						} else {
+							post = checkMeaningService.updateMeaningPost(post, viSC, keyword);
+						}
+
+					}
+					if (nextPost.isNegative() == null) {
+						if (nextPost.getLanguage().equals("en")) {
+							nextPost = checkMeaningService.updateMeaningPost(nextPost, engSC, keyword);
+						} else {
+							nextPost = checkMeaningService.updateMeaningPost(nextPost, viSC, keyword);
+						}
+
+					}
+					if (post.isNegative() && nextPost.isNegative()) {
+						for (int x = 0; x < listKey.size(); x++) {
+							Keyword keywordObj = listKey.get(x);
+							double std = crisisService.getStandardTimes(keywordObj.getPercent_of_crisis());
+							if (lastPostStandardReact != null && lastPostStandardShare != null
+									&& lastPostStandardComment != null) {
+								double react_upper_limit = 0, share_upper_limit = 0, comment_upper_limit = 0;
+								if (lastPostStandardReact != null) {
+									react_upper_limit = lastStandardService.calUpperLimit(
+											lastPostStandardReact.getLastStandard(),
+											lastPostStandardReact.getLastMean(), std);
+								}
+								if (lastPostStandardShare != null) {
+									share_upper_limit = lastStandardService.calUpperLimit(
+											lastPostStandardShare.getLastStandard(),
+											lastPostStandardShare.getLastMean(), std);
+								}
+								if (lastPostStandardComment != null) {
+									comment_upper_limit = lastStandardService.calUpperLimit(
+											lastPostStandardComment.getLastStandard(),
+											lastPostStandardComment.getLastMean(), std);
+								}
+								double percentage = crisisService.getPercentage(std);
+								if ((post.getNumberOfReply() - nextPost.getNumberOfReply()) > comment_upper_limit) {
+									// Add Crisis To Db
+									System.out.println("Crisis post increase: " + nextPost.getPostId());
+									listCrisis = crisisService.insertPostCrisis(nextPost, keyword, postType, listCrisis,
+											detectTypeIncreaseReact, percentage);
+								} else if ((post.getNumberOfReweet()
+										- nextPost.getNumberOfReweet()) > share_upper_limit) {
+									System.out.println("Crisis post increase: " + nextPost.getPostId());
+									listCrisis = crisisService.insertPostCrisis(nextPost, keyword, postType, listCrisis,
+											detectTypeIncreaseShare, percentage);
+								} else if ((post.getNumberOfReact()
+										- nextPost.getNumberOfReact()) > react_upper_limit) {
+									System.out.println("Crisis post increase: " + nextPost.getPostId());
+									listCrisis = crisisService.insertPostCrisis(nextPost, keyword, postType, listCrisis,
+											detectTypeIncreaseReact, percentage);
+								}
+							}
+						}
+					}
+				}
+				List<Comment> lastPostComment = new ArrayList<>();
+				List<Comment> newPostComment = new ArrayList<>();
+				List<Comment> listComment = new ArrayList<>();
+				for (int i = 0; i < listPost.size(); i = i + 2) {
+					Post post = listPost.get(i);
+					Post nextPost = listPost.get(i + 1);
+					lastPostComment.addAll(commentService.getCommentByPostId(post.getId()));
+					newPostComment.addAll(commentService.getCommentByPostId(nextPost.getId()));
+				}
+				for (int i = 0; i < lastPostComment.size(); i++) {
+					Comment lastComment = lastPostComment.get(i);
+					int result = commentService.findComment(newPostComment, lastComment);
+					if (result != -1) {
+						listComment.add(lastComment);
+						listComment.add(newPostComment.get(result));
+					}
+				}
+				CheckMeaningIncreaseCommentThread.setData(engSC, viSC, keyword, listComment, listCrisis);
+				CheckMeaningIncreaseCommentThread.start();
+				this.interrupt();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+}

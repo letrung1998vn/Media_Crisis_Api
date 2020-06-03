@@ -24,8 +24,8 @@ public class LastStandardService {
 	
 	
 	@Transactional
-	public double calUpperLimit(double standard, double mean) {
-		double anomaly_cut_off = standard * 2;
+	public double calUpperLimit(double standard, double mean, double stdTime) {
+		double anomaly_cut_off = standard * stdTime;
 		double upper_limit = mean + anomaly_cut_off;
 		return upper_limit;
 	}
