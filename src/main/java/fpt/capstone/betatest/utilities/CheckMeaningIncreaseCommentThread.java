@@ -97,7 +97,7 @@ public class CheckMeaningIncreaseCommentThread extends BaseThread{
 									|| (lastComment.getNumberOfReact()
 											- newComment.getNumberOfReact()) > react_upper_limit) {
 								// Add Crisis to Db
-								crisisService.insertCommentCrisis(newComment, keyword, listCrisis, type);;
+								crisisService.insertCommentCrisis(newComment, keyword, listCrisis, type);
 							}
 						}
 					}

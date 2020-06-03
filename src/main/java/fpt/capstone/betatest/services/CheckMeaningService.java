@@ -630,22 +630,13 @@ public class CheckMeaningService {
 		public void detectCrisisInCurrent(String keyword, TextAPIClient client, List<Crisis> listCrisis) throws Exception {
 			List<Post> listPost = postService.getRecentPost(keyword);
 			if (listPost.size() > 0) {
-				CheckMeaningCurrentPostThread CheckMeaningCurrentPostThread = new CheckMeaningCurrentPostThread(client, keyword, listPost, listCrisis);
+				CheckMeaningCurrentPostThread CheckMeaningCurrentPostThread = new CheckMeaningCurrentPostThread
+						(client, keyword, listPost, listCrisis);
 //				CheckMeaningCurrentPostThread.setData();
 				CheckMeaningCurrentPostThread.start();
 			}
 		}
-		
-		
-		
-		
 
-
-		
-
-		
-
-	
 
 		@Transactional
 		public boolean checkExist(List<Post> listPost, String postContent) {
