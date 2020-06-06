@@ -33,6 +33,7 @@ public class UserController {
 	KeywordService keywordService;
 	@Autowired
 	NotificationTokenService notificationTokenService;
+
 	@PostMapping("changeStatus")
 	public MessageOutputModel changeUserStatus(@RequestParam(value = "username") String username) {
 		return userService.changeUserStatus(username);
@@ -42,8 +43,16 @@ public class UserController {
 	public MessageOutputModel checkLogin(@RequestParam(value = "username") String username,
 			@RequestParam(value = "password") String password, @RequestParam(value = "notiToken") String notiToken) {
 		User result = userService.checkLogin(username, password);
-		//notificationTokenService.addNewToken(notiToken, username);
-		//System.out.println(notificationTokenService.addMoreTimeForToken(notiToken).toString());
+		notificationTokenService.disableUnnecessaryToken(notiToken, username);
+		NotificationToken nt = notificationTokenService.getNotiTokenByUserIdAndNotiToken(username, notiToken);
+		if (nt == null) {
+			notificationTokenService.addNewToken(notiToken, username);
+		} else {
+			nt.setAvailable(true);
+			Calendar date = Calendar.getInstance();
+			nt.setActiveTime(date.getTime());
+			notificationTokenService.saveToken(nt);
+		}
 		return userService.checkLogin(result);
 	}
 
@@ -77,7 +86,7 @@ public class UserController {
 			@RequestParam(value = "name") String name, @RequestParam(value = "password") String password,
 			@RequestParam(value = "email") String email) {
 		return userService.registration(username, password, name, email);
-		
+
 	}
 
 	//
@@ -102,13 +111,13 @@ public class UserController {
 		User user = userService.getUserByUsername(username);
 		return userService.updatePassword(user, password);
 	}
-	
+
 	@PostMapping("disableWebhook")
 	public MessageOutputModel disableWebhook(@RequestParam(value = "userName") String username) {
 		User user = userService.getUserByUsername(username);
 		return userService.disableWebhook(user);
 	}
-	
+
 	@PostMapping("getAllUserCrisis")
 	public List<CrisisModel> getAllUserCrisis(@RequestParam(value = "userName") String username) {
 		User user = userService.getUserByUsername(username);
