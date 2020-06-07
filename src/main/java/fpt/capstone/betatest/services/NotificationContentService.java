@@ -209,7 +209,7 @@ public class NotificationContentService {
 						Post post = result.get(0);
 						ldm.setContent(post.getPostContent());
 						ldm.setLink(post.getLinkDetail());
-						ldm.setType(crisis.getDetectType());
+						ldm.setType(crisis.getDetectType() + crisis.getType());
 						ldm.setStd(crisisService.getStandardTimes(crisis.getPercentage()));
 						listLinkDetailModel.add(ldm);
 					}
@@ -221,7 +221,7 @@ public class NotificationContentService {
 						LinkDetailModel ldm = new LinkDetailModel();
 						ldm.setContent(comment.getCommentContent());
 						ldm.setLink(comment.getLinkDetail());
-						ldm.setType(crisis.getDetectType());
+						ldm.setType(crisis.getDetectType() + crisis.getType());
 						ldm.setStd(crisisService.getStandardTimes(crisis.getPercentage()));
 						listLinkDetailModel.add(ldm);
 					}

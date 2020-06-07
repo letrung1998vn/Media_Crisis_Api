@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 import fpt.capstone.betatest.entities.NotificationToken;
 import fpt.capstone.betatest.entities.User;
 import fpt.capstone.betatest.model.CrisisModel;
+import fpt.capstone.betatest.model.EmailListContent;
+import fpt.capstone.betatest.model.HistoryRatioModel;
 import fpt.capstone.betatest.model.MessageOutputModel;
 import fpt.capstone.betatest.model.UserCrisis;
 import fpt.capstone.betatest.services.KeywordService;
@@ -41,7 +43,7 @@ public class UserController {
 
 	@PostMapping("login")
 	public MessageOutputModel checkLogin(@RequestParam(value = "username") String username,
-			@RequestParam(value = "password") String password, @RequestParam(value = "notiToken") String notiToken) {
+			@RequestParam(value = "password") String password) {
 		User result = userService.checkLogin(username, password);
 		notificationTokenService.disableUnnecessaryToken(notiToken, username);
 		NotificationToken nt = notificationTokenService.getNotiTokenByUserIdAndNotiToken(username, notiToken);
@@ -122,5 +124,20 @@ public class UserController {
 	public List<CrisisModel> getAllUserCrisis(@RequestParam(value = "userName") String username) {
 		User user = userService.getUserByUsername(username);
 		return userService.getAllUserCrisis(user);
+	}
+
+	@PostMapping("getAllUserRatio")
+	public List<HistoryRatioModel> getAllUserRatio(@RequestParam(value = "userName") String username) {
+		System.out.println("UserName: " + username);
+		User user = userService.getUserByUsername(username);
+		List<HistoryRatioModel> list = userService.getAllUserRatio(user);
+		System.out.println("size: " + list.size());
+		for (int i = 0; i < list.size(); i++) {
+			HistoryRatioModel hrm = list.get(i);
+			System.out.println("kw: " + hrm.getKeyword());
+			System.out.println("type: " + hrm.getType());
+			System.out.println("ratio: " + hrm.getListRatio());
+		}
+		return userService.getAllUserRatio(user);
 	}
 }

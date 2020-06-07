@@ -1,5 +1,7 @@
 package fpt.capstone.betatest.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,6 +27,10 @@ public class CommentController {
 	@PostMapping("getNegativeComment")
 	public Page<Comment> getNegativeComment(@RequestParam(value = "page") String page) {
 		return commentService.getAllNegativeComment(true, Integer.parseInt(page));
+	}
+	@PostMapping("getNegativeCommentByKeyword")
+	public List<Comment> getNegativeCommentByKeyword(@RequestParam(value = "keyword") String keyword) {
+		return commentService.getNegativePostByKeyword(keyword);
 	}
 
 }

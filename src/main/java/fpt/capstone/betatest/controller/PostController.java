@@ -31,4 +31,8 @@ public class PostController {
 	public Page<Post> getNegativePost(@RequestParam(value = "page") String page) {
 		return postService.getAllNegativePost(true, Integer.parseInt(page));
 	}
+	@PostMapping("getNegativePostByKeyword")
+	public List<Post> getNegativePostByKeyword(@RequestParam(value = "keyword") String keyword) {
+		return postService.getNegativePostByKeyword(keyword);
+	}
 }

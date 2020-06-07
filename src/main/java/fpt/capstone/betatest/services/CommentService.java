@@ -65,4 +65,8 @@ public class CommentService {
 		Pageable page = PageRequest.of((Page - 1), 20);
 		return commentRepository.findByIsNegativeOrderByCrawlDateDesc(isNegative, page);
 	}
+	@Transactional
+	public List<Comment> getNegativePostByKeyword(String keyword) {
+		return commentRepository.findByKeywordAndIsNegativeOrderByCrawlDateDesc(keyword, true);
+	}
 }

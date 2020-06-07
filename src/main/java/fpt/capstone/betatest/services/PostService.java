@@ -117,5 +117,8 @@ public class PostService {
 		}
 		return returnList;
 	}
-
+	@Transactional
+	public List<Post> getNegativePostByKeyword(String keyword) {
+		return postRepository.findByKeywordAndIsNegativeOrderByCrawlDateDesc(keyword, true);
+	}
 }
