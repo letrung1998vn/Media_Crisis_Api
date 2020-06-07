@@ -43,7 +43,7 @@ public class UserController {
 
 	@PostMapping("login")
 	public MessageOutputModel checkLogin(@RequestParam(value = "username") String username,
-			@RequestParam(value = "password") String password) {
+			@RequestParam(value = "password") String password, @RequestParam(value = "notiToken") String notiToken) {
 		User result = userService.checkLogin(username, password);
 		notificationTokenService.disableUnnecessaryToken(notiToken, username);
 		NotificationToken nt = notificationTokenService.getNotiTokenByUserIdAndNotiToken(username, notiToken);
