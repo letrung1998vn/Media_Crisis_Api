@@ -26,5 +26,5 @@ public interface CommentRepository extends JpaRepository<Comment, Integer> {
 
 	Page<Comment> findByIsNegativeOrderByCrawlDateDesc(boolean isNegative, Pageable pageable);
 
-	List<Comment> findByKeywordAndIsNegativeOrderByCrawlDateDesc(String keyword, boolean isNegative);
+	List<Comment> findByPostIdAndIsNegativeOrderByCrawlDateDesc(String postId, boolean isNegative);
 }

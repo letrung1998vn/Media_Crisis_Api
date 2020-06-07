@@ -128,16 +128,7 @@ public class UserController {
 
 	@PostMapping("getAllUserRatio")
 	public List<HistoryRatioModel> getAllUserRatio(@RequestParam(value = "userName") String username) {
-		System.out.println("UserName: " + username);
 		User user = userService.getUserByUsername(username);
-		List<HistoryRatioModel> list = userService.getAllUserRatio(user);
-		System.out.println("size: " + list.size());
-		for (int i = 0; i < list.size(); i++) {
-			HistoryRatioModel hrm = list.get(i);
-			System.out.println("kw: " + hrm.getKeyword());
-			System.out.println("type: " + hrm.getType());
-			System.out.println("ratio: " + hrm.getListRatio());
-		}
 		return userService.getAllUserRatio(user);
 	}
 }

@@ -66,7 +66,7 @@ public class CommentService {
 		return commentRepository.findByIsNegativeOrderByCrawlDateDesc(isNegative, page);
 	}
 	@Transactional
-	public List<Comment> getNegativePostByKeyword(String keyword) {
-		return commentRepository.findByKeywordAndIsNegativeOrderByCrawlDateDesc(keyword, true);
+	public List<Comment> getNegativeCommentByPostId(String postId) {
+		return commentRepository.findByPostIdAndIsNegativeOrderByCrawlDateDesc(postId, true);
 	}
 }
