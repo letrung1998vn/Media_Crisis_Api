@@ -10,6 +10,6 @@ import fpt.capstone.betatest.entities.NotificationToken;
 @Repository("notificationTokenRepository")
 public interface NotificationTokenRepository extends JpaRepository<NotificationToken, Integer>{
 	List<NotificationToken> findByUserName(String UserId);
+	List<NotificationToken> findByNotiToken(String notiToken);
 	NotificationToken findByUserNameAndNotiToken(String userId, String notiToken);
-	NotificationToken findByNotiToken(String notiToken);
 }

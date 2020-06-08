@@ -17,6 +17,8 @@ import fpt.capstone.betatest.entities.User;
 import fpt.capstone.betatest.entities.UserInfo;
 import fpt.capstone.betatest.model.CrisisModel;
 import fpt.capstone.betatest.model.CustomComparator;
+import fpt.capstone.betatest.model.EmailListContent;
+import fpt.capstone.betatest.model.HistoryRatioModel;
 import fpt.capstone.betatest.model.MessageOutputModel;
 import fpt.capstone.betatest.model.UserCrisis;
 import fpt.capstone.betatest.repositories.CrisisRepository;
@@ -27,8 +29,6 @@ public class UserService {
 	@Autowired
 	private UserRepository usersRepository;
 	@Autowired
-	private CrisisRepository crisisRepository;
-	@Autowired
 	private PostService postService;
 	@Autowired
 	private CommentService commentService;
@@ -38,12 +38,14 @@ public class UserService {
 	UserInfoService userInfoService;
 	@Autowired
 	CrisisService crisisService;
-	
+	@Autowired
+	NegativeRatioService negativeRatioService;
+
 	@Transactional
 	public User checkLogin(String username, String password) {
 		return usersRepository.findByUserNameAndPassword(username, password);
 	}
-	
+
 	@Transactional
 	public List<User> findAll() {
 		return usersRepository.findAll();
@@ -58,24 +60,24 @@ public class UserService {
 		}
 		return result;
 	}
-	
+
 	@Transactional
 	public User getUserByUsername(String username) {
 		User user = usersRepository.findByUserName(username);
 		return user;
 	}
-	
+
 	@Transactional
 	public User saveUser(User u) {
 		return usersRepository.save(u);
 	}
-	
+
 	@Transactional
 	public Page<User> searchByUsernameAndPage(String userId, int Page) {
 		Pageable page = PageRequest.of((Page - 1), 10);
 		return usersRepository.findByUserNameContaining(userId, page);
 	}
-	
+
 	@Transactional
 	public MessageOutputModel changeUserStatus(String username) {
 		User user = this.getUserByUsername(username);
@@ -114,7 +116,7 @@ public class UserService {
 		}
 		return mod;
 	}
-	
+
 	@Transactional
 	public MessageOutputModel checkLogin(User result) {
 		MessageOutputModel mod = new MessageOutputModel();
@@ -136,7 +138,7 @@ public class UserService {
 		}
 		return mod;
 	}
-	
+
 	@Transactional
 	public MessageOutputModel updateWebhook(String link, String username) {
 		User user = this.getUserByUsername(username);
@@ -153,7 +155,7 @@ public class UserService {
 		}
 		return mod;
 	}
-	
+
 	@Transactional
 	public MessageOutputModel findKeyword(User result) {
 		MessageOutputModel mod = new MessageOutputModel();
@@ -173,6 +175,7 @@ public class UserService {
 		}
 		return mod;
 	}
+
 	@Transactional
 	public MessageOutputModel findNoti(User result) {
 		MessageOutputModel mod = new MessageOutputModel();
@@ -187,9 +190,9 @@ public class UserService {
 		}
 		return mod;
 	}
-	
+
 	@Transactional
-	public MessageOutputModel registration(String username , String password, String name, String email) {
+	public MessageOutputModel registration(String username, String password, String name, String email) {
 		MessageOutputModel mod = new MessageOutputModel();
 		User user = new User();
 		UserInfo userInfo = new UserInfo();
@@ -217,7 +220,7 @@ public class UserService {
 		}
 		return mod;
 	}
-	
+
 	@Transactional
 	public MessageOutputModel updateProfile(User user, String email, String name) {
 		MessageOutputModel mod = new MessageOutputModel();
@@ -234,9 +237,9 @@ public class UserService {
 
 		return mod;
 	}
-	
+
 	@Transactional
-	public MessageOutputModel updatePassword(User user , String password) {
+	public MessageOutputModel updatePassword(User user, String password) {
 		MessageOutputModel mod = new MessageOutputModel();
 		if (!user.isAvailable()) {
 			mod.setStatusCode(3);
@@ -249,7 +252,7 @@ public class UserService {
 		}
 		return mod;
 	}
-	
+
 	@Transactional
 	public MessageOutputModel disableWebhook(User user) {
 		MessageOutputModel mod = new MessageOutputModel();
@@ -264,7 +267,7 @@ public class UserService {
 		}
 		return mod;
 	}
-	
+
 	public List<CrisisModel> getAllUserCrisis(User user) {
 		CrisisModel cm = new CrisisModel();
 		List<Keyword> userKeywordList = keywordService.getAll(user);
@@ -278,14 +281,15 @@ public class UserService {
 				cm.setPercentage(crisis.getPercentage());
 				cm.setKeyword(crisis.getKeyword());
 				cm.setDetectDate(crisis.getDetectDate());
-				if(crisis.getType().trim().equals("post")) {
+				if (crisis.getType().trim().equals("post")) {
 					cm.setType("post");
-					//System.out.println(crisis.getContentId()+"");
-					//System.out.println(postService.findPostById(crisis.getContentId()+""));
+					// System.out.println(crisis.getContentId()+"");
+					// System.out.println(postService.findPostById(crisis.getContentId()+""));
 					cm.setContent(postService.findPostById(crisis.getContentId()).get(0).getPostContent());
 				} else {
 					cm.setType("comment");
-					cm.setContent(commentService.getCommentByCommentId(crisis.getContentId()).get(0).getCommentContent());
+					cm.setContent(
+							commentService.getCommentByCommentId(crisis.getContentId()).get(0).getCommentContent());
 				}
 				crisisOutputModel.add(cm);
 			}
@@ -293,6 +297,19 @@ public class UserService {
 		crisisOutputModel.sort(new CustomComparator());
 		return crisisOutputModel;
 	}
+
+	public List<HistoryRatioModel> getAllUserRatio(User user) {
+		List<HistoryRatioModel> ratioOutputModel = new ArrayList<>();
+		List<Keyword> userKeywordList = keywordService.getAll(user);
+		try {
+			for (int i = 0; i < userKeywordList.size(); i++) {
+				Keyword kw = userKeywordList.get(i);
+				ratioOutputModel.add(negativeRatioService.getPostRatio(kw.getKeyword()));
+				ratioOutputModel.add(negativeRatioService.getCommentRatio(kw.getKeyword()));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return ratioOutputModel;
+	}
 }
-
-

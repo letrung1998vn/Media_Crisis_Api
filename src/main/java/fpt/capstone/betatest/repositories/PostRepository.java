@@ -41,4 +41,5 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
 	Post getSecondLastNewPost(Date crawlDate, BigInteger postId);
 	Page<Post> findByIsNewOrderByCrawlDateDesc(boolean isNew, Pageable pageable);
 	Page<Post> findByIsNegativeOrderByCrawlDateDesc(boolean isNegative, Pageable pageable);
+	List<Post> findByKeywordAndIsNegativeOrderByCrawlDateDesc(String keyword, boolean isNegative);
 }
