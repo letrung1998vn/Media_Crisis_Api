@@ -14,6 +14,7 @@ import fpt.capstone.betatest.entities.Keyword;
 import fpt.capstone.betatest.entities.User;
 import fpt.capstone.betatest.model.MessageOutputModel;
 import fpt.capstone.betatest.services.KeywordService;
+import fpt.capstone.betatest.services.NotificationTokenService;
 import fpt.capstone.betatest.services.UserService;
 
 @RestController
@@ -23,7 +24,9 @@ public class KeywordController {
 	KeywordService keywordService;
 	@Autowired
 	private UserService userService;
-
+	@Autowired
+	NotificationTokenService notificationTokenService;
+	
 	@GetMapping("findAll")
 	public MessageOutputModel findAll() {
 		return keywordService.findAll();
@@ -34,6 +37,7 @@ public class KeywordController {
 		return keywordService.getUsers();
 	}
 
+	//admin su dunng
 	@PostMapping("search")
 	public Page<Keyword> getKeyword(@RequestParam(value = "keyword") String keyword,
 			@RequestParam(value = "username") String username, @RequestParam(value = "page") int page) {
@@ -46,6 +50,7 @@ public class KeywordController {
 		Keyword kw = new Keyword();
 		User user = userService.getUserByUsername(userId);
 		double crisisRate = Double.parseDouble(crisisRateString);
+		notificationTokenService.addMoreTimeForToken(userId);
 		return keywordService.createKeyword(user, kw, keyword, crisisRate);
 	}
 
@@ -56,6 +61,7 @@ public class KeywordController {
 		Keyword kw = keywordService.getKeywordById(keywordId);
 		User user = userService.getUserByUsername(author);
 		double crisisRate = Double.parseDouble(crisisRateString);
+		notificationTokenService.addMoreTimeForToken(author);
 		return keywordService.updateKeyword(user, kw, keyword, log_version, keywordId, crisisRate);
 	}
 
@@ -63,6 +69,7 @@ public class KeywordController {
 	public MessageOutputModel deleteKeyword(@RequestParam(value = "id") int id,
 			@RequestParam(value = "logVersion") int log_version, @RequestParam(value = "author") String author) {	
 		User user = userService.getUserByUsername(author);
+		notificationTokenService.addMoreTimeForToken(author);
 		return keywordService.deleteKeyword(user, log_version, id);
 	}
 

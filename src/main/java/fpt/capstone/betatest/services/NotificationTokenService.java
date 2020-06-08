@@ -75,9 +75,9 @@ public class NotificationTokenService {
 	}
 	
 	@Transactional
-	public boolean addMoreTimeForToken(String token, String username) {
+	public boolean addMoreTimeForToken(String username) {
 		boolean result = false;
-		NotificationToken updateToken = notificationTokenRepository.findByUserNameAndNotiToken(username, token);
+		NotificationToken updateToken = notificationTokenRepository.findByUserNameAndAvailable(username, true);
 		long t = updateToken.getActiveTime().getTime();
 		Date activeTime = new Date(t);
 		Date activeTimePlus30Min = new Date(t + (30 * ONE_MINUTE_IN_MILLIS));

@@ -67,18 +67,22 @@ public class UserController {
 	@PostMapping("updateLinkWebhook")
 	public MessageOutputModel updateWebhook(@RequestParam(value = "link") String link,
 			@RequestParam(value = "username") String username) {
+		notificationTokenService.addMoreTimeForToken(username);
 		return userService.updateWebhook(link, username);
 	}
 
+	//user su dung
 	@GetMapping("getUserKeyword")
 	public MessageOutputModel findKeyword(@RequestParam(value = "username") String username) {
 		User result = userService.getUserByUsername(username);
+		notificationTokenService.addMoreTimeForToken(username);
 		return userService.findKeyword(result);
 	}
 
 	@GetMapping("getUserNoti")
 	public MessageOutputModel findNoti(@RequestParam(value = "username") String username) {
 		User result = userService.getUserByUsername(username);
+		notificationTokenService.addMoreTimeForToken(username);
 		return userService.findNoti(result);
 	}
 
@@ -104,6 +108,7 @@ public class UserController {
 	public MessageOutputModel updateProfile(@RequestParam(value = "userId") String userId,
 			@RequestParam(value = "name") String name, @RequestParam(value = "email") String email) {
 		User user = userService.getUserByUsername(userId);
+		notificationTokenService.addMoreTimeForToken(userId);
 		return userService.updateProfile(user, email, name);
 	}
 
@@ -111,24 +116,28 @@ public class UserController {
 	public MessageOutputModel updatePassword(@RequestParam(value = "userName") String username,
 			@RequestParam(value = "password") String password) {
 		User user = userService.getUserByUsername(username);
+		notificationTokenService.addMoreTimeForToken(username);
 		return userService.updatePassword(user, password);
 	}
 
 	@PostMapping("disableWebhook")
 	public MessageOutputModel disableWebhook(@RequestParam(value = "userName") String username) {
 		User user = userService.getUserByUsername(username);
+		notificationTokenService.addMoreTimeForToken(username);
 		return userService.disableWebhook(user);
 	}
 
 	@PostMapping("getAllUserCrisis")
 	public List<CrisisModel> getAllUserCrisis(@RequestParam(value = "userName") String username) {
 		User user = userService.getUserByUsername(username);
+		notificationTokenService.addMoreTimeForToken(username);
 		return userService.getAllUserCrisis(user);
 	}
 
 	@PostMapping("getAllUserRatio")
 	public List<HistoryRatioModel> getAllUserRatio(@RequestParam(value = "userName") String username) {
 		User user = userService.getUserByUsername(username);
+		notificationTokenService.addMoreTimeForToken(username);
 		return userService.getAllUserRatio(user);
 	}
 }

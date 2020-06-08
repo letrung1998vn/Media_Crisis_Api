@@ -12,4 +12,5 @@ public interface NotificationTokenRepository extends JpaRepository<NotificationT
 	List<NotificationToken> findByUserName(String UserId);
 	List<NotificationToken> findByNotiToken(String notiToken);
 	NotificationToken findByUserNameAndNotiToken(String userId, String notiToken);
+	NotificationToken findByUserNameAndAvailable(String userId, boolean available);
 }
