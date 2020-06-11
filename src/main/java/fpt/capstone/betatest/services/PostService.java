@@ -24,9 +24,9 @@ public class PostService {
 
 	@Autowired
 	private CheckMeaningService checkMeaningService;
-	
+
 	final long diffenrentDate = 7;
-	
+
 	@Transactional
 	public List<Post> getEachPostContentWithLatestDate(String keyword) {
 		return postRepository.getEachPostContentWithLatestDate(keyword);
@@ -51,12 +51,12 @@ public class PostService {
 	public List<Post> findPostById(BigInteger id) {
 		return postRepository.findByPostId(id);
 	}
-	
+
 	@Transactional
 	public List<Post> getNewPost(String keyword, Boolean isNew) {
 		return postRepository.findByKeywordAndIsNew(keyword, isNew);
 	}
-	
+
 	@Transactional
 	public Page<Post> getAllNewPost(boolean isNew, int Page) {
 		Pageable page = PageRequest.of((Page - 1), 20);
@@ -68,7 +68,7 @@ public class PostService {
 		Pageable page = PageRequest.of((Page - 1), 20);
 		return postRepository.findByIsNegativeOrderByCrawlDateDesc(isNegative, page);
 	}
-	
+
 	@Transactional
 	public Post save(Post post) {
 		return postRepository.save(post);
@@ -78,7 +78,7 @@ public class PostService {
 	public Post getSecondLastNewPost(Date crawlDate, BigInteger postId) {
 		return postRepository.getSecondLastNewPost(crawlDate, postId);
 	}
-	
+
 	@Transactional
 	public List<Post> getIncreasePost(String keyword) {
 		// Get the list of post with two latest date in DB
@@ -99,7 +99,7 @@ public class PostService {
 		}
 		return resultList;
 	}
-	
+
 	@Transactional
 	public List<Post> getRecentPost(String keyword) {
 		// Get The list of post with latest date in DB
@@ -111,12 +111,13 @@ public class PostService {
 			Date date = new Date(millis);
 			long diffInMillies = Math.abs(date.getTime() - post.getCrawlDate().getTime());
 			long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
-			if (diff < diffenrentDate) {
+			if (diff <= diffenrentDate) {
 				returnList.add(post);
 			}
 		}
 		return returnList;
 	}
+
 	@Transactional
 	public List<Post> getNegativePostByKeyword(String keyword) {
 		return postRepository.findByKeywordAndIsNegativeOrderByCrawlDateDesc(keyword, true);
