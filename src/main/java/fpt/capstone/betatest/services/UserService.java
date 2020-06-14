@@ -11,8 +11,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import fpt.capstone.betatest.entities.Comment;
 import fpt.capstone.betatest.entities.Crisis;
 import fpt.capstone.betatest.entities.Keyword;
+import fpt.capstone.betatest.entities.Post;
 import fpt.capstone.betatest.entities.User;
 import fpt.capstone.betatest.entities.UserInfo;
 import fpt.capstone.betatest.model.CrisisModel;
@@ -285,11 +287,14 @@ public class UserService {
 					cm.setType("post");
 					// System.out.println(crisis.getContentId()+"");
 					// System.out.println(postService.findPostById(crisis.getContentId()+""));
-					cm.setContent(postService.findPostById(crisis.getContentId()).get(0).getPostContent());
+					Post post = postService.findPostById(crisis.getContentId()).get(0);
+					cm.setContent(post.getPostContent());
+					cm.setLink(post.getLinkDetail());
 				} else {
 					cm.setType("comment");
-					cm.setContent(
-							commentService.getCommentByCommentId(crisis.getContentId()).get(0).getCommentContent());
+					Comment comment = commentService.getCommentByCommentId(crisis.getContentId()).get(0);
+					cm.setContent(comment.getCommentContent());
+					cm.setLink(comment.getLinkDetail());
 				}
 				crisisOutputModel.add(cm);
 			}

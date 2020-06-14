@@ -18,7 +18,7 @@ import fpt.capstone.betatest.repositories.NotificationTokenRepository;
 
 @Service
 public class NotificationTokenService {
-	static final long ONE_MINUTE_IN_MILLIS=60000;//millisecs
+	static final long ONE_MINUTE_IN_MILLIS = 60000;// millisecs
 	@Autowired
 	private NotificationTokenRepository notificationTokenRepository;
 
@@ -68,12 +68,12 @@ public class NotificationTokenService {
 		}
 		return mod;
 	}
-	
+
 	@Transactional
 	public NotificationToken findByToken(String token, String username) {
 		return notificationTokenRepository.findByUserNameAndNotiToken(username, token);
 	}
-	
+
 	@Transactional
 	public boolean addMoreTimeForToken(String username) {
 		boolean result = false;
@@ -82,11 +82,11 @@ public class NotificationTokenService {
 		Date activeTime = new Date(t);
 		Date activeTimePlus30Min = new Date(t + (30 * ONE_MINUTE_IN_MILLIS));
 		Calendar date = Calendar.getInstance();
-//		System.out.println("Db Time: " + activeTime);
-//		System.out.println("Db Time + 30 min: " + activeTimePlus30Min);
-//		System.out.println("Now: " + date.getTime());
-//		System.out.println(date.getTime().compareTo(activeTime));
-//		System.out.println(date.getTime().compareTo(activeTimePlus30Min));
+		// System.out.println("Db Time: " + activeTime);
+		// System.out.println("Db Time + 30 min: " + activeTimePlus30Min);
+		// System.out.println("Now: " + date.getTime());
+		// System.out.println(date.getTime().compareTo(activeTime));
+		// System.out.println(date.getTime().compareTo(activeTimePlus30Min));
 		if ((date.getTime().compareTo(activeTimePlus30Min) == -1) && (date.getTime().compareTo(activeTime) == 1)) {
 			updateToken.setActiveTime(date.getTime());
 			result = true;
@@ -94,14 +94,14 @@ public class NotificationTokenService {
 		notificationTokenRepository.save(updateToken);
 		return result;
 	}
-	
+
 	@Transactional
 	public NotificationToken disableToken(String tokenString, String username) {
 		NotificationToken token = notificationTokenRepository.findByUserNameAndNotiToken(username, tokenString);
 		token.setAvailable(false);
 		return notificationTokenRepository.save(token);
 	}
-	
+
 	@Transactional
 	public NotificationToken addNewToken(String tokenString, String username) {
 		NotificationToken token = new NotificationToken();
@@ -112,7 +112,7 @@ public class NotificationTokenService {
 		token.setActiveTime(date);
 		return notificationTokenRepository.save(token);
 	}
-	
+
 	@Transactional
 	public void disableUnnecessaryToken(String tokenString, String username) {
 		List<NotificationToken> listNotiToken = notificationTokenRepository.findByUserName(username);
@@ -120,9 +120,22 @@ public class NotificationTokenService {
 			disableToken(notificationToken.getNotiToken(), username);
 		}
 		listNotiToken = notificationTokenRepository.findByNotiToken(tokenString);
-		for (NotificationToken notificationToken : listNotiToken) {
-			disableToken(notificationToken.getNotiToken(), username);
+		if (checkUserExist(listNotiToken, username)) {
+			for (NotificationToken notificationToken : listNotiToken) {
+				disableToken(notificationToken.getNotiToken(), username);
+			}
 		}
+	}
+
+	private boolean checkUserExist(List<NotificationToken> listNotiToken, String username) {
+		boolean result = false;
+		for (NotificationToken notificationToken : listNotiToken) {
+			if (notificationToken.getUserName().equals(username)) {
+				result = true;
+				break;
+			}
+		}
+		return result;
 	}
 
 	@Transactional

@@ -10,7 +10,7 @@ public class CrisisModel {
     private Double percentage;
     private String keyword;
     private Date detectDate;
-    
+    private String link;
     public CrisisModel() {
     }
 
@@ -68,6 +68,14 @@ public class CrisisModel {
 
 	public void setDetectDate(Date detectDate) {
 		this.detectDate = detectDate;
+	}
+
+	public String getLink() {
+		return link;
+	}
+
+	public void setLink(String link) {
+		this.link = link;
 	}
 
     
