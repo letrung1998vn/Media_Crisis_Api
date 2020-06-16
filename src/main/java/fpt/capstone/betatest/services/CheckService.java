@@ -25,17 +25,33 @@ public class CheckService extends Thread {
 	StanfordCoreNLP engSC;
 
 	StanfordCoreNLP viSC;
+	private boolean condition = true;
+	private boolean running = false;
 
 	public void setData(StanfordCoreNLP engSC, StanfordCoreNLP viSC) {
 		this.engSC = engSC;
 		this.viSC = viSC;
 	}
 
+	public boolean getRunningCondition() {
+		return this.running;
+	}
+
+	public boolean getCondition() {
+		return this.condition;
+	}
+
+	public void setCondition(boolean condition) {
+		this.condition = condition;
+	}
+
 	@Override
 	public synchronized void start() {
 		try {
 			int a = 0;
-			while (true) {
+			while (condition) {
+				running = true;
+				System.out.println("Check condition:" + condition);
 				System.out.println("Start " + a + "th");
 				List<Keyword_Crawler> listKeyword = keywordCrawlerService.getAllKeyword();
 				List<Crisis> listCrisis = new ArrayList<>();
@@ -57,8 +73,14 @@ public class CheckService extends Thread {
 				System.out.println("Sleep " + a + "th");
 				this.sleep(1000 * 60 * 2);
 			}
+			running = false;
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public void interrupt() {
+		condition = false;
 	}
 }

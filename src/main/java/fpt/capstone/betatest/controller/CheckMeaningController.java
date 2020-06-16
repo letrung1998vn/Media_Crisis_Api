@@ -17,6 +17,7 @@ import fpt.capstone.betatest.services.CheckService;
 public class CheckMeaningController {
 	@Autowired
 	CheckService check;
+	Properties props;
 
 	@GetMapping("check")
 	public void checkMeaning() throws Exception {
@@ -26,7 +27,18 @@ public class CheckMeaningController {
 		props.put("sentiment.model", "src/main/resources/my.model.ser.gz");
 		StanfordCoreNLP viSC = new StanfordCoreNLP(props);
 		check.setData(engSC, viSC);
-		check.start();
+		if (!check.getCondition()) {
+			check.setCondition(true);
+		}
+		if (!check.getRunningCondition()) {
+			check.start();
+		}
+	}
+
+	@GetMapping("Stopcheck")
+	public void checkMeaningStop() {
+		System.out.println("Stop");
+		check.interrupt();
 	}
 
 }
