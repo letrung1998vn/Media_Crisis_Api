@@ -28,7 +28,12 @@ public class KeywordService {
 
 	@Transactional
 	public Page<Keyword> searchKeyword(String keyword, int Page) {
-		Pageable page = PageRequest.of((Page - 1), 10);
+		Pageable page;
+		if (Page > 0) {
+			page = PageRequest.of((Page - 1), 10);
+		} else {
+			page = PageRequest.of((Page), 10);
+		}
 		return keywordsRepository.findByKeywordContainingAndAvailable(keyword, page, true);
 	}
 
