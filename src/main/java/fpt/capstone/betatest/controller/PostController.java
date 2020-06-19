@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import fpt.capstone.betatest.entities.Post;
 import fpt.capstone.betatest.services.KeywordService;
 import fpt.capstone.betatest.services.PostService;
@@ -23,6 +25,7 @@ public class PostController {
 	PostService postService;
 	
 	@PostMapping("getNewPost")
+	@JsonFormat(timezone = "Asia/Saigon", pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ")
 	public Page<Post> getNewPost(@RequestParam(value = "page") String page) {
 		return postService.getAllNewPost(true, Integer.parseInt(page));
 	}
