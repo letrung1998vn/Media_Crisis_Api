@@ -6,6 +6,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 import javax.mail.Authenticator;
 import javax.mail.Message;
@@ -60,6 +61,7 @@ public class NotificationService {
 	private static String username = "passmon2020@gmail.com";
 	private static String password = "Vutiendat123!!!";
 	private static String port = "587";
+	private static long timeout = 30;
 
 	@Transactional
 	public Notification save(Notification notification) {
@@ -370,10 +372,22 @@ public class NotificationService {
 		List<NotificationToken> listNoti = notificationTokenService.getNotiTokenByUserId(user.getUserName());
 		for (int i = 0; i < listNoti.size(); i++) {
 			NotificationToken notiToken = listNoti.get(i);
-			if (notiToken.isAvailable()) {
-				String json = createJsonNotificationWithLinkDetail(notiToken.getNotiToken(), keyword, listCrisis);
-				NotificationWebModel noti = new NotificationWebModel("https://fcm.googleapis.com/fcm/send", json);
-				System.out.println("Status: " + noti.connect());
+			long millis = System.currentTimeMillis();
+			Date date = new Date(millis);
+			long diffInMillies = Math.abs(date.getTime() - notiToken.getActiveTime().getTime());
+			long diff = TimeUnit.MINUTES.convert(diffInMillies, TimeUnit.MILLISECONDS);
+			if (date.before(notiToken.getActiveTime())) {
+				if (notiToken.isAvailable()) {
+					String json = createJsonNotificationWithLinkDetail(notiToken.getNotiToken(), keyword, listCrisis);
+					NotificationWebModel noti = new NotificationWebModel("https://fcm.googleapis.com/fcm/send", json);
+					System.out.println("Status: " + noti.connect());
+				}
+			} else {
+				if (notiToken.isAvailable() && diff < timeout) {
+					String json = createJsonNotificationWithLinkDetail(notiToken.getNotiToken(), keyword, listCrisis);
+					NotificationWebModel noti = new NotificationWebModel("https://fcm.googleapis.com/fcm/send", json);
+					System.out.println("Status: " + noti.connect());
+				}
 			}
 		}
 	}
@@ -383,11 +397,26 @@ public class NotificationService {
 		List<NotificationToken> listNoti = notificationTokenService.getNotiTokenByUserId(user.getUserName());
 		for (int i = 0; i < listNoti.size(); i++) {
 			NotificationToken notiToken = listNoti.get(i);
-			if (notiToken.isAvailable()) {
-				String json = createJsonNotificationWithLinkDetailListPost(notiToken.getNotiToken(), keyword, listPost);
-				NotificationWebModel noti = new NotificationWebModel("https://fcm.googleapis.com/fcm/send", json);
-				System.out.println("Status: " + noti.connect());
+			long millis = System.currentTimeMillis();
+			Date date = new Date(millis);
+			long diffInMillies = Math.abs(date.getTime() - notiToken.getActiveTime().getTime());
+			long diff = TimeUnit.MINUTES.convert(diffInMillies, TimeUnit.MILLISECONDS);
+			if (date.before(notiToken.getActiveTime())) {
+				if (notiToken.isAvailable()) {
+					String json = createJsonNotificationWithLinkDetailListPost(notiToken.getNotiToken(), keyword,
+							listPost);
+					NotificationWebModel noti = new NotificationWebModel("https://fcm.googleapis.com/fcm/send", json);
+					System.out.println("Status: " + noti.connect());
+				}
+			} else {
+				if (notiToken.isAvailable() && diff < timeout) {
+					String json = createJsonNotificationWithLinkDetailListPost(notiToken.getNotiToken(), keyword,
+							listPost);
+					NotificationWebModel noti = new NotificationWebModel("https://fcm.googleapis.com/fcm/send", json);
+					System.out.println("Status: " + noti.connect());
+				}
 			}
+
 		}
 	}
 
@@ -396,11 +425,24 @@ public class NotificationService {
 		List<NotificationToken> listNoti = notificationTokenService.getNotiTokenByUserId(user.getUserName());
 		for (int i = 0; i < listNoti.size(); i++) {
 			NotificationToken notiToken = listNoti.get(i);
-			if (notiToken.isAvailable()) {
-				String json = createJsonNotificationWithLinkDetailListComment(notiToken.getNotiToken(), keyword,
-						listComment);
-				NotificationWebModel noti = new NotificationWebModel("https://fcm.googleapis.com/fcm/send", json);
-				System.out.println("Status: " + noti.connect());
+			long millis = System.currentTimeMillis();
+			Date date = new Date(millis);
+			long diffInMillies = Math.abs(date.getTime() - notiToken.getActiveTime().getTime());
+			long diff = TimeUnit.MINUTES.convert(diffInMillies, TimeUnit.MILLISECONDS);
+			if (date.before(notiToken.getActiveTime())) {
+				if (notiToken.isAvailable()) {
+					String json = createJsonNotificationWithLinkDetailListComment(notiToken.getNotiToken(), keyword,
+							listComment);
+					NotificationWebModel noti = new NotificationWebModel("https://fcm.googleapis.com/fcm/send", json);
+					System.out.println("Status: " + noti.connect());
+				}
+			} else {
+				if (notiToken.isAvailable() && diff < timeout) {
+					String json = createJsonNotificationWithLinkDetailListComment(notiToken.getNotiToken(), keyword,
+							listComment);
+					NotificationWebModel noti = new NotificationWebModel("https://fcm.googleapis.com/fcm/send", json);
+					System.out.println("Status: " + noti.connect());
+				}
 			}
 		}
 	}
